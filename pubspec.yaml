@@ -1,0 +1,43 @@
+name: demo_earthly
+description: "Earthly Jewels - Flutter App matching Shopify store design"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # UI & Fonts
+  google_fonts: ^6.1.0
+  cached_network_image: ^3.3.1
+  flutter_svg: ^2.0.9
+  shimmer: ^3.0.0
+  smooth_page_indicator: ^1.1.0
+  carousel_slider: ^5.0.0
+
+  # State Management
+  provider: ^6.1.1
+
+  # Networking
+  http: ^1.1.0
+
+  # Utils
+  url_launcher: ^6.2.5
+  shared_preferences: ^2.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
