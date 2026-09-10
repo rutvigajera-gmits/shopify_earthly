@@ -907,6 +907,36 @@ class ShopifyService {
 
   // ─── Search ───────────────────────────────────────────────────────────────
 
-  Future<List<Product>> searchProducts(String query) =>
-      fetchProducts(first: 20, query: query);
+  Future<List<Product>> searchProducts(String query) async {
+    final escaped = query.replaceAll('"', '\\"');
+    final data = await _query('''
+      {
+        search(query: "$escaped", first: 24, types: PRODUCT) {
+          edges {
+            node {
+              ... on Product {
+                id handle title description vendor availableForSale tags
+                images(first: 3) { edges { node { url altText } } }
+                variants(first: 5) {
+                  edges {
+                    node {
+                      id title availableForSale
+                      priceV2 { amount currencyCode }
+                      compareAtPriceV2 { amount currencyCode }
+                      selectedOptions { name value }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ''');
+    final edges = (data['search']?['edges'] as List?) ?? [];
+    return edges
+        .map((e) => Product.fromStorefrontJson(e as Map<String, dynamic>))
+        .where((p) => p.handle.isNotEmpty)
+        .toList();
+  }
 }

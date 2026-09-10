@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
@@ -5,6 +6,20 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/providers/product_provider.dart';
 import '../../widgets/product_card.dart';
+
+const _kMinQueryLength = 2;
+const _kDebounceDuration = Duration(milliseconds: 500);
+
+const List<String> _trending = [
+  'Diamond Ring',
+  'Solitaire',
+  'Engagement Ring',
+  'Earrings',
+  'Lab Grown Diamond',
+  'Necklace',
+  'Eternity Band',
+  'Tennis Bracelet',
+];
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -16,15 +31,8 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final _controller = TextEditingController();
   final _focus = FocusNode();
-
-  static const List<String> _trending = [
-    'Diamond Ring',
-    'Solitaire',
-    'Engagement Ring',
-    'Gold Earrings',
-    'Lab Grown Diamond',
-    'Necklace',
-  ];
+  Timer? _debounce;
+  String _lastQuery = '';
 
   @override
   void initState() {
@@ -34,19 +42,60 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _controller.dispose();
     _focus.dispose();
     super.dispose();
   }
 
-  void _onSearch(String query) {
-    context.read<ProductProvider>().search(query);
+  void _onChanged(String raw) {
+    final query = raw.trim();
+
+    _debounce?.cancel();
+
+    if (query.length < _kMinQueryLength) {
+      if (_lastQuery.isNotEmpty) {
+        _lastQuery = '';
+        context.read<ProductProvider>().clearSearch();
+      }
+      setState(() {});
+      return;
+    }
+
+    if (query == _lastQuery) {
+      setState(() {});
+      return;
+    }
+
+    // Mark as pending so UI doesn't show "No results" while waiting
+    setState(() {});
+    _debounce = Timer(_kDebounceDuration, () {
+      _lastQuery = query;
+      context.read<ProductProvider>().search(query);
+    });
   }
 
   void _onClear() {
     _controller.clear();
+    _lastQuery = '';
+    _debounce?.cancel();
     context.read<ProductProvider>().clearSearch();
+    setState(() {});
   }
+
+  void _searchTerm(String term) {
+    _controller.text = term;
+    _lastQuery = term;
+    _debounce?.cancel();
+    context.read<ProductProvider>().search(term);
+    setState(() {});
+  }
+
+  bool get _hasQuery => _controller.text.trim().length >= _kMinQueryLength;
+
+  // True when user has typed enough but debounce hasn't fired yet
+  bool get _isPending =>
+      _hasQuery && _controller.text.trim() != _lastQuery;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +113,7 @@ class _SearchScreenState extends State<SearchScreen> {
         title: _SearchField(
           controller: _controller,
           focusNode: _focus,
-          onChanged: _onSearch,
+          onChanged: _onChanged,
           onClear: _onClear,
         ),
         bottom: const PreferredSize(
@@ -74,46 +123,67 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       body: Consumer<ProductProvider>(
         builder: (context, provider, _) {
-          if (provider.loadingSearch) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (_controller.text.isEmpty) {
+          // No query or debounce pending — show trending
+          if (!_hasQuery || _isPending) {
             return _TrendingSearches(
               terms: _trending,
-              onTap: (term) {
-                _controller.text = term;
-                _onSearch(term);
-              },
+              onTap: _searchTerm,
+            );
+          }
+
+          if (provider.loadingSearch) {
+            return const Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.textPrimary,
+              ),
             );
           }
 
           if (provider.searchResults.isEmpty) {
-            return _EmptyResults(query: _controller.text);
+            return _EmptyResults(query: _controller.text.trim());
           }
 
-          return GridView.builder(
-            padding: const EdgeInsets.all(AppConstants.horizontalPadding),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 24,
-              childAspectRatio: 0.65,
-            ),
-            itemCount: provider.searchResults.length,
-            itemBuilder: (context, i) => ProductCard(
-              product: provider.searchResults[i],
-              onTap: () => Navigator.of(context).pushNamed(
-                '/product',
-                arguments: provider.searchResults[i].handle,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    AppConstants.horizontalPadding, 14, 0, 0),
+                child: Text(
+                  '${provider.searchResults.length} result${provider.searchResults.length == 1 ? '' : 's'}',
+                  style: AppTextStyles.labelSmall,
+                ),
               ),
-            ),
+              Expanded(
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(AppConstants.horizontalPadding),
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 24,
+                    childAspectRatio: 0.65,
+                  ),
+                  itemCount: provider.searchResults.length,
+                  itemBuilder: (context, i) => ProductCard(
+                    product: provider.searchResults[i],
+                    onTap: () => Navigator.of(context).pushNamed(
+                      '/product',
+                      arguments: provider.searchResults[i].handle,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
     );
   }
 }
+
+// ─── Search field ────────────────────────────────────────────────────────────
 
 class _SearchField extends StatelessWidget {
   final TextEditingController controller;
@@ -135,22 +205,25 @@ class _SearchField extends StatelessWidget {
       focusNode: focusNode,
       onChanged: onChanged,
       style: AppTextStyles.bodyMedium,
+      textInputAction: TextInputAction.search,
+      onSubmitted: (v) => onChanged(v),
       decoration: InputDecoration(
-        hintText: 'Search rings, earrings, necklaces...',
-        hintStyle: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.textLight,
-        ),
+        hintText: 'Search jewellery...',
+        hintStyle:
+            AppTextStyles.bodyMedium.copyWith(color: AppColors.textLight),
         border: InputBorder.none,
         enabledBorder: InputBorder.none,
         focusedBorder: InputBorder.none,
         filled: false,
-        prefixIcon: const Icon(Icons.search, color: AppColors.textLight),
+        prefixIcon:
+            const Icon(Icons.search, color: AppColors.textLight, size: 20),
         suffixIcon: ValueListenableBuilder<TextEditingValue>(
           valueListenable: controller,
-          builder: (ctx, value, child) => value.text.isNotEmpty
+          builder: (ctx, value, _) => value.text.isNotEmpty
               ? GestureDetector(
                   onTap: onClear,
-                  child: const Icon(Icons.close, size: 18, color: AppColors.textSecondary),
+                  child: const Icon(Icons.close,
+                      size: 18, color: AppColors.textSecondary),
                 )
               : const SizedBox.shrink(),
         ),
@@ -159,6 +232,8 @@ class _SearchField extends StatelessWidget {
     );
   }
 }
+
+// ─── Trending searches ───────────────────────────────────────────────────────
 
 class _TrendingSearches extends StatelessWidget {
   final List<String> terms;
@@ -188,9 +263,19 @@ class _TrendingSearches extends StatelessWidget {
                   color: AppColors.surface,
                   border: Border.all(color: AppColors.border),
                 ),
-                child: Text(term, style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textPrimary,
-                )),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.north_west,
+                        size: 12, color: AppColors.textSecondary),
+                    const SizedBox(width: 6),
+                    Text(
+                      term,
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: AppColors.textPrimary),
+                    ),
+                  ],
+                ),
               ),
             );
           }).toList(),
@@ -199,6 +284,8 @@ class _TrendingSearches extends StatelessWidget {
     );
   }
 }
+
+// ─── Empty results ───────────────────────────────────────────────────────────
 
 class _EmptyResults extends StatelessWidget {
   final String query;
@@ -215,13 +302,13 @@ class _EmptyResults extends StatelessWidget {
           Text(
             'No results for "$query"',
             style: AppTextStyles.headlineSmall,
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            'Try a different search term',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            'Try different keywords',
+            style: AppTextStyles.bodyMedium
+                .copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),

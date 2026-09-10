@@ -8,6 +8,29 @@ import '../../../data/models/product_model.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/product_card.dart';
 
+// Category tab definition
+class _Category {
+  final String label;
+  final String handle; // empty = All (best sellers)
+  const _Category(this.label, this.handle);
+}
+
+const List<_Category> _categories = [
+  _Category('All', ''),
+  _Category('Rings', 'lab-grown-diamond-rings'),
+  _Category('Earrings', 'lab-grown-diamond-earrings'),
+  _Category('Necklace', 'lab-grown-diamond-necklace'),
+  _Category('Bracelets', 'lab-grown-diamond-bracelets'),
+  _Category('Men\'s', 'mens-ring'),
+];
+
+const List<String> _sortOptions = [
+  'Featured',
+  'Price: Low to High',
+  'Price: High to Low',
+  'Newest',
+];
+
 class ProductsScreen extends StatefulWidget {
   final VoidCallback? onSearchTap;
   final VoidCallback? onCartTap;
@@ -20,23 +43,10 @@ class ProductsScreen extends StatefulWidget {
 
 class _ProductsScreenState extends State<ProductsScreen> {
   int _selectedCategory = 0;
-
-  static const List<Map<String, String>> _categories = [
-    {'label': 'All', 'handle': ''},
-    {'label': 'Rings', 'handle': 'rings'},
-    {'label': 'Earrings', 'handle': 'earrings'},
-    {'label': 'Necklace', 'handle': 'necklaces'},
-    {'label': 'Fine Jewellery', 'handle': 'fine-jewellery'},
-    {'label': 'New Arrivals', 'handle': 'new-arrivals'},
-  ];
-
   String _sortBy = 'Featured';
-  static const List<String> _sortOptions = [
-    'Featured',
-    'Price: Low to High',
-    'Price: High to Low',
-    'Newest',
-  ];
+  double _minPrice = 0;
+  double _maxPrice = 500000;
+  bool _filtersActive = false;
 
   @override
   void initState() {
@@ -44,6 +54,133 @@ class _ProductsScreenState extends State<ProductsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductProvider>().loadFeaturedProducts();
     });
+  }
+
+  void _onCategoryChanged(int index) {
+    if (_selectedCategory == index) return;
+    setState(() => _selectedCategory = index);
+    final handle = _categories[index].handle;
+    if (handle.isEmpty) {
+      context.read<ProductProvider>().loadFeaturedProducts();
+    } else {
+      context.read<ProductProvider>().loadCollectionProducts(handle);
+    }
+  }
+
+  void _openFilterSheet() {
+    double tempMin = _minPrice;
+    double tempMax = _maxPrice;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(0)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Filter', style: AppTextStyles.headlineSmall),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(ctx),
+                        child: const Icon(Icons.close, size: 20),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Text('Price Range', style: AppTextStyles.labelLarge),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '₹${tempMin.toStringAsFixed(0)}',
+                        style: AppTextStyles.bodySmall,
+                      ),
+                      Text(
+                        tempMax >= 500000
+                            ? '₹5,00,000+'
+                            : '₹${tempMax.toStringAsFixed(0)}',
+                        style: AppTextStyles.bodySmall,
+                      ),
+                    ],
+                  ),
+                  RangeSlider(
+                    values: RangeValues(tempMin, tempMax),
+                    min: 0,
+                    max: 500000,
+                    divisions: 100,
+                    activeColor: AppColors.textPrimary,
+                    inactiveColor: AppColors.border,
+                    onChanged: (v) => setSheetState(() {
+                      tempMin = v.start;
+                      tempMax = v.end;
+                    }),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _minPrice = 0;
+                              _maxPrice = 500000;
+                              _filtersActive = false;
+                            });
+                            Navigator.pop(ctx);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text('Clear', style: AppTextStyles.button
+                                .copyWith(color: AppColors.textPrimary, letterSpacing: 1.5)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _minPrice = tempMin;
+                              _maxPrice = tempMax;
+                              _filtersActive =
+                                  tempMin > 0 || tempMax < 500000;
+                            });
+                            Navigator.pop(ctx);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            color: AppColors.textPrimary,
+                            alignment: Alignment.center,
+                            child: Text('Apply', style: AppTextStyles.button
+                                .copyWith(color: AppColors.textWhite, letterSpacing: 1.5)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -61,24 +198,34 @@ class _ProductsScreenState extends State<ProductsScreen> {
           _CategoryTabBar(
             categories: _categories,
             selectedIndex: _selectedCategory,
-            onSelected: (i) => setState(() => _selectedCategory = i),
+            onSelected: _onCategoryChanged,
           ),
           const Divider(height: 1),
           _SortFilterBar(
             sortBy: _sortBy,
-            sortOptions: _sortOptions,
+            filtersActive: _filtersActive,
             onSortChanged: (v) => setState(() => _sortBy = v),
+            onFilterTap: _openFilterSheet,
           ),
           const Divider(height: 1),
-          Expanded(child: _ProductGrid(sortBy: _sortBy)),
+          Expanded(
+            child: _ProductGrid(
+              categoryHandle: _categories[_selectedCategory].handle,
+              sortBy: _sortBy,
+              minPrice: _minPrice,
+              maxPrice: _maxPrice,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
+// ─── Category tab bar ────────────────────────────────────────────────────────
+
 class _CategoryTabBar extends StatelessWidget {
-  final List<Map<String, String>> categories;
+  final List<_Category> categories;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
@@ -114,7 +261,7 @@ class _CategoryTabBar extends StatelessWidget {
                 ),
               ),
               child: Text(
-                categories[i]['label']!,
+                categories[i].label,
                 style: AppTextStyles.labelLarge.copyWith(
                   color: isSelected
                       ? AppColors.textPrimary
@@ -130,15 +277,19 @@ class _CategoryTabBar extends StatelessWidget {
   }
 }
 
+// ─── Sort & filter bar ───────────────────────────────────────────────────────
+
 class _SortFilterBar extends StatelessWidget {
   final String sortBy;
-  final List<String> sortOptions;
+  final bool filtersActive;
   final ValueChanged<String> onSortChanged;
+  final VoidCallback onFilterTap;
 
   const _SortFilterBar({
     required this.sortBy,
-    required this.sortOptions,
+    required this.filtersActive,
     required this.onSortChanged,
+    required this.onFilterTap,
   });
 
   @override
@@ -150,9 +301,30 @@ class _SortFilterBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.tune, size: 16, color: AppColors.textPrimary),
-          const SizedBox(width: 6),
-          const Text('Filter', style: TextStyle(fontSize: 13)),
+          GestureDetector(
+            onTap: onFilterTap,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.tune,
+                  size: 16,
+                  color: filtersActive
+                      ? AppColors.gold
+                      : AppColors.textPrimary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  filtersActive ? 'Filter •' : 'Filter',
+                  style: AppTextStyles.labelLarge.copyWith(
+                    fontSize: 13,
+                    color: filtersActive
+                        ? AppColors.gold
+                        : AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
           const Spacer(),
           const Icon(Icons.sort, size: 16, color: AppColors.textPrimary),
           const SizedBox(width: 6),
@@ -163,7 +335,7 @@ class _SortFilterBar extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
               icon: const Icon(Icons.keyboard_arrow_down, size: 16),
-              items: sortOptions
+              items: _sortOptions
                   .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                   .toList(),
               onChanged: (v) {
@@ -177,11 +349,22 @@ class _SortFilterBar extends StatelessWidget {
   }
 }
 
-class _ProductGrid extends StatelessWidget {
-  final String sortBy;
-  const _ProductGrid({required this.sortBy});
+// ─── Product grid ─────────────────────────────────────────────────────────────
 
-  List<Product> _sorted(List<Product> products) {
+class _ProductGrid extends StatelessWidget {
+  final String categoryHandle;
+  final String sortBy;
+  final double minPrice;
+  final double maxPrice;
+
+  const _ProductGrid({
+    required this.categoryHandle,
+    required this.sortBy,
+    required this.minPrice,
+    required this.maxPrice,
+  });
+
+  List<Product> _applySort(List<Product> products) {
     final list = List<Product>.from(products);
     switch (sortBy) {
       case 'Price: Low to High':
@@ -192,17 +375,34 @@ class _ProductGrid extends StatelessWidget {
         list.sort((a, b) =>
             (double.tryParse(b.minPrice) ?? 0)
                 .compareTo(double.tryParse(a.minPrice) ?? 0));
+      case 'Newest':
+        // Products are already ordered by collection/best-selling;
+        // reverse to approximate newest-first.
+        list.sort((a, b) => b.id.compareTo(a.id));
       default:
         break;
     }
     return list;
   }
 
+  List<Product> _applyPriceFilter(List<Product> products) {
+    if (minPrice <= 0 && maxPrice >= 500000) return products;
+    return products.where((p) {
+      final price = double.tryParse(p.minPrice) ?? 0;
+      return price >= minPrice && (maxPrice >= 500000 || price <= maxPrice);
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ProductProvider>(
       builder: (context, provider, _) {
-        if (provider.loadingFeatured) {
+        final isAll = categoryHandle.isEmpty;
+        final loading = isAll
+            ? provider.loadingFeatured
+            : provider.loadingCollection;
+
+        if (loading) {
           return GridView.builder(
             padding: const EdgeInsets.all(AppConstants.horizontalPadding),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -212,15 +412,33 @@ class _ProductGrid extends StatelessWidget {
               childAspectRatio: 0.65,
             ),
             itemCount: 6,
-            itemBuilder: (ctx, i) => const ProductCardSkeleton(),
+            itemBuilder: (_, __) => const ProductCardSkeleton(),
           );
         }
 
-        final products = _sorted(provider.featuredProducts);
+        final raw = isAll
+            ? provider.featuredProducts
+            : (provider.loadedCollectionHandle == categoryHandle
+                ? provider.collectionProducts
+                : const <Product>[]);
+
+        final products = _applyPriceFilter(_applySort(raw));
 
         if (products.isEmpty) {
-          return const Center(
-            child: Text('No products found'),
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.diamond_outlined,
+                    size: 48, color: AppColors.textLight),
+                const SizedBox(height: 12),
+                Text(
+                  'No products found',
+                  style: AppTextStyles.bodyMedium
+                      .copyWith(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
           );
         }
 

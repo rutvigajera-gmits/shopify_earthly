@@ -13,7 +13,6 @@ class AppConstants {
   static const double cardSpacing = 12.0;
   static const double borderRadius = 4.0;
 
-  // ── Hero banner slides — 5 collections with high-quality images ───────────
   static const List<String> bannerCollectionHandles = [
     'lab-grown-diamond-rings',
     'lab-grown-diamond-earrings',
@@ -22,7 +21,6 @@ class AppConstants {
     'lab-grown-diamond-engagement-rings',
   ];
 
-  // ── "Shop by Category" — 5 tiles matching the website ────────────────────
   static const List<String> categoryCollectionHandles = [
     'lab-grown-diamond-rings',
     'lab-grown-diamond-earrings',
@@ -31,7 +29,6 @@ class AppConstants {
     'mens-ring',
   ];
 
-  // ── "Perfect Sparkle for Every Occasion" — 4 tabs matching the website ───
   static const List<String> occasionHandles = [
     'lab-grown-diamond-engagement-rings',
     'eternity-rings',
@@ -39,7 +36,6 @@ class AppConstants {
     'gifts-for-her',
   ];
 
-  // ── "Designer Rings Collection" — 8 cards matching the website ────────────
   static const List<String> designerRingHandles = [
     'lab-grown-diamond-rings',
     'twine',

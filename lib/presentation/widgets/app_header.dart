@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/providers/cart_provider.dart';
-import '../../data/providers/shop_provider.dart';
+import '../../data/providers/home_provider.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final bool showBack;
@@ -74,23 +74,22 @@ class _DynamicLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ShopProvider>(
-      builder: (context, shop, _) {
-        final brand = shop.brand;
+    return Consumer<HomeProvider>(
+      builder: (context, home, _) {
+        final logoUrl = home.logoUrl;
+        final shopName = home.shopName;
 
-        // Show network logo image if available
-        if (brand != null && brand.hasLogo) {
+        if (logoUrl.isNotEmpty) {
           return CachedNetworkImage(
-            imageUrl: brand.logoUrl!,
+            imageUrl: logoUrl,
             height: 36,
             fit: BoxFit.contain,
-            placeholder: (ctx, url) => _TextLogo(name: brand.storeName),
-            errorWidget: (ctx, url, err) => _TextLogo(name: brand.storeName),
+            placeholder: (ctx, url) => _TextLogo(name: shopName),
+            errorWidget: (ctx, url, err) => _TextLogo(name: shopName),
           );
         }
 
-        // Fall back to text logo
-        return _TextLogo(name: brand?.storeName);
+        return _TextLogo(name: shopName);
       },
     );
   }

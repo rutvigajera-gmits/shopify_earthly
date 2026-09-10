@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../data/providers/shop_provider.dart';
+import '../../data/providers/home_provider.dart';
 
 class AnnouncementBar extends StatefulWidget {
   const AnnouncementBar({super.key});
@@ -16,8 +16,6 @@ class _AnnouncementBarState extends State<AnnouncementBar> {
   int _index = 0;
   Timer? _timer;
   List<String> _tracked = [];
-
-  static const _defaults = ['BOOK YOUR STORE VISIT - ANDHERI WEST MUMBAI'];
 
   void _startTimer(List<String> messages) {
     _timer?.cancel();
@@ -35,10 +33,9 @@ class _AnnouncementBarState extends State<AnnouncementBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ShopProvider>(
-      builder: (context, shop, _) {
-        final messages =
-            shop.announcements.isNotEmpty ? shop.announcements : _defaults;
+    return Consumer<HomeProvider>(
+      builder: (context, home, _) {
+        final messages = home.announcements;
 
         if (messages != _tracked) {
           _tracked = messages;
