@@ -166,6 +166,14 @@ class _HomeScreenState extends State<HomeScreen> {
           child: _ShopByCategorySection(data: catData),
         );
 
+      case 'shop_by_shape':
+        final shapeData = section.collectionRowData;
+        if (!shapeData.hasContent) return null;
+        return Padding(
+          padding: const EdgeInsets.only(top: AppConstants.sectionSpacing),
+          child: _ShopByShapeSection(data: shapeData),
+        );
+
       case 'collection_row':
         final colData = section.collectionRowData;
         if (!colData.hasContent) return null;
@@ -978,6 +986,80 @@ class _CategoryGridTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Section: shop_by_shape ───────────────────────────────────────────────────
+
+class _ShopByShapeSection extends StatelessWidget {
+  final CollectionRowData data;
+  const _ShopByShapeSection({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (data.title.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.horizontalPadding),
+            child: Text(data.title, style: AppTextStyles.headlineLarge),
+          ),
+        const SizedBox(height: 20),
+        SizedBox(
+          height: 110,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.horizontalPadding),
+            itemCount: data.tiles.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 20),
+            itemBuilder: (_, i) => _ShapeTile(tile: data.tiles[i]),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShapeTile extends StatelessWidget {
+  final CollectionTile tile;
+  const _ShapeTile({required this.tile});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {},
+      child: SizedBox(
+        width: 72,
+        child: Column(
+          children: [
+            ClipOval(
+              child: CachedNetworkImage(
+                imageUrl: tile.imageUrl,
+                width: 72,
+                height: 72,
+                fit: BoxFit.cover,
+                placeholder: (_, __) =>
+                    Container(color: AppColors.cardBackground),
+                errorWidget: (_, __, ___) =>
+                    Container(color: AppColors.cardBackground),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              tile.title,
+              style: AppTextStyles.labelSmall
+                  .copyWith(color: AppColors.textPrimary, letterSpacing: 0.5),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }

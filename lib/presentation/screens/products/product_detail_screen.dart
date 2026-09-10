@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -9,6 +11,8 @@ import '../../../data/providers/product_provider.dart';
 import '../../../data/providers/cart_provider.dart';
 import '../../../data/providers/review_provider.dart';
 import '../../../data/providers/shop_provider.dart';
+import '../../../data/providers/wishlist_provider.dart';
+import '../../../data/services/recently_viewed_service.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/models/review_model.dart';
 
@@ -32,6 +36,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductProvider>().loadProductByHandle(widget.handle);
+      RecentlyViewedService.addHandle(widget.handle);
     });
   }
 
@@ -69,6 +74,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 images: product.images,
                 currentIndex: _imageIndex,
                 onIndexChanged: (i) => setState(() => _imageIndex = i),
+                handle: product.handle,
+                productTitle: product.title,
               ),
               SliverToBoxAdapter(
                 child: _ProductDetails(
@@ -119,11 +126,15 @@ class _ImageGallerySliver extends StatelessWidget {
   final List<ProductImage> images;
   final int currentIndex;
   final ValueChanged<int> onIndexChanged;
+  final String handle;
+  final String productTitle;
 
   const _ImageGallerySliver({
     required this.images,
     required this.currentIndex,
     required this.onIndexChanged,
+    required this.handle,
+    required this.productTitle,
   });
 
   @override
@@ -145,6 +156,26 @@ class _ImageGallerySliver extends StatelessWidget {
         ),
       ),
       actions: [
+        Consumer<WishlistProvider>(
+          builder: (context, wishlist, _) {
+            final saved = wishlist.contains(handle);
+            return Container(
+              margin: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: Icon(
+                  saved ? Icons.favorite : Icons.favorite_border,
+                  size: 18,
+                  color: saved ? Colors.red : AppColors.textPrimary,
+                ),
+                onPressed: () => wishlist.toggle(handle),
+              ),
+            );
+          },
+        ),
         Container(
           margin: const EdgeInsets.all(8),
           decoration: const BoxDecoration(
@@ -152,9 +183,12 @@ class _ImageGallerySliver extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: const Icon(Icons.favorite_border, size: 18),
-            onPressed: () {},
+            icon: const Icon(Icons.share, size: 18),
             color: AppColors.textPrimary,
+            onPressed: () => Share.share(
+              'Check out this beautiful piece from Earthly Jewels!\nhttps://earthlyjewels.co/products/$handle',
+              subject: productTitle,
+            ),
           ),
         ),
       ],
@@ -283,7 +317,26 @@ class _ProductDetails extends StatelessWidget {
 
           // Variant options
           if (product.variants.length > 1) ...[
-            Text('Select Option', style: AppTextStyles.labelLarge),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Select Option', style: AppTextStyles.labelLarge),
+                GestureDetector(
+                  onTap: () => launchUrl(
+                    Uri.parse(
+                        'https://earthlyjewels.co/pages/ring-size-chart'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                  child: Text(
+                    'Size Guide',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      decoration: TextDecoration.underline,
+                      decorationColor: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 10,
@@ -372,20 +425,29 @@ class _ProductDetails extends StatelessWidget {
           // Wishlist
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.border),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: const RoundedRectangleBorder(),
-              ),
-              icon: const Icon(Icons.favorite_border, size: 16),
-              label: Text(
-                'ADD TO WISHLIST',
-                style: AppTextStyles.button.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-              ),
+            child: Consumer<WishlistProvider>(
+              builder: (context, wishlist, _) {
+                final saved = wishlist.contains(product.handle);
+                return OutlinedButton.icon(
+                  onPressed: () => wishlist.toggle(product.handle),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.border),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: const RoundedRectangleBorder(),
+                  ),
+                  icon: Icon(
+                    saved ? Icons.favorite : Icons.favorite_border,
+                    size: 16,
+                    color: saved ? Colors.red : AppColors.textPrimary,
+                  ),
+                  label: Text(
+                    saved ? 'SAVED TO WISHLIST' : 'ADD TO WISHLIST',
+                    style: AppTextStyles.button.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
 

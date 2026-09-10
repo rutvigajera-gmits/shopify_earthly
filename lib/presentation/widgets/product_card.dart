@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/models/product_model.dart';
+import '../../data/providers/wishlist_provider.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -69,18 +71,26 @@ class _ProductImage extends StatelessWidget {
         Positioned(
           top: 8,
           right: 8,
-          child: Container(
-            width: 32,
-            height: 32,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.favorite_border,
-              size: 16,
-              color: AppColors.textPrimary,
-            ),
+          child: Consumer<WishlistProvider>(
+            builder: (context, wishlist, _) {
+              final saved = wishlist.contains(product.handle);
+              return GestureDetector(
+                onTap: () => wishlist.toggle(product.handle),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    saved ? Icons.favorite : Icons.favorite_border,
+                    size: 16,
+                    color: saved ? Colors.red : AppColors.textPrimary,
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],

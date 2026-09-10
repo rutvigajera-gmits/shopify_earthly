@@ -14,6 +14,7 @@ class StorefrontHomeService {
     'reviews_carousel',
     'product_grid',
     'shop_by_category',
+    'shop_by_shape',
     'occasions',
     'stackable_bands',
     'oriole_exclusive',
@@ -241,6 +242,8 @@ class StorefrontHomeService {
         return _buildProductGrid(bestSellers, order);
       case 'shop_by_category':
         return _buildShopByCategory(simpleCols, order);
+      case 'shop_by_shape':
+        return _buildShopByShape(simpleCols, order);
       case 'collection_row':
         return _buildCollectionRow(simpleCols, order);
       case 'brand_values':
@@ -350,6 +353,47 @@ class StorefrontHomeService {
         'title': 'Shop by Category',
         'cta_label': 'View All',
         'cta_url': '/collections/all',
+        'tiles': tiles,
+      },
+    );
+  }
+
+  static const Map<String, String> _shapeLabels = {
+    's0': 'Round',
+    's1': 'Oval',
+    's2': 'Pear',
+    's3': 'Marquise',
+    's4': 'Cushion',
+    's5': 'Princess',
+    's6': 'Emerald',
+    's7': 'Heart',
+    's8': 'Asscher',
+    's9': 'Radiant',
+  };
+
+  HomeSection? _buildShopByShape(Map<String, dynamic> cols, int order) {
+    final tiles = <Map<String, dynamic>>[];
+    for (final entry in _shapeLabels.entries) {
+      final col = cols[entry.key] as Map<String, dynamic>?;
+      final imageUrl = (col?['image'] as Map?)?['url'] as String? ?? '';
+      if (imageUrl.isEmpty) continue;
+      tiles.add({
+        'handle': col?['handle'] as String? ?? '',
+        'title': entry.value,
+        'image_url': imageUrl,
+        'description': '',
+      });
+    }
+    if (tiles.isEmpty) return null;
+    return HomeSection(
+      id: 'shop_by_shape',
+      type: 'shop_by_shape',
+      visible: true,
+      order: order,
+      data: {
+        'title': 'Shop by Shape',
+        'cta_label': '',
+        'cta_url': '/collections/lab-grown-diamond-rings',
         'tiles': tiles,
       },
     );
@@ -732,6 +776,16 @@ class StorefrontHomeService {
       c12: collectionByHandle(handle: "lab-grown-diamond-engagement-rings") { title handle description image { url } }
       c13: collectionByHandle(handle: "oriole")                             { title handle description image { url } }
       c14: collectionByHandle(handle: "stackable-diamond-bands")            { title handle description image { url } }
+      s0:  collectionByHandle(handle: "round-diamond")                      { title handle image { url } }
+      s1:  collectionByHandle(handle: "oval-diamond")                       { title handle image { url } }
+      s2:  collectionByHandle(handle: "pear-diamond")                       { title handle image { url } }
+      s3:  collectionByHandle(handle: "marquise-diamond")                   { title handle image { url } }
+      s4:  collectionByHandle(handle: "cushion-cut-engagement-rings")       { title handle image { url } }
+      s5:  collectionByHandle(handle: "princess-diamond")                   { title handle image { url } }
+      s6:  collectionByHandle(handle: "emerald-diamond")                    { title handle image { url } }
+      s7:  collectionByHandle(handle: "heart-diamond")                      { title handle image { url } }
+      s8:  collectionByHandle(handle: "asscher-cut-diamond")                { title handle image { url } }
+      s9:  collectionByHandle(handle: "radiant-diamond")                    { title handle image { url } }
     }
   ''');
 

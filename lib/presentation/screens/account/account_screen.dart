@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -8,6 +9,18 @@ import '../../../data/providers/shop_provider.dart';
 import '../../widgets/app_header.dart';
 import 'login_screen.dart';
 import 'orders_screen.dart';
+
+void _openUrl(BuildContext context, String url) {
+  launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)
+      .catchError((_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open link')),
+      );
+    }
+    return false;
+  });
+}
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -44,12 +57,14 @@ class AccountScreen extends StatelessWidget {
                     _MenuItem(
                       icon: Icons.favorite_border,
                       label: 'Wishlist',
-                      onTap: () {},
+                      onTap: () =>
+                          Navigator.of(context).pushNamed('/wishlist'),
                     ),
                     _MenuItem(
                       icon: Icons.location_on_outlined,
                       label: 'Saved Addresses',
-                      onTap: () {},
+                      onTap: () => _openUrl(
+                          context, 'https://earthlyjewels.co/account/addresses'),
                     ),
                     _MenuItem(
                       icon: Icons.workspace_premium_outlined,
@@ -62,32 +77,56 @@ class AccountScreen extends StatelessWidget {
                   _MenuItem(
                     icon: Icons.calendar_today_outlined,
                     label: 'Book Store Visit',
-                    onTap: () {},
+                    onTap: () => _openUrl(
+                        context, 'https://earthlyjewels.co/pages/store-locator'),
                   ),
                   _MenuItem(
                     icon: Icons.headset_mic_outlined,
                     label: 'Virtual Consultation',
-                    onTap: () {},
+                    onTap: () => _openUrl(context,
+                        'https://earthlyjewels.co/pages/virtual-consultation'),
+                  ),
+                  _MenuItem(
+                    icon: Icons.straighten_outlined,
+                    label: 'Ring Size Guide',
+                    onTap: () => _openUrl(context,
+                        'https://earthlyjewels.co/pages/ring-size-chart'),
+                  ),
+                  _MenuItem(
+                    icon: Icons.info_outline,
+                    label: 'About Us',
+                    onTap: () =>
+                        _openUrl(context, 'https://earthlyjewels.co/pages/about'),
+                  ),
+                  _MenuItem(
+                    icon: Icons.article_outlined,
+                    label: 'Blog',
+                    onTap: () =>
+                        _openUrl(context, 'https://earthlyjewels.co/blogs'),
                   ),
                   _MenuItem(
                     icon: Icons.help_outline,
                     label: 'FAQ',
-                    onTap: () {},
+                    onTap: () =>
+                        _openUrl(context, 'https://earthlyjewels.co/pages/faq'),
                   ),
                   _MenuItem(
                     icon: Icons.phone_outlined,
                     label: 'Contact Us',
-                    onTap: () {},
+                    onTap: () => _openUrl(
+                        context, 'https://earthlyjewels.co/pages/contact'),
                   ),
                   _MenuItem(
                     icon: Icons.policy_outlined,
                     label: 'Privacy Policy',
-                    onTap: () {},
+                    onTap: () => _openUrl(context,
+                        'https://earthlyjewels.co/policies/privacy-policy'),
                   ),
                   _MenuItem(
                     icon: Icons.description_outlined,
                     label: 'Terms & Conditions',
-                    onTap: () {},
+                    onTap: () => _openUrl(context,
+                        'https://earthlyjewels.co/policies/terms-of-service'),
                   ),
 
                   const SizedBox(height: 8),

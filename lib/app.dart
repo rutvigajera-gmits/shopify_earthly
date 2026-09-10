@@ -8,6 +8,7 @@ import 'data/providers/shop_provider.dart';
 import 'data/providers/review_provider.dart';
 import 'data/providers/customer_provider.dart';
 import 'data/providers/home_provider.dart';
+import 'data/providers/wishlist_provider.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/products/products_screen.dart';
 import 'presentation/screens/account/account_screen.dart';
@@ -26,6 +27,7 @@ class EarthlyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ShopProvider()),
         ChangeNotifierProvider(create: (_) => ReviewProvider()),
         ChangeNotifierProvider(create: (_) => CustomerProvider()),
+        ChangeNotifierProvider(create: (_) => WishlistProvider()),
       ],
       child: MaterialApp(
         title: 'Earthly Jewels',
@@ -54,6 +56,7 @@ class _AppShellState extends State<_AppShell> {
     // Restore customer session from persisted token.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CustomerProvider>().init();
+      context.read<WishlistProvider>().init();
     });
   }
 

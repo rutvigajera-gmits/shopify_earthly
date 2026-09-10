@@ -21,6 +21,9 @@ const List<_Category> _categories = [
   _Category('Earrings', 'lab-grown-diamond-earrings'),
   _Category('Necklace', 'lab-grown-diamond-necklace'),
   _Category('Bracelets', 'lab-grown-diamond-bracelets'),
+  _Category('Pendants', 'lab-grown-diamond-pendants'),
+  _Category('Mangalsutra', 'mangalsutra'),
+  _Category('Ear Studs', 'lab-diamond-ear-studs'),
   _Category('Men\'s', 'mens-ring'),
 ];
 
