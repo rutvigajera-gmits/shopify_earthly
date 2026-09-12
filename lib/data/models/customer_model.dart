@@ -38,6 +38,88 @@ class Customer {
   }
 }
 
+class CustomerAddress {
+  final String id;
+  final String? firstName;
+  final String? lastName;
+  final String? company;
+  final String? address1;
+  final String? address2;
+  final String? city;
+  final String? province;
+  final String? country;
+  final String? zip;
+  final String? phone;
+  final bool isDefault;
+
+  const CustomerAddress({
+    required this.id,
+    this.firstName,
+    this.lastName,
+    this.company,
+    this.address1,
+    this.address2,
+    this.city,
+    this.province,
+    this.country,
+    this.zip,
+    this.phone,
+    this.isDefault = false,
+  });
+
+  String get displayName {
+    final name = '${firstName ?? ''} ${lastName ?? ''}'.trim();
+    return name.isNotEmpty ? name : 'Address';
+  }
+
+  List<String> get lines {
+    final parts = <String>[];
+    if (address1?.isNotEmpty == true) parts.add(address1!);
+    if (address2?.isNotEmpty == true) parts.add(address2!);
+    final cityState = [city, province]
+        .where((s) => s?.isNotEmpty == true)
+        .join(', ');
+    if (cityState.isNotEmpty) parts.add(cityState);
+    if (zip?.isNotEmpty == true) parts.add(zip!);
+    if (country?.isNotEmpty == true) parts.add(country!);
+    return parts;
+  }
+
+  CustomerAddress copyWith({bool? isDefault}) => CustomerAddress(
+        id: id,
+        firstName: firstName,
+        lastName: lastName,
+        company: company,
+        address1: address1,
+        address2: address2,
+        city: city,
+        province: province,
+        country: country,
+        zip: zip,
+        phone: phone,
+        isDefault: isDefault ?? this.isDefault,
+      );
+
+  factory CustomerAddress.fromStorefrontJson(
+    Map<String, dynamic> json, {
+    bool isDefault = false,
+  }) =>
+      CustomerAddress(
+        id: json['id'] as String? ?? '',
+        firstName: json['firstName'] as String?,
+        lastName: json['lastName'] as String?,
+        company: json['company'] as String?,
+        address1: json['address1'] as String?,
+        address2: json['address2'] as String?,
+        city: json['city'] as String?,
+        province: json['province'] as String?,
+        country: json['country'] as String?,
+        zip: json['zip'] as String?,
+        phone: json['phone'] as String?,
+        isDefault: isDefault,
+      );
+}
+
 class OrderLineItem {
   final String title;
   final int quantity;

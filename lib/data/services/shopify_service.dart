@@ -360,87 +360,85 @@ class ShopifyService {
   }
 
   // ─── Reviews ─────────────────────────────────────────────────────────────
-  // Priority: Shopify metaobjects → Judge.me public API → SPR (legacy).
+  // Source: Judge.me public API (requires Public Token from Judge.me → Settings → General).
+
+  static bool get _judgeMeConfigured =>
+      AppConstants.judgeMePublicToken.isNotEmpty &&
+      AppConstants.judgeMePublicToken != 'YOUR_PUBLIC_TOKEN_HERE';
 
   Future<List<Review>> fetchStoreReviews({int perPage = 10}) async {
-    // 1. Shopify metaobjects
+    if (!_judgeMeConfigured) {
+      debugPrint('[JudgeMe] Token not configured — set judgeMePublicToken in app_constants.dart');
+      return [];
+    }
     try {
-      final data = await _query('''
-        {
-          r1: metaobjects(type: "review", first: $perPage) {
-            edges { node { fields { key value } } }
-          }
-          r2: metaobjects(type: "customer_review", first: $perPage) {
-            edges { node { fields { key value } } }
-          }
-          r3: metaobjects(type: "testimonial", first: $perPage) {
-            edges { node { fields { key value } } }
-          }
-        }
-      ''');
-      for (final alias in ['r1', 'r2', 'r3']) {
-        final edges = (data[alias]?['edges'] as List?) ?? [];
-        if (edges.isEmpty) continue;
-        final reviews = <Review>[];
-        for (final edge in edges) {
-          try {
-            final r = Review.fromMetaobject(edge['node'] as Map<String, dynamic>);
-            if (r.body.isNotEmpty) reviews.add(r);
-          } catch (_) {}
-        }
-        if (reviews.isNotEmpty) return reviews;
-      }
-    } catch (_) {}
-
-    // 2. Judge.me public API
-    try {
-      final resp = await http.get(
-        Uri.parse(
-          'https://judge.me/api/v1/reviews'
-          '?shop_domain=${AppConstants.shopDomain}&per_page=$perPage',
-        ),
-        headers: {'Accept': 'application/json'},
+      final uri = Uri.parse(
+        'https://judge.me/api/v1/reviews'
+        '?api_token=${AppConstants.judgeMePublicToken}'
+        '&shop_domain=${AppConstants.judgeMeShopDomain}'
+        '&per_page=$perPage'
+        '&sort_by=created_at'
+        '&sort_dir=desc',
       );
+      debugPrint('[JudgeMe] fetchStoreReviews → ${uri.host}${uri.path}');
+      final resp = await http.get(uri, headers: {'Accept': 'application/json'});
+      debugPrint('[JudgeMe] fetchStoreReviews status=${resp.statusCode} body=${resp.body.substring(0, resp.body.length.clamp(0, 300))}');
       if (resp.statusCode == 200) {
         final body = jsonDecode(resp.body) as Map<String, dynamic>;
         final summary = ReviewSummary.fromSprJson(body);
-        if (summary.reviews.isNotEmpty) return summary.reviews;
+        debugPrint('[JudgeMe] fetchStoreReviews → ${summary.reviews.length} reviews');
+        return summary.reviews;
       }
-    } catch (_) {}
-
-    // 3. Shopify Product Reviews (SPR, legacy)
-    try {
-      final resp = await http.get(
-        Uri.parse(
-          'https://${AppConstants.shopDomain}/reviews.json?per_page=$perPage',
-        ),
-        headers: {'Accept': 'application/json'},
-      );
-      if (resp.statusCode == 200) {
-        final body = jsonDecode(resp.body) as Map<String, dynamic>;
-        final summary = ReviewSummary.fromSprJson(body);
-        if (summary.reviews.isNotEmpty) return summary.reviews;
-      }
-    } catch (_) {}
-
+    } catch (e) {
+      debugPrint('[JudgeMe] fetchStoreReviews error: $e');
+    }
     return [];
   }
 
   Future<ReviewSummary> fetchProductReviews(String handle) async {
+    if (!_judgeMeConfigured) return ReviewSummary.empty();
     try {
-      final resp = await http.get(
-        Uri.parse(
-          'https://${AppConstants.shopDomain}/products/$handle/reviews.json',
-        ),
-        headers: {'Accept': 'application/json'},
+      final productId = await _fetchShopifyProductId(handle);
+      debugPrint('[JudgeMe] fetchProductReviews handle=$handle productId=$productId');
+      if (productId == null) return ReviewSummary.empty();
+
+      final uri = Uri.parse(
+        'https://judge.me/api/v1/reviews'
+        '?api_token=${AppConstants.judgeMePublicToken}'
+        '&shop_domain=${AppConstants.judgeMeShopDomain}'
+        '&product_id=$productId'
+        '&per_page=20'
+        '&sort_by=created_at'
+        '&sort_dir=desc',
       );
+      final resp = await http.get(uri, headers: {'Accept': 'application/json'});
+      debugPrint('[JudgeMe] fetchProductReviews status=${resp.statusCode} body=${resp.body.substring(0, resp.body.length.clamp(0, 300))}');
       if (resp.statusCode == 200) {
-        return ReviewSummary.fromSprJson(
+        final result = ReviewSummary.fromSprJson(
           jsonDecode(resp.body) as Map<String, dynamic>,
         );
+        debugPrint('[JudgeMe] fetchProductReviews → ${result.reviews.length} reviews');
+        return result;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[JudgeMe] fetchProductReviews error: $e');
+    }
     return ReviewSummary.empty();
+  }
+
+  // Judge.me filters by Shopify numeric product ID, not handle.
+  // Resolve handle → GID → numeric ID via Storefront API.
+  Future<int?> _fetchShopifyProductId(String handle) async {
+    try {
+      final data = await _query('{ product(handle: "$handle") { id } }');
+      final gid = data['product']?['id'] as String?;
+      debugPrint('[JudgeMe] _fetchShopifyProductId handle=$handle gid=$gid');
+      if (gid == null) return null;
+      return int.tryParse(gid.split('/').last);
+    } catch (e) {
+      debugPrint('[JudgeMe] _fetchShopifyProductId error: $e');
+      return null;
+    }
   }
 
   // ─── Products ─────────────────────────────────────────────────────────────
@@ -903,6 +901,169 @@ class ShopifyService {
         .map((e) =>
             CustomerOrder.fromStorefrontJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  // ─── Customer Profile & Addresses ────────────────────────────────────────
+
+  Future<Customer?> updateCustomer({
+    required String accessToken,
+    String? firstName,
+    String? lastName,
+    String? phone,
+  }) async {
+    final input = <String, dynamic>{};
+    if (firstName != null) input['firstName'] = firstName;
+    if (lastName != null) input['lastName'] = lastName;
+    if (phone != null && phone.isNotEmpty) input['phone'] = phone;
+
+    final data = await _queryWithVars('''
+      mutation update(\$token: String!, \$customer: CustomerUpdateInput!) {
+        customerUpdate(customerAccessToken: \$token, customer: \$customer) {
+          customer { id firstName lastName email phone }
+          customerUserErrors { code field message }
+        }
+      }
+    ''', {'token': accessToken, 'customer': input});
+    final result = data['customerUpdate'] as Map<String, dynamic>? ?? {};
+    final errors = result['customerUserErrors'] as List?;
+    if (errors != null && errors.isNotEmpty) {
+      throw Exception(
+          (errors.first as Map)['message'] as String? ?? 'Update failed');
+    }
+    final json = result['customer'] as Map<String, dynamic>?;
+    return json != null ? Customer.fromStorefrontJson(json) : null;
+  }
+
+  Future<List<CustomerAddress>> fetchCustomerAddresses(String accessToken) async {
+    try {
+      final data = await _queryWithVars('''
+        query getAddresses(\$token: String!) {
+          customer(customerAccessToken: \$token) {
+            defaultAddress { id }
+            addresses(first: 10) {
+              edges {
+                node {
+                  id firstName lastName company
+                  address1 address2 city province country zip phone
+                }
+              }
+            }
+          }
+        }
+      ''', {'token': accessToken});
+      final customer = data['customer'] as Map<String, dynamic>?;
+      if (customer == null) return [];
+      final defaultId =
+          (customer['defaultAddress'] as Map?)?['id'] as String? ?? '';
+      final edges = (customer['addresses']?['edges'] as List?) ?? [];
+      return edges.map((e) {
+        final node = e['node'] as Map<String, dynamic>;
+        return CustomerAddress.fromStorefrontJson(
+          node,
+          isDefault: node['id'] == defaultId,
+        );
+      }).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<CustomerAddress> createCustomerAddress({
+    required String accessToken,
+    required Map<String, String> address,
+  }) async {
+    final data = await _queryWithVars('''
+      mutation createAddr(\$token: String!, \$address: MailingAddressInput!) {
+        customerAddressCreate(customerAccessToken: \$token, address: \$address) {
+          customerAddress {
+            id firstName lastName company
+            address1 address2 city province country zip phone
+          }
+          customerUserErrors { code field message }
+        }
+      }
+    ''', {'token': accessToken, 'address': address});
+    final result = data['customerAddressCreate'] as Map<String, dynamic>? ?? {};
+    final errors = result['customerUserErrors'] as List?;
+    if (errors != null && errors.isNotEmpty) {
+      throw Exception(
+          (errors.first as Map)['message'] as String? ?? 'Could not save address');
+    }
+    final json = result['customerAddress'] as Map<String, dynamic>?;
+    if (json == null) throw Exception('Address not returned');
+    return CustomerAddress.fromStorefrontJson(json);
+  }
+
+  Future<CustomerAddress> updateCustomerAddress({
+    required String accessToken,
+    required String addressId,
+    required Map<String, String> address,
+  }) async {
+    final data = await _queryWithVars('''
+      mutation updateAddr(\$token: String!, \$id: ID!, \$address: MailingAddressInput!) {
+        customerAddressUpdate(
+          customerAccessToken: \$token, id: \$id, address: \$address
+        ) {
+          customerAddress {
+            id firstName lastName company
+            address1 address2 city province country zip phone
+          }
+          customerUserErrors { code field message }
+        }
+      }
+    ''', {'token': accessToken, 'id': addressId, 'address': address});
+    final result = data['customerAddressUpdate'] as Map<String, dynamic>? ?? {};
+    final errors = result['customerUserErrors'] as List?;
+    if (errors != null && errors.isNotEmpty) {
+      throw Exception(
+          (errors.first as Map)['message'] as String? ?? 'Could not update address');
+    }
+    final json = result['customerAddress'] as Map<String, dynamic>?;
+    if (json == null) throw Exception('Address not returned');
+    return CustomerAddress.fromStorefrontJson(json);
+  }
+
+  Future<void> deleteCustomerAddress({
+    required String accessToken,
+    required String addressId,
+  }) async {
+    final data = await _queryWithVars('''
+      mutation deleteAddr(\$token: String!, \$id: ID!) {
+        customerAddressDelete(customerAccessToken: \$token, id: \$id) {
+          deletedCustomerAddressId
+          customerUserErrors { code field message }
+        }
+      }
+    ''', {'token': accessToken, 'id': addressId});
+    final result = data['customerAddressDelete'] as Map<String, dynamic>? ?? {};
+    final errors = result['customerUserErrors'] as List?;
+    if (errors != null && errors.isNotEmpty) {
+      throw Exception(
+          (errors.first as Map)['message'] as String? ?? 'Could not delete address');
+    }
+  }
+
+  Future<void> setDefaultCustomerAddress({
+    required String accessToken,
+    required String addressId,
+  }) async {
+    final data = await _queryWithVars('''
+      mutation setDefault(\$token: String!, \$addressId: ID!) {
+        customerDefaultAddressUpdate(
+          customerAccessToken: \$token, addressId: \$addressId
+        ) {
+          customer { id }
+          customerUserErrors { code field message }
+        }
+      }
+    ''', {'token': accessToken, 'addressId': addressId});
+    final result =
+        data['customerDefaultAddressUpdate'] as Map<String, dynamic>? ?? {};
+    final errors = result['customerUserErrors'] as List?;
+    if (errors != null && errors.isNotEmpty) {
+      throw Exception(
+          (errors.first as Map)['message'] as String? ?? 'Could not set default');
+    }
   }
 
   // ─── Search ───────────────────────────────────────────────────────────────

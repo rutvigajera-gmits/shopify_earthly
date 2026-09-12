@@ -3,6 +3,11 @@ class AppConstants {
 
   // ── Shopify Storefront API ──────────────────────────────────────────────────
   static const String shopDomain = 'earthlyjewels.co';
+
+  // ── Judge.me Reviews ────────────────────────────────────────────────────────
+  // Public Token — safe to commit. Found in Judge.me → Settings → General → API section.
+  static const String judgeMePublicToken = '1lo-Qc8pmxTOpzmH2b36IiheWrg';
+  static const String judgeMeShopDomain = 'gold-rate-update.myshopify.com';
   static const String storefrontApiVersion = '2026-07';
   static const String storefrontApiUrl =
       'https://$shopDomain/api/$storefrontApiVersion/graphql.json';

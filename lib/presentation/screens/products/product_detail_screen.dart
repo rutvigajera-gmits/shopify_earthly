@@ -10,7 +10,6 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../data/providers/product_provider.dart';
 import '../../../data/providers/cart_provider.dart';
 import '../../../data/providers/review_provider.dart';
-import '../../../data/providers/shop_provider.dart';
 import '../../../data/providers/wishlist_provider.dart';
 import '../../../data/services/recently_viewed_service.dart';
 import '../../../data/models/product_model.dart';
@@ -62,9 +61,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           );
         }
 
-        _selectedVariant ??= product.variants.isNotEmpty
-            ? product.variants.first
-            : null;
+        // Reset variant whenever the loaded product changes (e.g. navigating
+        // between products while the old variant is still in state).
+        if (_selectedVariant == null ||
+            !product.variants.any((v) => v.id == _selectedVariant!.id)) {
+          _selectedVariant =
+              product.variants.isNotEmpty ? product.variants.first : null;
+        }
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -700,43 +703,14 @@ class _ProductReviewsSectionState extends State<_ProductReviewsSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<ReviewProvider, ShopProvider>(
-      builder: (context, rp, shop, _) {
+    return Consumer<ReviewProvider>(
+      builder: (context, rp, _) {
         final loading = rp.isLoadingProduct(widget.handle);
         final summary = rp.productReviews(widget.handle);
 
-        // Use product-specific reviews from developer's API / SPR,
-        // or fall back to store-level home API reviews.
-        final List<Review> reviews;
-        final int total;
-        final double avg;
-
-        if (summary != null && summary.totalCount > 0) {
-          reviews = summary.reviews;
-          total = summary.totalCount;
-          avg = summary.averageRating;
-        } else if (!loading && shop.homeReviews.isNotEmpty) {
-          // Filter by productHandle or show all store reviews
-          final filtered = shop.homeReviews
-              .where((r) =>
-                  r.productHandle == widget.handle ||
-                  (r.productTitle != null &&
-                      r.productTitle!
-                          .toLowerCase()
-                          .contains(widget.handle.replaceAll('-', ' '))))
-              .toList();
-          final display =
-              filtered.isNotEmpty ? filtered : shop.homeReviews.take(5).toList();
-          reviews = display;
-          total = display.length;
-          avg = display.isEmpty
-              ? 0
-              : display.fold(0.0, (s, r) => s + r.rating) / display.length;
-        } else {
-          reviews = [];
-          total = 0;
-          avg = 0;
-        }
+        final List<Review> reviews = summary?.reviews ?? [];
+        final int total = summary?.totalCount ?? 0;
+        final double avg = summary?.averageRating ?? 0;
 
         if (loading) {
           return const Padding(

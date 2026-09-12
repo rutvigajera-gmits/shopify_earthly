@@ -27,9 +27,14 @@ class Review {
     final pics = <String>[];
     if (json['pictures'] is List) {
       for (final p in json['pictures'] as List) {
-        if (p is Map && p['original'] != null) {
-          pics.add(p['original'] as String);
-        }
+        if (p is! Map) continue;
+        // Judge.me v1 API: pictures[].urls.original
+        final urls = p['urls'] as Map?;
+        final fromUrls = urls?['original'] as String?;
+        // Legacy SPR format: pictures[].original
+        final fromDirect = p['original'] as String?;
+        final url = fromUrls ?? fromDirect;
+        if (url != null && url.isNotEmpty) pics.add(url);
       }
     }
 

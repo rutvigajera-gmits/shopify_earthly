@@ -9,17 +9,21 @@ class CustomerProvider extends ChangeNotifier {
   Customer? _customer;
   String? _accessToken;
   List<CustomerOrder> _orders = [];
+  List<CustomerAddress> _addresses = [];
 
   bool _loading = false;
   bool _ordersLoading = false;
   bool _ordersLoaded = false;
+  bool _addressesLoading = false;
   String? _error;
 
   bool get isLoggedIn => _customer != null && _accessToken != null;
   Customer? get customer => _customer;
   List<CustomerOrder> get orders => _orders;
+  List<CustomerAddress> get addresses => _addresses;
   bool get loading => _loading;
   bool get ordersLoading => _ordersLoading;
+  bool get addressesLoading => _addressesLoading;
   String? get error => _error;
 
   // Called on app start — restores session from SharedPreferences.
@@ -127,5 +131,115 @@ class CustomerProvider extends ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  // ─── Profile update ───────────────────────────────────────────────────────
+
+  Future<void> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? phone,
+  }) async {
+    if (_accessToken == null) return;
+    _loading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final updated = await _service.updateCustomer(
+        accessToken: _accessToken!,
+        firstName: firstName,
+        lastName: lastName,
+        phone: phone,
+      );
+      if (updated != null) _customer = updated;
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  // ─── Address management ───────────────────────────────────────────────────
+
+  Future<void> loadAddresses() async {
+    if (_accessToken == null || _addressesLoading) return;
+    _addressesLoading = true;
+    notifyListeners();
+    try {
+      _addresses = await _service.fetchCustomerAddresses(_accessToken!);
+    } catch (_) {
+      _addresses = [];
+    } finally {
+      _addressesLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String?> addAddress(Map<String, String> address) async {
+    if (_accessToken == null) return 'Not logged in';
+    try {
+      final created = await _service.createCustomerAddress(
+        accessToken: _accessToken!,
+        address: address,
+      );
+      _addresses.insert(0, created);
+      notifyListeners();
+      return null;
+    } catch (e) {
+      return e.toString().replaceFirst('Exception: ', '');
+    }
+  }
+
+  Future<String?> editAddress(
+      String addressId, Map<String, String> address) async {
+    if (_accessToken == null) return 'Not logged in';
+    try {
+      final updated = await _service.updateCustomerAddress(
+        accessToken: _accessToken!,
+        addressId: addressId,
+        address: address,
+      );
+      final idx = _addresses.indexWhere((a) => a.id == addressId);
+      if (idx != -1) {
+        _addresses[idx] = updated.copyWith(isDefault: _addresses[idx].isDefault);
+      }
+      notifyListeners();
+      return null;
+    } catch (e) {
+      return e.toString().replaceFirst('Exception: ', '');
+    }
+  }
+
+  Future<String?> removeAddress(String addressId) async {
+    if (_accessToken == null) return 'Not logged in';
+    try {
+      await _service.deleteCustomerAddress(
+        accessToken: _accessToken!,
+        addressId: addressId,
+      );
+      _addresses.removeWhere((a) => a.id == addressId);
+      notifyListeners();
+      return null;
+    } catch (e) {
+      return e.toString().replaceFirst('Exception: ', '');
+    }
+  }
+
+  Future<String?> makeDefaultAddress(String addressId) async {
+    if (_accessToken == null) return 'Not logged in';
+    try {
+      await _service.setDefaultCustomerAddress(
+        accessToken: _accessToken!,
+        addressId: addressId,
+      );
+      _addresses = _addresses
+          .map((a) => a.copyWith(isDefault: a.id == addressId))
+          .toList();
+      notifyListeners();
+      return null;
+    } catch (e) {
+      return e.toString().replaceFirst('Exception: ', '');
+    }
   }
 }

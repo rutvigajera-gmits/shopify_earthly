@@ -87,7 +87,6 @@ class StorefrontHomeService {
       _queryBestSellers(),
       _queryOrioleProducts(),
       _queryBannerMetaobjects(),
-      _queryGithubReviews(),
     ]);
 
     final content = results[0] as Map<String, dynamic>;
@@ -96,7 +95,6 @@ class StorefrontHomeService {
     final bestSellers = results[3] as List<HomeProduct>;
     final orioleProducts = results[4] as List<HomeProduct>;
     final bannerSlides = results[5] as List<Map<String, dynamic>>;
-    final githubReviews = results[6] as List<Map<String, dynamic>>;
 
     // Shop brand
     final shop = content['shop'] as Map<String, dynamic>? ?? {};
@@ -127,9 +125,7 @@ class StorefrontHomeService {
 
     final announcements = _parseLines(announcementHtml);
     final brandValues = _parseBrandValues(brandValuesHtml);
-    final reviews = githubReviews.isNotEmpty
-        ? githubReviews
-        : _parseReviews(content['testimonials'] as Map<String, dynamic>?);
+    // Reviews are now loaded live from Judge.me via ReviewProvider — no static data needed.
     final faqItems = _parseFaq(content['faq'] as Map<String, dynamic>?);
     final contact = _parseContact(contactHtml);
 
@@ -145,7 +141,6 @@ class StorefrontHomeService {
         orioleProducts: orioleProducts,
         brandValues: brandValues,
         brandValuesTitle: brandValuesTitle,
-        reviews: reviews,
         faqItems: faqItems,
         ctaPage: ctaPage,
         virtualCallPage: virtualCallPage,
@@ -229,7 +224,6 @@ class StorefrontHomeService {
     required List<HomeProduct> orioleProducts,
     required List<Map<String, String>> brandValues,
     required String brandValuesTitle,
-    required List<Map<String, dynamic>> reviews,
     required List<Map<String, String>> faqItems,
     required List<Map<String, dynamic>> bannerSlides,
     Map<String, dynamic>? ctaPage,
@@ -249,7 +243,7 @@ class StorefrontHomeService {
       case 'brand_values':
         return _buildBrandValues(brandValues, brandValuesTitle, order);
       case 'reviews_carousel':
-        return _buildReviews(reviews, order);
+        return _buildReviews(order);
       case 'occasions':
         return _buildOccasions(occCols, order);
       case 'designer_rings':
@@ -451,20 +445,13 @@ class StorefrontHomeService {
     );
   }
 
-  HomeSection? _buildReviews(
-    List<Map<String, dynamic>> reviews,
-    int order,
-  ) {
-    if (reviews.isEmpty) return null;
+  HomeSection? _buildReviews(int order) {
     return HomeSection(
       id: 'reviews_carousel',
       type: 'reviews_carousel',
       visible: true,
       order: order,
-      data: {
-        'section_title': 'What Our Customers Say',
-        'reviews': reviews,
-      },
+      data: {'section_title': 'What Our Customers Say'},
     );
   }
 
@@ -817,38 +804,6 @@ class StorefrontHomeService {
     '2-carat-round-solitaire-diamond-ring',
   ];
 
-  static const String _githubReviewsUrl =
-      'https://raw.githubusercontent.com/tejas-077/earthly-automation/main/reviews.json';
-
-  Future<List<Map<String, dynamic>>> _queryGithubReviews() async {
-    try {
-      final response = await http
-          .get(Uri.parse(_githubReviewsUrl))
-          .timeout(const Duration(seconds: 15));
-      if (response.statusCode != 200) return [];
-      final list = jsonDecode(response.body) as List;
-      return list
-          .map((item) {
-            final m = item as Map<String, dynamic>;
-            final text = (m['text'] as String? ?? '').trim();
-            final translated = (m['textTranslated'] as String? ?? '').trim();
-            return {
-              'rating': (m['stars'] as num?)?.toDouble() ?? 5.0,
-              'title': '',
-              'body': text.isNotEmpty ? text : translated,
-              'author': m['name'] as String? ?? '',
-              'product_name': '',
-              'avatar_url': m['reviewerPhotoUrl'] as String? ?? '',
-            };
-          })
-          .where((r) => (r['body'] as String).isNotEmpty)
-          .toList();
-    } catch (e) {
-      debugPrint('[Home] GitHub reviews error: $e');
-      return [];
-    }
-  }
-
   Future<List<HomeProduct>> _queryBestSellers() async {
     // 1. Try "most-loved-pieces" Shopify collection (if merchant creates one)
     final colData = await _query('''
@@ -993,42 +948,6 @@ class StorefrontHomeService {
       }
     }
     return values;
-  }
-
-  List<Map<String, dynamic>> _parseReviews(Map<String, dynamic>? blogData) {
-    final edges = (blogData?['articles']?['edges'] as List?) ?? [];
-    final reviews = <Map<String, dynamic>>[];
-    for (final edge in edges) {
-      final node = edge['node'] as Map<String, dynamic>? ?? {};
-      final title = node['title'] as String? ?? '';
-      final body = _stripHtml(node['contentHtml'] as String? ?? '');
-      final tags =
-          (node['tags'] as List? ?? []).map((t) => t.toString()).toList();
-
-      double rating = 5.0;
-      String author = '';
-      String product = '';
-      for (final tag in tags) {
-        if (tag.startsWith('rating:')) {
-          rating = double.tryParse(tag.substring(7)) ?? 5.0;
-        } else if (tag.startsWith('author:')) {
-          author = tag.substring(7).trim();
-        } else if (tag.startsWith('product:')) {
-          product = tag.substring(8).trim();
-        }
-      }
-
-      if (body.isNotEmpty || title.isNotEmpty) {
-        reviews.add({
-          'rating': rating,
-          'title': title,
-          'body': body,
-          'author': author.isNotEmpty ? author : 'Customer',
-          'product_name': product,
-        });
-      }
-    }
-    return reviews;
   }
 
   List<Map<String, String>> _parseFaq(Map<String, dynamic>? blogData) {

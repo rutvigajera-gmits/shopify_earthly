@@ -3,6 +3,7 @@ import '../../presentation/screens/products/product_detail_screen.dart';
 import '../../presentation/screens/cart/cart_screen.dart';
 import '../../presentation/screens/search/search_screen.dart';
 import '../../presentation/screens/wishlist/wishlist_screen.dart';
+import '../../presentation/screens/account/addresses_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -12,6 +13,7 @@ class AppRoutes {
   static const String cart = '/cart';
   static const String search = '/search';
   static const String wishlist = '/wishlist';
+  static const String addresses = '/addresses';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -26,6 +28,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const SearchScreen());
       case wishlist:
         return MaterialPageRoute(builder: (_) => const WishlistScreen());
+      case addresses:
+        return MaterialPageRoute(builder: (_) => const AddressesScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(

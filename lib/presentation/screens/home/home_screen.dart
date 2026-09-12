@@ -8,7 +8,9 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/providers/home_provider.dart';
+import '../../../data/providers/review_provider.dart';
 import '../../../data/models/home_api_model.dart';
+import '../../../data/models/review_model.dart';
 import '../../widgets/announcement_bar.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/product_card.dart';
@@ -205,11 +207,9 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
       case 'reviews_carousel':
-        final rvData = section.reviewsCarouselData;
-        if (!rvData.hasContent) return null;
         return Padding(
           padding: const EdgeInsets.only(top: AppConstants.sectionSpacing),
-          child: _ReviewsCarouselSection(data: rvData),
+          child: _ReviewsCarouselSection(data: section.reviewsCarouselData),
         );
 
       case 'occasions':
@@ -1266,46 +1266,88 @@ class _BrandValuesSection extends StatelessWidget {
 
 // ─── Section: reviews_carousel ────────────────────────────────────────────────
 
-class _ReviewsCarouselSection extends StatelessWidget {
+class _ReviewsCarouselSection extends StatefulWidget {
   final ReviewsCarouselData data;
-
   const _ReviewsCarouselSection({required this.data});
 
   @override
+  State<_ReviewsCarouselSection> createState() =>
+      _ReviewsCarouselSectionState();
+}
+
+class _ReviewsCarouselSectionState extends State<_ReviewsCarouselSection> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<ReviewProvider>().loadStoreReviews();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (data.sectionTitle.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.horizontalPadding),
-            child: Text(data.sectionTitle,
-                style: AppTextStyles.headlineLarge),
-          ),
-        const SizedBox(height: 20),
-        SizedBox(
-          height: 220,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.horizontalPadding),
-            itemCount: data.reviews.length,
-            separatorBuilder: (_, __) =>
-                const SizedBox(width: AppConstants.cardSpacing),
-            itemBuilder: (_, i) =>
-                _ReviewCardWidget(review: data.reviews[i]),
-          ),
-        ),
-      ],
+    return Consumer<ReviewProvider>(
+      builder: (context, rp, _) {
+        final loading = rp.loadingStore;
+        final reviews = rp.storeReviews;
+
+        final title = widget.data.sectionTitle.isNotEmpty
+            ? widget.data.sectionTitle
+            : 'Customer Reviews';
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppConstants.horizontalPadding),
+              child: Text(title, style: AppTextStyles.headlineLarge),
+            ),
+            const SizedBox(height: 20),
+            if (loading)
+              SizedBox(
+                height: 220,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.horizontalPadding),
+                  itemCount: 3,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: AppConstants.cardSpacing),
+                  itemBuilder: (_, __) => Shimmer.fromColors(
+                    baseColor: AppColors.shimmerBase,
+                    highlightColor: AppColors.shimmerHighlight,
+                    child: Container(
+                        width: 280, height: 220, color: Colors.white),
+                  ),
+                ),
+              )
+            else if (reviews.isEmpty)
+              const SizedBox.shrink()
+            else
+              SizedBox(
+                height: 220,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.horizontalPadding),
+                  itemCount: reviews.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: AppConstants.cardSpacing),
+                  itemBuilder: (_, i) =>
+                      _LiveReviewCard(review: reviews[i]),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
 
-class _ReviewCardWidget extends StatelessWidget {
-  final ReviewCard review;
-
-  const _ReviewCardWidget({required this.review});
+class _LiveReviewCard extends StatelessWidget {
+  final Review review;
+  const _LiveReviewCard({required this.review});
 
   @override
   Widget build(BuildContext context) {
@@ -1316,16 +1358,29 @@ class _ReviewCardWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Stars
           Row(
             children: List.generate(5, (i) {
               return Icon(
-                i < review.rating.round() ? Icons.star : Icons.star_border,
+                i < review.rating ? Icons.star : Icons.star_border,
                 size: 14,
                 color: AppColors.gold,
               );
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
+          // Title
+          if (review.title != null && review.title!.isNotEmpty) ...[
+            Text(
+              review.title!,
+              style: AppTextStyles.labelSmall
+                  .copyWith(color: AppColors.textPrimary, letterSpacing: 0.3),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+          ],
+          // Body
           Expanded(
             child: Text(
               review.body,
@@ -1336,27 +1391,17 @@ class _ReviewCardWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
+          // Author row
           Row(
             children: [
-              if (review.avatarUrl.isNotEmpty)
-                ClipOval(
-                  child: CachedNetworkImage(
-                    imageUrl: review.avatarUrl,
-                    width: 32,
-                    height: 32,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => _avatarFallback(),
-                  ),
-                )
-              else
-                _avatarFallback(),
+              _AvatarCircle(name: review.reviewerName),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      review.author,
+                      review.reviewerName,
                       style: AppTextStyles.labelSmall
                           .copyWith(color: AppColors.textPrimary),
                       maxLines: 1,
@@ -1365,11 +1410,21 @@ class _ReviewCardWidget extends StatelessWidget {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        const Icon(Icons.g_mobiledata,
-                            size: 14, color: AppColors.textLight),
-                        Text(' Google Review',
-                            style: AppTextStyles.labelSmall
-                                .copyWith(color: AppColors.textLight, fontSize: 9)),
+                        const Icon(Icons.verified,
+                            size: 11, color: AppColors.gold),
+                        const SizedBox(width: 3),
+                        Text(
+                          'Verified Buyer',
+                          style: AppTextStyles.labelSmall.copyWith(
+                              color: AppColors.gold, fontSize: 9),
+                        ),
+                        if (review.formattedDate.isNotEmpty) ...[
+                          Text(
+                            '  ·  ${review.formattedDate}',
+                            style: AppTextStyles.labelSmall.copyWith(
+                                color: AppColors.textLight, fontSize: 9),
+                          ),
+                        ],
                       ],
                     ),
                   ],
@@ -1381,16 +1436,31 @@ class _ReviewCardWidget extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _avatarFallback() {
+class _AvatarCircle extends StatelessWidget {
+  final String name;
+  const _AvatarCircle({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    final initial =
+        name.isNotEmpty ? name[0].toUpperCase() : '?';
     return Container(
       width: 32,
       height: 32,
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.border,
+        color: AppColors.textPrimary,
       ),
-      child: const Icon(Icons.person, size: 18, color: AppColors.textLight),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.w600),
+      ),
     );
   }
 }

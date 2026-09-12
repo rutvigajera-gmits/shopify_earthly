@@ -9,6 +9,7 @@ import '../../../data/providers/shop_provider.dart';
 import '../../widgets/app_header.dart';
 import 'login_screen.dart';
 import 'orders_screen.dart';
+import 'edit_profile_screen.dart';
 
 void _openUrl(BuildContext context, String url) {
   launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)
@@ -63,8 +64,8 @@ class AccountScreen extends StatelessWidget {
                     _MenuItem(
                       icon: Icons.location_on_outlined,
                       label: 'Saved Addresses',
-                      onTap: () => _openUrl(
-                          context, 'https://earthlyjewels.co/account/addresses'),
+                      onTap: () =>
+                          Navigator.of(context).pushNamed('/addresses'),
                     ),
                     _MenuItem(
                       icon: Icons.workspace_premium_outlined,
@@ -244,6 +245,17 @@ class _LoggedInHeader extends StatelessWidget {
                       style: AppTextStyles.bodySmall),
                 ],
               ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                  builder: (_) => const EditProfileScreen()),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(4),
+              child: Icon(Icons.edit_outlined,
+                  size: 20, color: AppColors.textSecondary),
             ),
           ),
         ],
