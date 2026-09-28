@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/providers/cart_provider.dart';
-import '../../data/providers/home_provider.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final bool showBack;
   final String? title;
   final VoidCallback? onSearchTap;
   final VoidCallback? onCartTap;
+  final VoidCallback? onWishlistTap;
+  final bool showSearchBar;
 
   const AppHeader({
     super.key,
@@ -18,51 +18,108 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.title,
     this.onSearchTap,
     this.onCartTap,
+    this.onWishlistTap,
+    this.showSearchBar = false,
   });
 
+  static const double _barHeight = 56;
+  static const double _searchBarHeight = 48;
+  static const double _searchBarPadding = 8;
+
   @override
-  Size get preferredSize => const Size.fromHeight(60);
+  Size get preferredSize => Size.fromHeight(
+        showSearchBar ? _barHeight + _searchBarHeight + _searchBarPadding : _barHeight,
+      );
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 60,
       color: AppColors.background,
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Left action
           SizedBox(
-            width: 56,
-            child: showBack
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, size: 18),
-                    onPressed: () => Navigator.of(context).pop(),
-                    color: AppColors.textPrimary,
-                  )
-                : IconButton(
-                    icon: const Icon(Icons.search, size: 22),
-                    onPressed: onSearchTap,
-                    color: AppColors.textPrimary,
-                  ),
-          ),
-
-          // Center — dynamic logo or title
-          Expanded(
-            child: Center(
-              child: title != null
-                  ? Text(title!, style: AppTextStyles.headlineSmall)
-                  : const _DynamicLogo(),
-            ),
-          ),
-
-          // Right — cart icon with badge
-          SizedBox(
-            width: 56,
+            height: _barHeight,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [_CartIcon(onTap: onCartTap)],
+              children: [
+                // Left
+                SizedBox(
+                  width: 52,
+                  child: showBack
+                      ? IconButton(
+                          icon: const Icon(Icons.arrow_back_ios, size: 18),
+                          onPressed: () => Navigator.of(context).pop(),
+                          color: AppColors.textPrimary,
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.menu, size: 22),
+                          onPressed: onSearchTap,
+                          color: AppColors.textPrimary,
+                        ),
+                ),
+
+                // Center — logo or title
+                Expanded(
+                  child: Center(
+                    child: title != null
+                        ? Text(title!, style: AppTextStyles.headlineSmall)
+                        : const _DynamicLogo(),
+                  ),
+                ),
+
+                // Right — wishlist + cart
+                SizedBox(
+                  width: 96,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.favorite_border, size: 20),
+                        onPressed: onWishlistTap,
+                        color: AppColors.textPrimary,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
+                      ),
+                      _CartIcon(onTap: onCartTap),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
+
+          // Optional search bar
+          if (showSearchBar) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: GestureDetector(
+                onTap: onSearchTap,
+                child: Container(
+                  height: _searchBarHeight,
+                  decoration: BoxDecoration(
+                    color: AppColors.neutral100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 14),
+                      const Icon(Icons.search, size: 18, color: AppColors.textMuted),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Search jewellery, diamonds...',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -74,62 +131,10 @@ class _DynamicLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<HomeProvider>(
-      builder: (context, home, _) {
-        final logoUrl = home.logoUrl;
-        final shopName = home.shopName;
-
-        if (logoUrl.isNotEmpty) {
-          return CachedNetworkImage(
-            imageUrl: logoUrl,
-            height: 36,
-            fit: BoxFit.contain,
-            placeholder: (ctx, url) => _TextLogo(name: shopName),
-            errorWidget: (ctx, url, err) => _TextLogo(name: shopName),
-          );
-        }
-
-        return _TextLogo(name: shopName);
-      },
-    );
-  }
-}
-
-class _TextLogo extends StatelessWidget {
-  final String? name;
-  const _TextLogo({this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    final parts = (name ?? 'EARTHLY JEWELS').toUpperCase().split(' ');
-    final line1 = parts.isNotEmpty ? parts.first : 'EARTHLY';
-    final line2 = parts.length > 1 ? parts.skip(1).join(' ') : 'JEWELS';
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            line1,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-              letterSpacing: 4,
-            ),
-          ),
-          Text(
-            line2,
-            style: const TextStyle(
-              fontSize: 8,
-              fontWeight: FontWeight.w400,
-              color: AppColors.textSecondary,
-              letterSpacing: 6,
-            ),
-          ),
-        ],
-      ),
+    return Image.asset(
+      'assets/images/logo.png',
+      height: 48,
+      fit: BoxFit.contain,
     );
   }
 }
@@ -149,16 +154,18 @@ class _CartIcon extends StatelessWidget {
               icon: const Icon(Icons.shopping_bag_outlined, size: 22),
               onPressed: onTap,
               color: AppColors.textPrimary,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
             ),
             if (cart.itemCount > 0)
               Positioned(
-                right: 6,
-                top: 6,
+                right: 4,
+                top: 4,
                 child: Container(
-                  width: 16,
-                  height: 16,
+                  width: 15,
+                  height: 15,
                   decoration: const BoxDecoration(
-                    color: AppColors.textPrimary,
+                    color: AppColors.badge,
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -166,8 +173,8 @@ class _CartIcon extends StatelessWidget {
                       cart.itemCount > 9 ? '9+' : '${cart.itemCount}',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),

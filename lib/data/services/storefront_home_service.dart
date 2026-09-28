@@ -10,18 +10,14 @@ class StorefrontHomeService {
 
   static const List<String> _defaultSectionOrder = [
     'hero_banner',
-    'brand_values',
-    'reviews_carousel',
-    'product_grid',
     'shop_by_category',
-    'shop_by_shape',
-    'occasions',
-    'stackable_bands',
-    'oriole_exclusive',
+    'product_grid',
     'designer_rings',
+    'occasions',
+    'shop_by_shape',
+    'oriole_exclusive',
     'customize_cta',
     'virtual_call_cta',
-    'faq_accordion',
   ];
 
   static const List<String> _occasionHandles = [
@@ -544,6 +540,7 @@ class StorefrontHomeService {
     List<HomeProduct> orioleProducts,
     int order,
   ) {
+    debugPrint('[Oriole] _buildOrioleExclusive called, products: ${orioleProducts.length}');
     if (orioleProducts.isEmpty) return null;
     final col = cols['c13'] as Map<String, dynamic>?;
     final sectionTitle = col?['title'] as String? ?? 'Oriole Diamonds';
@@ -673,7 +670,10 @@ class StorefrontHomeService {
         node {
           fields {
             key value type
-            reference { ... on MediaImage { image { url altText } } }
+            reference {
+              ... on MediaImage { image { url altText } }
+              ... on Video { sources { url mimeType } previewImage { url } }
+            }
           }
         }
       }
@@ -695,6 +695,7 @@ class StorefrontHomeService {
           final node = edge['node'] as Map<String, dynamic>? ?? {};
           final fieldsList = node['fields'] as List? ?? [];
           String imageUrl = '';
+          String videoUrl = '';
           String title = '';
           String subtitle = '';
           String ctaLabel = 'Shop Now';
@@ -710,6 +711,17 @@ class StorefrontHomeService {
                 final ref = f['reference'] as Map<String, dynamic>?;
                 imageUrl =
                     (ref?['image'] as Map?)?['url'] as String? ?? '';
+              case 'video':
+              case 'banner_video':
+              case 'background_video':
+                final ref = f['reference'] as Map<String, dynamic>?;
+                final sources = (ref?['sources'] as List?) ?? [];
+                for (final s in sources) {
+                  final mime = s['mimeType'] as String? ?? '';
+                  if (mime.contains('mp4') || videoUrl.isEmpty) {
+                    videoUrl = s['url'] as String? ?? videoUrl;
+                  }
+                }
               case 'title':
               case 'heading':
                 title = val;
@@ -727,9 +739,10 @@ class StorefrontHomeService {
                 ctaUrl = val;
             }
           }
-          if (imageUrl.isEmpty) continue;
+          if (imageUrl.isEmpty && videoUrl.isEmpty) continue;
           slides.add({
             'image': imageUrl,
+            'video_url': videoUrl,
             'title': title,
             'subtitle': subtitle,
             'cta_label': ctaLabel,
@@ -871,12 +884,16 @@ class StorefrontHomeService {
       }
     ''');
     final col = data['collectionByHandle'] as Map<String, dynamic>?;
+    debugPrint('[Oriole] collectionByHandle result: ${col == null ? "NULL (collection not found)" : "found"}');
     final edges = (col?['products']?['edges'] as List?) ?? [];
-    return edges
+    debugPrint('[Oriole] product edges count: ${edges.length}');
+    final products = edges
         .map((e) => HomeProduct.fromJson(
               _productNodeToMap(e['node'] as Map<String, dynamic>),
             ))
         .toList();
+    debugPrint('[Oriole] parsed products: ${products.length}');
+    return products;
   }
 
   // ── Parsing helpers ────────────────────────────────────────────────────────
@@ -916,11 +933,9 @@ class StorefrontHomeService {
 
   List<String> _parseSectionOrder(String html) {
     const validTypes = {
-      'hero_banner', 'product_grid', 'product_carousel', 'collection_row',
-      'shop_by_category', 'brand_values', 'reviews_carousel', 'occasions',
-      'designer_rings', 'stackable_bands', 'oriole_exclusive',
-      'customize_cta', 'virtual_call_cta', 'full_width_cta',
-      'faq_accordion', 'image_text',
+      'hero_banner', 'shop_by_category', 'product_grid',
+      'designer_rings', 'occasions', 'shop_by_shape',
+      'oriole_exclusive', 'customize_cta', 'full_width_cta', 'virtual_call_cta',
     };
     final lines = _parseLines(html)
         .where((l) => validTypes.contains(l.toLowerCase()))

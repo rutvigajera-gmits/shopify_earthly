@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../presentation/screens/products/product_detail_screen.dart';
+import '../../presentation/screens/products/shape_products_screen.dart';
 import '../../presentation/screens/cart/cart_screen.dart';
 import '../../presentation/screens/search/search_screen.dart';
 import '../../presentation/screens/wishlist/wishlist_screen.dart';
@@ -14,6 +15,7 @@ class AppRoutes {
   static const String search = '/search';
   static const String wishlist = '/wishlist';
   static const String addresses = '/addresses';
+  static const String shapeProducts = '/shape-products';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -30,6 +32,14 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const WishlistScreen());
       case addresses:
         return MaterialPageRoute(builder: (_) => const AddressesScreen());
+      case shapeProducts:
+        final args = settings.arguments as Map<String, String>? ?? {};
+        return MaterialPageRoute(
+          builder: (_) => ShapeProductsScreen(
+            shapeName: args['shapeName'] ?? '',
+            collectionHandle: args['handle'] ?? '',
+          ),
+        );
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(

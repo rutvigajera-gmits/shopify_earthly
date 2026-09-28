@@ -511,8 +511,24 @@ class ShopifyService {
       {
         productByHandle(handle: "$handle") {
           id handle title description vendor availableForSale tags
-          images(first: 8) { edges { node { url altText } } }
-          variants(first: 10) {
+          images(first: 20) { edges { node { url altText } } }
+          media(first: 20) {
+            edges {
+              node {
+                mediaContentType
+                ... on MediaImage { image { url altText } }
+                ... on Video {
+                  sources { url mimeType }
+                  previewImage { url }
+                }
+                ... on ExternalVideo {
+                  embeddedUrl
+                  previewImage { url }
+                }
+              }
+            }
+          }
+          variants(first: 250) {
             edges {
               node {
                 id title availableForSale
@@ -1064,6 +1080,78 @@ class ShopifyService {
       throw Exception(
           (errors.first as Map)['message'] as String? ?? 'Could not set default');
     }
+  }
+
+  // ─── Shape Products ───────────────────────────────────────────────────────
+  // Mirrors the Shopify URL: /collections/lab-grown-diamond-rings/{Shape}-Diamond
+  // Strategy 1: filter products inside the main rings collection by shape tag.
+  // Strategy 2: try the shape-specific collection handle directly.
+  // Strategy 3: generic products query with the shape tag.
+
+  Future<List<Product>> fetchShapeProducts({
+    required String shapeName,
+    String collectionHandle = '',
+    int productCount = 48,
+  }) async {
+    final tag = '$shapeName-Diamond';
+    final productFragment = '''
+      id handle title description vendor availableForSale tags
+      images(first: 2) { edges { node { url altText } } }
+      variants(first: 3) {
+        edges {
+          node {
+            id title availableForSale
+            priceV2 { amount currencyCode }
+            compareAtPriceV2 { amount currencyCode }
+            selectedOptions { name value }
+          }
+        }
+      }
+    ''';
+
+    // Strategy 1 — main rings collection filtered by shape tag
+    try {
+      final data = await _query('''
+        {
+          collectionByHandle(handle: "lab-grown-diamond-rings") {
+            products(first: $productCount, filters: [{tag: "$tag"}]) {
+              edges { node { $productFragment } }
+            }
+          }
+        }
+      ''');
+      final edges = (data['collectionByHandle']?['products']?['edges'] as List?) ?? [];
+      if (edges.isNotEmpty) {
+        debugPrint('[Shopify] fetchShapeProducts tag="$tag" → ${edges.length} products');
+        return edges.map((e) => Product.fromStorefrontJson(e as Map<String, dynamic>)).toList();
+      }
+    } catch (e) {
+      debugPrint('[Shopify] fetchShapeProducts strategy1 error: $e');
+    }
+
+    // Strategy 2 — shape-specific collection handle
+    if (collectionHandle.isNotEmpty) {
+      try {
+        final col = await fetchCollectionByHandle(collectionHandle, productCount: productCount);
+        if (col != null && col.products.isNotEmpty) {
+          debugPrint('[Shopify] fetchShapeProducts handle="$collectionHandle" → ${col.products.length} products');
+          return col.products;
+        }
+      } catch (e) {
+        debugPrint('[Shopify] fetchShapeProducts strategy2 error: $e');
+      }
+    }
+
+    // Strategy 3 — generic tag query
+    try {
+      final products = await fetchProducts(first: productCount, query: 'tag:$tag');
+      debugPrint('[Shopify] fetchShapeProducts tag-query "$tag" → ${products.length} products');
+      return products;
+    } catch (e) {
+      debugPrint('[Shopify] fetchShapeProducts strategy3 error: $e');
+    }
+
+    return [];
   }
 
   // ─── Search ───────────────────────────────────────────────────────────────

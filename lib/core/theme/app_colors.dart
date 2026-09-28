@@ -3,39 +3,65 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Backgrounds
-  static const Color background = Color(0xFFFFFFFF);
-  static const Color surface = Color(0xFFFBF8F3);
-  static const Color cardBackground = Color(0xFFF7F4EF);
+  // ── Brand ──────────────────────────────────────────────────────────────────
+  static const Color primary  = Color(0xFF000D0F);
+  static const Color teal     = Color(0xFF01414B);
+  static const Color peach    = Color(0xFFFFDDBF);
+  static const Color orange   = Color(0xFFED8C51);
 
-  // Text
-  static const Color textPrimary = Color(0xFF1C1C1C);
-  static const Color textSecondary = Color(0xFF7A7A7A);
-  static const Color textLight = Color(0xFFAAAAAA);
-  static const Color textWhite = Color(0xFFFFFFFF);
+  // ── Surface ────────────────────────────────────────────────────────────────
+  static const Color surfaceBase   = Color(0xFFFFFFFF);
+  static const Color surfaceWarm   = Color(0xFFFDF8F5);
+  static const Color surfaceSubtle = Color(0xFFFAFAFA);
+  static const Color surfaceCream  = Color(0xFFFFF1E4);
+  static const Color surfaceDark   = Color(0xFF171717);
 
-  // Brand / Accent
-  static const Color gold = Color(0xFFC49A6C);
-  static const Color goldDark = Color(0xFF9E7A4A);
-  static const Color goldLight = Color(0xFFF0E4CC);
-  static const Color goldSurface = Color(0xFFFDF6EC);
+  // ── Text ──────────────────────────────────────────────────────────────────
+  static const Color textPrimary   = Color(0xFF000D0F);
+  static const Color textSecondary = Color(0xFF344054);
+  static const Color textMuted     = Color(0xFF737373);
+  static const Color textOnDark    = Color(0xFFFFDDBF);
+  static const Color textWhite     = Color(0xFFFFFFFF);
 
-  // UI
-  static const Color border = Color(0xFFE8E0D6);
-  static const Color divider = Color(0xFFF0EBE3);
-  static const Color shadow = Color(0x1A000000);
+  // ── Feedback ──────────────────────────────────────────────────────────────
+  static const Color success = Color(0xFF0F7C64);
+  static const Color sale    = Color(0xFF79D18A);
+  static const Color rating  = Color(0xFFF59E0B);
+  static const Color badge   = Color(0xFFEB1256);
+  static const Color error   = Color(0xFFD32F2F);
+  static const Color focus   = Color(0xFF0B61CD);
 
-  // Status
-  static const Color success = Color(0xFF4CAF50);
-  static const Color error = Color(0xFFD32F2F);
-  static const Color badge = Color(0xFF8B6914);
-  static const Color badgeBackground = Color(0xFFFAF0DC);
+  // ── Neutral ───────────────────────────────────────────────────────────────
+  static const Color neutral900 = Color(0xFF212B36);
+  static const Color neutral700 = Color(0xFF344054);
+  static const Color neutral500 = Color(0xFF868686);
+  static const Color neutral300 = Color(0xFFD0D5DD);
+  static const Color neutral200 = Color(0xFFE5E5E5);
+  static const Color neutral100 = Color(0xFFF5F5F5);
+  static const Color neutral000 = Color(0xFFFFFFFF);
 
-  // Announcement / Dark bar
-  static const Color announcementBg = Color(0xFF1C1C1C);
-  static const Color announcementText = Color(0xFFFFFFFF);
+  // ── Semantic aliases (used throughout app) ─────────────────────────────────
+  static const Color background        = surfaceBase;
+  static const Color surface           = surfaceWarm;
+  static const Color cardBackground   = neutral100;
+  static const Color border            = neutral200;
+  static const Color divider           = neutral200;
+
+  // Gold → brand orange for accent consistency
+  static const Color gold              = orange;
+  static const Color goldDark          = Color(0xFFD4722A);
+  static const Color goldLight         = peach;
+  static const Color goldSurface       = surfaceCream;
+
+  static const Color announcementBg    = primary;
+  static const Color announcementText  = textWhite;
 
   // Shimmer
-  static const Color shimmerBase = Color(0xFFEEEBE6);
-  static const Color shimmerHighlight = Color(0xFFF8F5F0);
+  static const Color shimmerBase       = Color(0xFFEEEBE6);
+  static const Color shimmerHighlight  = Color(0xFFF8F5F0);
+
+  // Legacy aliases kept for widgets not yet updated
+  static const Color textLight         = textMuted;
+  static const Color shadow            = Color(0x1A000000);
+  static const Color badgeBackground   = Color(0xFFFFF0F3);
 }

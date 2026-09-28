@@ -31,6 +31,8 @@ dependencies:
   url_launcher: ^6.2.5
   shared_preferences: ^2.3.0
   share_plus: ^10.1.0
+  video_player: ^2.9.2
+  nb_utils: ^7.0.0
 
 dev_dependencies:
   flutter_test:
@@ -42,3 +44,4 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/videos/

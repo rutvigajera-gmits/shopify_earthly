@@ -369,7 +369,7 @@ class HeroBannerData {
     return HeroBannerData(
       slides: list
           .map((e) => HeroBannerSlide.fromJson(_asMap(e)))
-          .where((s) => s.image.isNotEmpty)
+          .where((s) => s.image.isNotEmpty || s.videoUrl.isNotEmpty)
           .toList(),
     );
   }
@@ -377,6 +377,7 @@ class HeroBannerData {
 
 class HeroBannerSlide {
   final String image;
+  final String videoUrl;
   final String title;
   final String subtitle;
   final String ctaLabel;
@@ -386,6 +387,7 @@ class HeroBannerSlide {
 
   const HeroBannerSlide({
     required this.image,
+    required this.videoUrl,
     required this.title,
     required this.subtitle,
     required this.ctaLabel,
@@ -394,9 +396,12 @@ class HeroBannerSlide {
     required this.overlay,
   });
 
+  bool get hasVideo => videoUrl.isNotEmpty;
+
   factory HeroBannerSlide.fromJson(Map<String, dynamic> json) =>
       HeroBannerSlide(
         image: json['image'] as String? ?? '',
+        videoUrl: json['video_url'] as String? ?? '',
         title: json['title'] as String? ?? '',
         subtitle: json['subtitle'] as String? ?? '',
         ctaLabel: json['cta_label'] as String? ?? '',
@@ -543,6 +548,7 @@ class HomeProduct {
           selectedOptions: {},
         ),
       ],
+      options: const [],
       tags: badge != null ? [badge!.toLowerCase()] : [],
     );
   }

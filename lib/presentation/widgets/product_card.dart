@@ -23,14 +23,33 @@ class ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: SizedBox(
+      child: Container(
         width: width,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceBase,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.07),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _ProductImage(product: product),
-            const SizedBox(height: 10),
-            _ProductInfo(product: product),
+            // Square image — AspectRatio makes height = width on any parent
+            AspectRatio(
+              aspectRatio: 1.0,
+              child: _ProductImage(product: product),
+            ),
+            // Info fills remaining height (works in both GridView cells and
+            // height-constrained horizontal ListViews)
+            Expanded(
+              child: _ProductInfo(product: product),
+            ),
           ],
         ),
       ),
@@ -45,29 +64,17 @@ class _ProductImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Stack(
+      fit: StackFit.expand,
       children: [
-        AspectRatio(
-          aspectRatio: 1,
-          child: product.primaryImage != null
-              ? CachedNetworkImage(
-                  imageUrl: product.primaryImage!.url,
-                  fit: BoxFit.cover,
-                  placeholder: (ctx, url) => _shimmer(),
-                  errorWidget: (ctx, url, err) => _placeholder(),
-                )
-              : _placeholder(),
-        ),
-        if (product.isMembersOnly)
-          Positioned(
-            top: 10,
-            left: 10,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              color: AppColors.badgeBackground,
-              child: Text('MEMBERS ONLY', style: AppTextStyles.badge),
-            ),
-          ),
-        // Wishlist button
+        product.primaryImage != null
+            ? CachedNetworkImage(
+                imageUrl: product.primaryImage!.url,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => _shimmer(),
+                errorWidget: (_, __, ___) => _placeholder(),
+              )
+            : _placeholder(),
+        // Wishlist heart — white circle top-right
         Positioned(
           top: 8,
           right: 8,
@@ -77,15 +84,15 @@ class _ProductImage extends StatelessWidget {
               return GestureDetector(
                 onTap: () => wishlist.toggle(product.handle),
                 child: Container(
-                  width: 32,
-                  height: 32,
+                  width: 30,
+                  height: 30,
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     saved ? Icons.favorite : Icons.favorite_border,
-                    size: 16,
+                    size: 15,
                     color: saved ? Colors.red : AppColors.textPrimary,
                   ),
                 ),
@@ -97,17 +104,13 @@ class _ProductImage extends StatelessWidget {
     );
   }
 
-  Widget _placeholder() {
-    return Container(color: AppColors.cardBackground);
-  }
+  Widget _placeholder() => Container(color: AppColors.neutral100);
 
-  Widget _shimmer() {
-    return Shimmer.fromColors(
-      baseColor: AppColors.shimmerBase,
-      highlightColor: AppColors.shimmerHighlight,
-      child: Container(color: AppColors.shimmerBase),
-    );
-  }
+  Widget _shimmer() => Shimmer.fromColors(
+        baseColor: AppColors.shimmerBase,
+        highlightColor: AppColors.shimmerHighlight,
+        child: Container(color: AppColors.shimmerBase),
+      );
 }
 
 class _ProductInfo extends StatelessWidget {
@@ -116,22 +119,38 @@ class _ProductInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final subtitle = product.vendor?.isNotEmpty == true ? product.vendor! : '';
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Text(
             product.title,
             style: AppTextStyles.productName,
-            maxLines: 2,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          if (subtitle.isNotEmpty) ...[
+            const SizedBox(height: 3),
+            Text(
+              subtitle,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textMuted,
+                fontSize: 11,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          const SizedBox(height: 5),
           Text(
-            'From ${product.formattedMinPrice}',
-            style: AppTextStyles.priceText,
+            product.formattedMinPrice,
+            style: AppTextStyles.priceText.copyWith(
+              color: AppColors.teal,
+              fontSize: 13,
+            ),
           ),
         ],
       ),
@@ -139,36 +158,57 @@ class _ProductInfo extends StatelessWidget {
   }
 }
 
-// Shimmer placeholder card shown while loading
+// Skeleton card — matches new card shape
 class ProductCardSkeleton extends StatelessWidget {
   final double? width;
   const ProductCardSkeleton({super.key, this.width});
 
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: AppColors.shimmerBase,
-      highlightColor: AppColors.shimmerHighlight,
-      child: SizedBox(
-        width: width,
+    return Container(
+      width: width,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceBase,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Shimmer.fromColors(
+        baseColor: AppColors.shimmerBase,
+        highlightColor: AppColors.shimmerHighlight,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AspectRatio(
-              aspectRatio: 1,
+              aspectRatio: 1.0,
               child: Container(color: AppColors.shimmerBase),
             ),
-            const SizedBox(height: 10),
-            Container(
-              height: 14,
-              width: double.infinity,
-              color: AppColors.shimmerBase,
-            ),
-            const SizedBox(height: 6),
-            Container(
-              height: 12,
-              width: 80,
-              color: AppColors.shimmerBase,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                        height: 13,
+                        width: double.infinity,
+                        color: AppColors.shimmerBase),
+                    const SizedBox(height: 6),
+                    Container(
+                        height: 11, width: 90, color: AppColors.shimmerBase),
+                    const SizedBox(height: 6),
+                    Container(
+                        height: 13, width: 70, color: AppColors.shimmerBase),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
