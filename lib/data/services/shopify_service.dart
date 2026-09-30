@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../core/constants/app_constants.dart';
-// AppConstants is already imported above — no duplicate needed
+import '../../core/config/api_config.dart';
+import '../network/shopify_client.dart';
 import '../models/product_model.dart';
 import '../models/collection_model.dart';
 import '../models/cart_model.dart';
@@ -14,26 +15,8 @@ class ShopifyService {
   ShopifyService._();
   static final ShopifyService instance = ShopifyService._();
 
-  Future<Map<String, dynamic>> _query(String gql) async {
-    final response = await http.post(
-      Uri.parse(AppConstants.storefrontApiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': AppConstants.storefrontAccessToken,
-      },
-      body: jsonEncode({'query': gql}),
-    );
-    if (response.statusCode != 200) {
-      debugPrint('[Shopify] HTTP ${response.statusCode}: ${response.body.substring(0, response.body.length.clamp(0, 300))}');
-      throw Exception('Shopify API ${response.statusCode}');
-    }
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (data['errors'] != null) {
-      debugPrint('[Shopify] GraphQL error: ${data['errors']}');
-      throw Exception('GraphQL: ${data['errors']}');
-    }
-    return data['data'] as Map<String, dynamic>;
-  }
+  Future<Map<String, dynamic>> _query(String gql) =>
+      ShopifyClient.instance.query(gql);
 
   // ─── Shop Brand & Logo ────────────────────────────────────────────────────
 
@@ -363,8 +346,8 @@ class ShopifyService {
   // Source: Judge.me public API (requires Public Token from Judge.me → Settings → General).
 
   static bool get _judgeMeConfigured =>
-      AppConstants.judgeMePublicToken.isNotEmpty &&
-      AppConstants.judgeMePublicToken != 'YOUR_PUBLIC_TOKEN_HERE';
+      ApiConfig.judgeMePublicToken.isNotEmpty &&
+      ApiConfig.judgeMePublicToken != 'YOUR_PUBLIC_TOKEN_HERE';
 
   Future<List<Review>> fetchStoreReviews({int perPage = 10}) async {
     if (!_judgeMeConfigured) {
@@ -374,8 +357,8 @@ class ShopifyService {
     try {
       final uri = Uri.parse(
         'https://judge.me/api/v1/reviews'
-        '?api_token=${AppConstants.judgeMePublicToken}'
-        '&shop_domain=${AppConstants.judgeMeShopDomain}'
+        '?api_token=${ApiConfig.judgeMePublicToken}'
+        '&shop_domain=${ApiConfig.judgeMeShopDomain}'
         '&per_page=$perPage'
         '&sort_by=created_at'
         '&sort_dir=desc',
@@ -404,8 +387,8 @@ class ShopifyService {
 
       final uri = Uri.parse(
         'https://judge.me/api/v1/reviews'
-        '?api_token=${AppConstants.judgeMePublicToken}'
-        '&shop_domain=${AppConstants.judgeMeShopDomain}'
+        '?api_token=${ApiConfig.judgeMePublicToken}'
+        '&shop_domain=${ApiConfig.judgeMeShopDomain}'
         '&product_id=$productId'
         '&per_page=20'
         '&sort_by=created_at'
@@ -771,10 +754,10 @@ class ShopifyService {
   Future<Map<String, dynamic>> _queryWithVars(
       String gql, Map<String, dynamic> variables) async {
     final response = await http.post(
-      Uri.parse(AppConstants.storefrontApiUrl),
+      Uri.parse(ApiConfig.storefrontApiUrl),
       headers: {
         'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': AppConstants.storefrontAccessToken,
+        'X-Shopify-Storefront-Access-Token': ApiConfig.storefrontAccessToken,
       },
       body: jsonEncode({'query': gql, 'variables': variables}),
     );

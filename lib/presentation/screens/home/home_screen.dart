@@ -12,16 +12,11 @@ import '../../widgets/product_card.dart';
 import 'sections/section_hero_banner.dart';
 import 'sections/section_shop_by_category.dart';
 import 'sections/section_product_grid.dart';
-import 'sections/section_oriole_exclusive.dart';
-import 'sections/section_product_carousel.dart';
 import 'sections/section_occasions.dart';
 import 'sections/section_shop_by_shape.dart';
 import 'sections/section_designer_rings.dart';
-import 'sections/section_collection_row.dart';
-import 'sections/section_brand_values.dart';
-import 'sections/section_reviews.dart';
-import 'sections/section_cta.dart';
-import 'sections/section_faq.dart';
+import 'sections/section_oriole_exclusive.dart';
+import 'sections/section_instagram_reels.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onSearchTap;
@@ -85,46 +80,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   }
 
                   debugPrint('[Home] sections: ${home.sections.map((s) => s.type).toList()}');
-                  final children = <Widget>[];
-                  CollectionRowData? shapeApiData;
-                  HomeSection? orioleSection;
 
-                  for (final section in home.sections) {
-                    if (section.type == 'shop_by_shape') {
-                      shapeApiData = section.collectionRowData;
-                      continue;
-                    }
-                    if (section.type == 'oriole_exclusive') {
-                      orioleSection = section;
-                      continue;
-                    }
+                  const sectionOrder = {
+                    'hero_banner': 0,
+                    'shop_by_category': 1,
+                    'product_grid': 2,
+                    'designer_rings': 3,
+                    'occasions': 4,
+                    'shop_by_shape': 5,
+                    'oriole_exclusive': 6,
+                    'instagram_reels': 7,
+                  };
+
+                  final sortedSections = [...home.sections]
+                    ..sort((a, b) {
+                      final ai = sectionOrder[a.type] ?? 99;
+                      final bi = sectionOrder[b.type] ?? 99;
+                      return ai.compareTo(bi);
+                    });
+
+                  final children = <Widget>[];
+                  for (final section in sortedSections) {
                     final w = _buildSection(section);
                     if (w != null) children.add(w);
                   }
-
-                  children.add(Padding(
-                    padding: const EdgeInsets.only(top: AppConstants.sectionSpacing),
-                    child: ShopByShapeSection(
-                      data: shapeApiData ??
-                          const CollectionRowData(
-                            title: 'Shop by Shape',
-                            ctaLabel: '',
-                            ctaUrl: '',
-                            tiles: [],
-                          ),
-                      onViewAll: () => widget.onNavTap?.call(1),
-                      onTap: (shapeName, handle) => Navigator.of(context).pushNamed(
-                        '/shape-products',
-                        arguments: {'shapeName': shapeName, 'handle': handle},
-                      ),
-                    ),
-                  ));
-
-                  if (orioleSection != null) {
-                    final w = _buildSection(orioleSection);
-                    if (w != null) children.add(w);
-                  }
-
                   children.add(48.height);
 
                   return SliverList(
@@ -173,29 +152,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
 
-      case 'oriole_exclusive':
-        final data = section.orioleExclusiveData;
-        if (data.products.isEmpty) return null;
+      case 'designer_rings':
+        final data = section.collectionRowData;
+        if (!data.hasContent) return null;
         return Padding(
           padding: const EdgeInsets.only(top: vPad),
-          child: OrioleExclusiveSection(
+          child: DesignerRingsSection(
             data: data,
-            onProductTap: (handle) =>
-                Navigator.of(context).pushNamed('/product', arguments: handle),
-            onViewAll: () {},
-          ),
-        );
-
-      case 'product_carousel':
-        final data = section.productGridData;
-        if (data.products.isEmpty) return null;
-        return Padding(
-          padding: const EdgeInsets.only(top: vPad),
-          child: ProductCarouselSection(
-            data: data,
-            onProductTap: (handle) =>
-                Navigator.of(context).pushNamed('/product', arguments: handle),
             onViewAll: () => widget.onNavTap?.call(1),
+            onTap: (handle) =>
+                Navigator.of(context).pushNamed('/products', arguments: handle),
           ),
         );
 
@@ -212,73 +178,37 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
 
-      case 'designer_rings':
+      case 'shop_by_shape':
         final data = section.collectionRowData;
-        if (!data.hasContent) return null;
         return Padding(
           padding: const EdgeInsets.only(top: vPad),
-          child: DesignerRingsSection(
+          child: ShopByShapeSection(
             data: data,
             onViewAll: () => widget.onNavTap?.call(1),
-            onTap: (handle) =>
-                Navigator.of(context).pushNamed('/products', arguments: handle),
+            onTap: (shapeName, handle) => Navigator.of(context).pushNamed(
+              '/shape-products',
+              arguments: {'shapeName': shapeName, 'handle': handle},
+            ),
           ),
         );
 
-      case 'collection_row':
-        final data = section.collectionRowData;
-        if (!data.hasContent) return null;
+      case 'oriole_exclusive':
+        final data = section.orioleExclusiveData;
+        if (data.products.isEmpty) return null;
         return Padding(
           padding: const EdgeInsets.only(top: vPad),
-          child: CollectionRowSection(data: data, onViewAll: () {}),
+          child: OrioleExclusiveSection(
+            data: data,
+            onProductTap: (handle) =>
+                Navigator.of(context).pushNamed('/product', arguments: handle),
+            onViewAll: () {},
+          ),
         );
 
-      case 'brand_values':
-        final data = section.brandValuesData;
-        if (!data.hasContent) return null;
+      case 'instagram_reels':
         return Padding(
           padding: const EdgeInsets.only(top: vPad),
-          child: BrandValuesSection(data: data),
-        );
-
-      case 'reviews_carousel':
-        return Padding(
-          padding: const EdgeInsets.only(top: vPad),
-          child: ReviewsCarouselSection(data: section.reviewsCarouselData),
-        );
-
-      case 'stackable_bands':
-      case 'customize_cta':
-      case 'full_width_cta':
-        final data = section.fullWidthCtaData;
-        if (!data.hasContent) return null;
-        return Padding(
-          padding: const EdgeInsets.only(top: vPad),
-          child: FullWidthCtaSection(data: data),
-        );
-
-      case 'virtual_call_cta':
-        final data = section.fullWidthCtaData;
-        if (!data.hasContent) return null;
-        return Padding(
-          padding: const EdgeInsets.only(top: vPad),
-          child: VirtualCallSection(data: data),
-        );
-
-      case 'faq_accordion':
-        final data = section.faqData;
-        if (!data.hasContent) return null;
-        return Padding(
-          padding: const EdgeInsets.only(top: vPad),
-          child: FaqAccordionSection(data: data),
-        );
-
-      case 'image_text':
-        final data = section.imageTextData;
-        if (!data.hasContent) return null;
-        return Padding(
-          padding: const EdgeInsets.only(top: vPad),
-          child: ImageTextSection(data: data),
+          child: InstagramReelsSection(data: section.instagramReelsData),
         );
 
       default:

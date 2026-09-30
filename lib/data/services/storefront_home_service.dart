@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import '../../core/constants/app_constants.dart';
 import '../models/home_api_model.dart';
+import '../network/shopify_client.dart';
 
 class StorefrontHomeService {
   StorefrontHomeService._();
@@ -16,8 +14,7 @@ class StorefrontHomeService {
     'occasions',
     'shop_by_shape',
     'oriole_exclusive',
-    'customize_cta',
-    'virtual_call_cta',
+    'instagram_reels',
   ];
 
   static const List<String> _occasionHandles = [
@@ -44,34 +41,8 @@ class StorefrontHomeService {
 
   // ── HTTP helper ────────────────────────────────────────────────────────────
 
-  Future<Map<String, dynamic>> _query(String gql) async {
-    try {
-      final response = await http
-          .post(
-            Uri.parse(AppConstants.storefrontApiUrl),
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Shopify-Storefront-Access-Token':
-                  AppConstants.storefrontAccessToken,
-            },
-            body: jsonEncode({'query': gql}),
-          )
-          .timeout(const Duration(seconds: 30));
-
-      if (response.statusCode != 200) {
-        debugPrint('[Home] HTTP ${response.statusCode}');
-        return {};
-      }
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-      if (decoded['errors'] != null) {
-        debugPrint('[Home] GraphQL errors: ${decoded['errors']}');
-      }
-      return decoded['data'] as Map<String, dynamic>? ?? {};
-    } catch (e) {
-      debugPrint('[Home] query error: $e');
-      return {};
-    }
-  }
+  Future<Map<String, dynamic>> _query(String gql) =>
+      ShopifyClient.instance.safeQuery(gql);
 
   // ── Public ─────────────────────────────────────────────────────────────────
 
@@ -83,6 +54,8 @@ class StorefrontHomeService {
       _queryBestSellers(),
       _queryOrioleProducts(),
       _queryBannerMetaobjects(),
+      _queryInstagramReels(),
+      _queryShapeCollections(),
     ]);
 
     final content = results[0] as Map<String, dynamic>;
@@ -91,6 +64,8 @@ class StorefrontHomeService {
     final bestSellers = results[3] as List<HomeProduct>;
     final orioleProducts = results[4] as List<HomeProduct>;
     final bannerSlides = results[5] as List<Map<String, dynamic>>;
+    final instagramReels = results[6] as List<Map<String, dynamic>>;
+    final shapeCols = results[7] as Map<String, dynamic>;
 
     // Shop brand
     final shop = content['shop'] as Map<String, dynamic>? ?? {};
@@ -101,28 +76,14 @@ class StorefrontHomeService {
     final slogan = brand?['slogan'] as String? ?? '';
 
     // Page content
-    final configHtml =
-        (content['homeConfig'] as Map?)?['body'] as String? ?? '';
     final announcementHtml =
         (content['homeAnnouncements'] as Map?)?['body'] as String? ?? '';
-    final brandValuesHtml =
-        (content['homeBrandValues'] as Map?)?['body'] as String? ?? '';
-    final brandValuesTitle =
-        (content['homeBrandValues'] as Map?)?['title'] as String? ?? '';
-    final ctaPage = content['homeCustomizeCta'] as Map<String, dynamic>?;
-    final virtualCallPage =
-        content['homeVirtualCall'] as Map<String, dynamic>?;
     final contactHtml =
         (content['homeContact'] as Map?)?['body'] as String? ?? '';
 
-    final sectionOrder = configHtml.isNotEmpty
-        ? _parseSectionOrder(configHtml)
-        : List<String>.from(_defaultSectionOrder);
+    final sectionOrder = List<String>.from(_defaultSectionOrder);
 
     final announcements = _parseLines(announcementHtml);
-    final brandValues = _parseBrandValues(brandValuesHtml);
-    // Reviews are now loaded live from Judge.me via ReviewProvider — no static data needed.
-    final faqItems = _parseFaq(content['faq'] as Map<String, dynamic>?);
     final contact = _parseContact(contactHtml);
 
     // Build sections
@@ -135,12 +96,9 @@ class StorefrontHomeService {
         occCols: occCols,
         bestSellers: bestSellers,
         orioleProducts: orioleProducts,
-        brandValues: brandValues,
-        brandValuesTitle: brandValuesTitle,
-        faqItems: faqItems,
-        ctaPage: ctaPage,
-        virtualCallPage: virtualCallPage,
         bannerSlides: bannerSlides,
+        instagramReels: instagramReels,
+        shapeCols: shapeCols,
       );
       if (section != null) sections.add(section);
     }
@@ -169,40 +127,7 @@ class StorefrontHomeService {
         'announcements': announcements,
         'navigation': {
           'header': [],
-          'footer_links': [
-            {
-              'heading': 'Useful links',
-              'links': [
-                {'label': 'Book A Video Call', 'url': '/pages/virtual-consultation'},
-                {'label': 'Buy Back / Cancellation Policy', 'url': '/policies/refund-policy'},
-                {'label': 'Privacy Policy', 'url': '/policies/privacy-policy'},
-                {'label': 'Terms and Condition', 'url': '/policies/terms-of-service'},
-                {'label': 'Shipping & Delivery', 'url': '/policies/shipping-policy'},
-                {'label': 'FAQ', 'url': '/pages/faq'},
-                {'label': 'Blogs', 'url': '/blogs'},
-              ],
-            },
-            {
-              'heading': 'Know Your Jewellery',
-              'links': [
-                {'label': 'Ring Size Chart', 'url': '/pages/ring-size-chart'},
-                {'label': 'Bracelet Size Chart', 'url': '/pages/bracelet-size-chart'},
-                {'label': 'Growing diamonds', 'url': '/pages/growing-diamonds'},
-                {'label': 'The 4cs', 'url': '/pages/the-4cs'},
-                {'label': 'Get In Touch', 'url': '/pages/contact'},
-              ],
-            },
-            {
-              'heading': 'About Earthly',
-              'links': [
-                {'label': 'Store Locator', 'url': '/pages/store-locator'},
-                {'label': 'About Us', 'url': '/pages/about'},
-                {'label': 'Mystique Stone', 'url': '/pages/mystique-stone'},
-                {'label': 'Custom Jewellery design', 'url': '/pages/customize'},
-                {'label': 'The Founder Story', 'url': '/pages/founder-story'},
-              ],
-            },
-          ],
+          'footer': [],
         },
       }),
       sections: sections,
@@ -218,43 +143,27 @@ class StorefrontHomeService {
     required Map<String, dynamic> occCols,
     required List<HomeProduct> bestSellers,
     required List<HomeProduct> orioleProducts,
-    required List<Map<String, String>> brandValues,
-    required String brandValuesTitle,
-    required List<Map<String, String>> faqItems,
     required List<Map<String, dynamic>> bannerSlides,
-    Map<String, dynamic>? ctaPage,
-    Map<String, dynamic>? virtualCallPage,
+    required List<Map<String, dynamic>> instagramReels,
+    required Map<String, dynamic> shapeCols,
   }) {
     switch (type) {
       case 'hero_banner':
         return _buildHeroBanner(simpleCols, bannerSlides, order);
-      case 'product_grid':
-        return _buildProductGrid(bestSellers, order);
       case 'shop_by_category':
         return _buildShopByCategory(simpleCols, order);
-      case 'shop_by_shape':
-        return _buildShopByShape(simpleCols, order);
-      case 'collection_row':
-        return _buildCollectionRow(simpleCols, order);
-      case 'brand_values':
-        return _buildBrandValues(brandValues, brandValuesTitle, order);
-      case 'reviews_carousel':
-        return _buildReviews(order);
-      case 'occasions':
-        return _buildOccasions(occCols, order);
+      case 'product_grid':
+        return _buildProductGrid(bestSellers, order);
       case 'designer_rings':
         return _buildDesignerRings(simpleCols, order);
-      case 'stackable_bands':
-        return _buildStackableBands(simpleCols, order);
+      case 'occasions':
+        return _buildOccasions(occCols, order);
+      case 'shop_by_shape':
+        return _buildShopByShape(shapeCols, order);
       case 'oriole_exclusive':
         return _buildOrioleExclusive(simpleCols, orioleProducts, order);
-      case 'customize_cta':
-      case 'full_width_cta':
-        return _buildCustomizeCta(ctaPage, order);
-      case 'virtual_call_cta':
-        return _buildVirtualCallCta(virtualCallPage, order);
-      case 'faq_accordion':
-        return _buildFaq(faqItems, order);
+      case 'instagram_reels':
+        return _buildInstagramReels(instagramReels, order);
       default:
         return null;
     }
@@ -365,7 +274,22 @@ class StorefrontHomeService {
     final tiles = <Map<String, dynamic>>[];
     for (final entry in _shapeLabels.entries) {
       final col = cols[entry.key] as Map<String, dynamic>?;
-      final imageUrl = (col?['image'] as Map?)?['url'] as String? ?? '';
+      String imageUrl = (col?['image'] as Map?)?['url'] as String? ?? '';
+      // Fallback: use first product image when collection has no cover image
+      if (imageUrl.isEmpty) {
+        final productEdges =
+            ((col?['products'] as Map?)?['edges'] as List?) ?? [];
+        if (productEdges.isNotEmpty) {
+          final node =
+              (productEdges.first['node'] as Map<String, dynamic>?) ?? {};
+          final imgEdges =
+              ((node['images'] as Map?)?['edges'] as List?) ?? [];
+          if (imgEdges.isNotEmpty) {
+            imageUrl =
+                (imgEdges.first['node'] as Map?)?['url'] as String? ?? '';
+          }
+        }
+      }
       if (imageUrl.isEmpty) continue;
       tiles.add({
         'handle': col?['handle'] as String? ?? '',
@@ -389,67 +313,6 @@ class StorefrontHomeService {
     );
   }
 
-  HomeSection? _buildCollectionRow(Map<String, dynamic> cols, int order) {
-    final tiles = <Map<String, dynamic>>[];
-    for (final idx in [0, 1, 2, 3, 4]) {
-      final col = cols['c$idx'] as Map<String, dynamic>?;
-      final imageUrl = (col?['image'] as Map?)?['url'] as String? ?? '';
-      if (imageUrl.isEmpty) continue;
-      tiles.add({
-        'handle': col?['handle'] as String? ?? '',
-        'title': col?['title'] as String? ?? '',
-        'image_url': imageUrl,
-        'description': col?['description'] as String? ?? '',
-      });
-    }
-    if (tiles.isEmpty) return null;
-    return HomeSection(
-      id: 'collection_row',
-      type: 'collection_row',
-      visible: true,
-      order: order,
-      data: {
-        'title': 'Shop by Category',
-        'cta_label': 'View All',
-        'cta_url': '/collections/all',
-        'tiles': tiles,
-      },
-    );
-  }
-
-  HomeSection? _buildBrandValues(
-    List<Map<String, String>> values,
-    String title,
-    int order,
-  ) {
-    if (values.isEmpty) return null;
-    return HomeSection(
-      id: 'brand_values',
-      type: 'brand_values',
-      visible: true,
-      order: order,
-      data: {
-        'title': title.isNotEmpty ? title : 'Why Earthly Jewels',
-        'values': values
-            .map((v) => {
-                  'icon': v['icon'] ?? '',
-                  'title': v['title'] ?? '',
-                  'body': v['body'] ?? '',
-                })
-            .toList(),
-      },
-    );
-  }
-
-  HomeSection? _buildReviews(int order) {
-    return HomeSection(
-      id: 'reviews_carousel',
-      type: 'reviews_carousel',
-      visible: true,
-      order: order,
-      data: {'section_title': 'What Our Customers Say'},
-    );
-  }
 
   HomeSection? _buildOccasions(Map<String, dynamic> occCols, int order) {
     final tabs = <Map<String, dynamic>>[];
@@ -513,28 +376,6 @@ class StorefrontHomeService {
     );
   }
 
-  HomeSection? _buildStackableBands(Map<String, dynamic> cols, int order) {
-    final col = cols['c14'] as Map<String, dynamic>?;
-    final title = col?['title'] as String? ?? '';
-    if (title.isEmpty) return null;
-    final imageUrl = (col?['image'] as Map?)?['url'] as String? ?? '';
-    final description = col?['description'] as String? ?? '';
-    final handle = col?['handle'] as String? ?? 'stackable-diamond-bands';
-    return HomeSection(
-      id: 'stackable_bands',
-      type: 'stackable_bands',
-      visible: true,
-      order: order,
-      data: {
-        'image_url': imageUrl,
-        'title': title,
-        'subtitle': description,
-        'cta_label': 'View Collection',
-        'cta_url': '/collections/$handle',
-      },
-    );
-  }
-
   HomeSection? _buildOrioleExclusive(
     Map<String, dynamic> cols,
     List<HomeProduct> orioleProducts,
@@ -543,7 +384,7 @@ class StorefrontHomeService {
     debugPrint('[Oriole] _buildOrioleExclusive called, products: ${orioleProducts.length}');
     if (orioleProducts.isEmpty) return null;
     final col = cols['c13'] as Map<String, dynamic>?;
-    final sectionTitle = col?['title'] as String? ?? 'Oriole Diamonds';
+    final sectionTitle = col?['title'] as String? ?? 'Earthly Exclusive Diamonds';
     final collHandle = col?['handle'] as String? ?? 'oriole';
     return HomeSection(
       id: 'oriole_exclusive',
@@ -560,68 +401,17 @@ class StorefrontHomeService {
     );
   }
 
-  HomeSection? _buildCustomizeCta(Map<String, dynamic>? ctaPage, int order) {
-    if (ctaPage == null) return null;
-    final title = ctaPage['title'] as String? ?? '';
-    if (title.isEmpty) return null;
-    final bodyHtml = ctaPage['body'] as String? ?? '';
-    final subtitle = _extractSubtitle(bodyHtml);
-    final imageUrl =
-        (ctaPage['featuredImage'] as Map?)?['url'] as String? ?? '';
+  HomeSection _buildInstagramReels(
+      List<Map<String, dynamic>> reels, int order) {
     return HomeSection(
-      id: 'customize_cta',
-      type: 'customize_cta',
+      id: 'instagram_reels',
+      type: 'instagram_reels',
       visible: true,
       order: order,
       data: {
-        'image_url': imageUrl,
-        'title': title,
-        'subtitle': subtitle,
-        'cta_label': 'Customize Now',
-        'cta_url': '/pages/customize',
-      },
-    );
-  }
-
-  HomeSection? _buildVirtualCallCta(
-      Map<String, dynamic>? page, int order) {
-    if (page == null) return null;
-    final title = page['title'] as String? ?? '';
-    if (title.isEmpty) return null;
-    final bodyHtml = page['body'] as String? ?? '';
-    final subtitle = _extractSubtitle(bodyHtml);
-    final imageUrl =
-        (page['featuredImage'] as Map?)?['url'] as String? ?? '';
-    return HomeSection(
-      id: 'virtual_call_cta',
-      type: 'virtual_call_cta',
-      visible: true,
-      order: order,
-      data: {
-        'image_url': imageUrl,
-        'title': title,
-        'subtitle': subtitle,
-        'cta_label': 'Schedule Your Call',
-        'cta_url': '/pages/virtual-consultation',
-      },
-    );
-  }
-
-  HomeSection? _buildFaq(List<Map<String, String>> items, int order) {
-    if (items.isEmpty) return null;
-    return HomeSection(
-      id: 'faq_accordion',
-      type: 'faq_accordion',
-      visible: true,
-      order: order,
-      data: {
-        'title': 'Everything you want to know about Earthly Jewels',
-        'items': items
-            .map((f) => {
-                  'question': f['question'] ?? '',
-                  'answer': f['answer'] ?? '',
-                })
-            .toList(),
+        'title': 'Instagram Reels & Feeds',
+        'instagram_handle': '@earthlyjewels.co',
+        'reels': reels,
       },
     );
   }
@@ -639,28 +429,8 @@ class StorefrontHomeService {
           shortDescription
         }
       }
-      homeConfig: page(handle: "home-config") { body }
       homeAnnouncements: page(handle: "home-announcements") { body }
-      homeBrandValues: page(handle: "home-brand-values") { title body }
-      homeCustomizeCta: page(handle: "home-customize-cta") {
-        title body
-        featuredImage { url }
-      }
-      homeVirtualCall: page(handle: "home-virtual-call") {
-        title body
-        featuredImage { url }
-      }
       homeContact: page(handle: "home-contact") { body }
-      testimonials: blog(handle: "testimonials") {
-        articles(first: 8, sortKey: PUBLISHED_AT, reverse: true) {
-          edges { node { title contentHtml tags } }
-        }
-      }
-      faq: blog(handle: "faq") {
-        articles(first: 20, sortKey: PUBLISHED_AT) {
-          edges { node { title contentHtml } }
-        }
-      }
     }
   ''');
 
@@ -776,16 +546,6 @@ class StorefrontHomeService {
       c12: collectionByHandle(handle: "lab-grown-diamond-engagement-rings") { title handle description image { url } }
       c13: collectionByHandle(handle: "oriole")                             { title handle description image { url } }
       c14: collectionByHandle(handle: "stackable-diamond-bands")            { title handle description image { url } }
-      s0:  collectionByHandle(handle: "round-diamond")                      { title handle image { url } }
-      s1:  collectionByHandle(handle: "oval-diamond")                       { title handle image { url } }
-      s2:  collectionByHandle(handle: "pear-diamond")                       { title handle image { url } }
-      s3:  collectionByHandle(handle: "marquise-diamond")                   { title handle image { url } }
-      s4:  collectionByHandle(handle: "cushion-cut-engagement-rings")       { title handle image { url } }
-      s5:  collectionByHandle(handle: "princess-diamond")                   { title handle image { url } }
-      s6:  collectionByHandle(handle: "emerald-diamond")                    { title handle image { url } }
-      s7:  collectionByHandle(handle: "heart-diamond")                      { title handle image { url } }
-      s8:  collectionByHandle(handle: "asscher-cut-diamond")                { title handle image { url } }
-      s9:  collectionByHandle(handle: "radiant-diamond")                    { title handle image { url } }
     }
   ''');
 
@@ -873,48 +633,119 @@ class StorefrontHomeService {
         .toList();
   }
 
-  Future<List<HomeProduct>> _queryOrioleProducts() async {
-    final data = await _query('''
+  Future<Map<String, dynamic>> _queryShapeCollections() {
+    const prodFrag = '''
+      products(first: 1) {
+        edges { node { images(first: 1) { edges { node { url } } } } }
+      }
+    ''';
+    return _query('''
       {
-        collectionByHandle(handle: "oriole") {
-          products(first: 8, sortKey: BEST_SELLING) {
-            edges { node { $_pf } }
-          }
-        }
+        s0: collectionByHandle(handle: "round-diamond")                { title handle image { url } $prodFrag }
+        s1: collectionByHandle(handle: "oval-diamond")                 { title handle image { url } $prodFrag }
+        s2: collectionByHandle(handle: "pear-diamond")                 { title handle image { url } $prodFrag }
+        s3: collectionByHandle(handle: "marquise-diamond")             { title handle image { url } $prodFrag }
+        s4: collectionByHandle(handle: "cushion-cut-engagement-rings") { title handle image { url } $prodFrag }
+        s5: collectionByHandle(handle: "princess-diamond")             { title handle image { url } $prodFrag }
+        s6: collectionByHandle(handle: "emerald-diamond")              { title handle image { url } $prodFrag }
+        s7: collectionByHandle(handle: "heart-diamond")                { title handle image { url } $prodFrag }
+        s8: collectionByHandle(handle: "asscher-cut-diamond")          { title handle image { url } $prodFrag }
+        s9: collectionByHandle(handle: "radiant-diamond")              { title handle image { url } $prodFrag }
       }
     ''');
-    final col = data['collectionByHandle'] as Map<String, dynamic>?;
-    debugPrint('[Oriole] collectionByHandle result: ${col == null ? "NULL (collection not found)" : "found"}');
-    final edges = (col?['products']?['edges'] as List?) ?? [];
-    debugPrint('[Oriole] product edges count: ${edges.length}');
-    final products = edges
-        .map((e) => HomeProduct.fromJson(
-              _productNodeToMap(e['node'] as Map<String, dynamic>),
-            ))
-        .toList();
-    debugPrint('[Oriole] parsed products: ${products.length}');
-    return products;
+  }
+
+  Future<List<Map<String, dynamic>>> _queryInstagramReels() async {
+    try {
+      final data = await _query('''
+        {
+          metaobjects(type: "instagram_reel", first: 12) {
+            edges {
+              node {
+                fields {
+                  key value
+                  reference {
+                    ... on MediaImage { image { url } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ''');
+      final edges = (data['metaobjects']?['edges'] as List?) ?? [];
+      if (edges.isEmpty) return [];
+      final reels = <Map<String, dynamic>>[];
+      for (final edge in edges) {
+        final fields = (edge['node']?['fields'] as List?) ?? [];
+        String thumbnailUrl = '';
+        String reelUrl = '';
+        String caption = '';
+        for (final f in fields) {
+          final key = f['key'] as String? ?? '';
+          final val = f['value'] as String? ?? '';
+          switch (key) {
+            case 'thumbnail':
+            case 'image':
+            case 'cover':
+              final ref = f['reference'] as Map<String, dynamic>?;
+              thumbnailUrl = (ref?['image'] as Map?)?['url'] as String? ?? '';
+            case 'reel_url':
+            case 'url':
+            case 'link':
+              reelUrl = val;
+            case 'caption':
+            case 'description':
+              caption = val;
+          }
+        }
+        if (thumbnailUrl.isEmpty && reelUrl.isEmpty) continue;
+        reels.add({
+          'thumbnail_url': thumbnailUrl,
+          'reel_url': reelUrl,
+          'caption': caption,
+        });
+      }
+      return reels;
+    } catch (e) {
+      debugPrint('[Home] instagram reels error: $e');
+      return [];
+    }
+  }
+
+  static const List<String> _orioleHandles = [
+    'oriole',
+    'oriole-diamonds',
+    'earthly-exclusive-diamonds',
+    'earthly-exclusive',
+  ];
+
+  Future<List<HomeProduct>> _queryOrioleProducts() async {
+    final aliases = _orioleHandles
+        .asMap()
+        .entries
+        .map((e) =>
+            'o${e.key}: collectionByHandle(handle: "${e.value}") { products(first: 8, sortKey: BEST_SELLING) { edges { node { $_pf } } } }')
+        .join('\n');
+    final data = await _query('{ $aliases }');
+
+    for (var i = 0; i < _orioleHandles.length; i++) {
+      final col = data['o$i'] as Map<String, dynamic>?;
+      final edges = (col?['products']?['edges'] as List?) ?? [];
+      debugPrint('[Oriole] handle="${_orioleHandles[i]}" edges=${edges.length}');
+      if (edges.isNotEmpty) {
+        return edges
+            .map((e) => HomeProduct.fromJson(
+                  _productNodeToMap(e['node'] as Map<String, dynamic>),
+                ))
+            .toList();
+      }
+    }
+    debugPrint('[Oriole] no products found in any handle');
+    return [];
   }
 
   // ── Parsing helpers ────────────────────────────────────────────────────────
-
-  String _stripHtml(String html) {
-    return html
-        .replaceAll(RegExp(r'<[^>]*>', dotAll: true), ' ')
-        .replaceAll('&amp;', '&')
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>')
-        .replaceAll('&quot;', '"')
-        .replaceAll('&#39;', "'")
-        .replaceAll('&nbsp;', ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-  }
-
-  String _extractSubtitle(String html) {
-    final text = _stripHtml(html);
-    return text.length > 250 ? '${text.substring(0, 247)}...' : text;
-  }
 
   List<String> _parseLines(String html) {
     return html
@@ -929,54 +760,6 @@ class StorefrontHomeService {
         .map((l) => l.trim())
         .where((l) => l.isNotEmpty)
         .toList();
-  }
-
-  List<String> _parseSectionOrder(String html) {
-    const validTypes = {
-      'hero_banner', 'shop_by_category', 'product_grid',
-      'designer_rings', 'occasions', 'shop_by_shape',
-      'oriole_exclusive', 'customize_cta', 'full_width_cta', 'virtual_call_cta',
-    };
-    final lines = _parseLines(html)
-        .where((l) => validTypes.contains(l.toLowerCase()))
-        .toList();
-    return lines.isNotEmpty ? lines : List<String>.from(_defaultSectionOrder);
-  }
-
-  List<Map<String, String>> _parseBrandValues(String html) {
-    if (html.isEmpty) return [];
-    final values = <Map<String, String>>[];
-    for (final line in _parseLines(html)) {
-      final parts = line.split('|');
-      if (parts.length >= 3) {
-        values.add({
-          'icon': parts[0].trim(),
-          'title': parts[1].trim(),
-          'body': parts.skip(2).join('|').trim(),
-        });
-      } else if (parts.length == 2) {
-        values.add({
-          'icon': '',
-          'title': parts[0].trim(),
-          'body': parts[1].trim(),
-        });
-      }
-    }
-    return values;
-  }
-
-  List<Map<String, String>> _parseFaq(Map<String, dynamic>? blogData) {
-    final edges = (blogData?['articles']?['edges'] as List?) ?? [];
-    final items = <Map<String, String>>[];
-    for (final edge in edges) {
-      final node = edge['node'] as Map<String, dynamic>? ?? {};
-      final question = node['title'] as String? ?? '';
-      final answer = _stripHtml(node['contentHtml'] as String? ?? '');
-      if (question.isNotEmpty && answer.isNotEmpty) {
-        items.add({'question': question, 'answer': answer});
-      }
-    }
-    return items;
   }
 
   Map<String, dynamic> _parseContact(String html) {

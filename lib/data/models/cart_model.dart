@@ -1,3 +1,5 @@
+import '../../core/utils/format_utils.dart';
+
 class CartLineItem {
   final String lineId;
   final String variantId;
@@ -21,21 +23,9 @@ class CartLineItem {
 
   double get lineTotal => price * quantity;
 
-  String get formattedPrice {
-    final formatted = price.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
-    return '₹$formatted';
-  }
+  String get formattedPrice => FormatUtils.formatPrice(price);
 
-  String get formattedLineTotal {
-    final formatted = lineTotal.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
-    return '₹$formatted';
-  }
+  String get formattedLineTotal => FormatUtils.formatPrice(lineTotal);
 
   CartLineItem copyWith({int? quantity}) {
     return CartLineItem(
@@ -88,13 +78,7 @@ class Cart {
 
   int get totalQuantity => lines.fold(0, (sum, item) => sum + item.quantity);
 
-  String get formattedSubtotal {
-    final formatted = subtotal.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
-    return '₹$formatted';
-  }
+  String get formattedSubtotal => FormatUtils.formatPrice(subtotal);
 
   Cart copyWith({
     String? id,

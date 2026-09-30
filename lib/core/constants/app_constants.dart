@@ -1,23 +1,13 @@
 class AppConstants {
   AppConstants._();
 
-  // ── Shopify Storefront API ──────────────────────────────────────────────────
-  static const String shopDomain = 'earthlyjewels.co';
-
-  // ── Judge.me Reviews ────────────────────────────────────────────────────────
-  // Public Token — safe to commit. Found in Judge.me → Settings → General → API section.
-  static const String judgeMePublicToken = '1lo-Qc8pmxTOpzmH2b36IiheWrg';
-  static const String judgeMeShopDomain = 'gold-rate-update.myshopify.com';
-  static const String storefrontApiVersion = '2026-07';
-  static const String storefrontApiUrl =
-      'https://$shopDomain/api/$storefrontApiVersion/graphql.json';
-  static const String storefrontAccessToken = 'f0a6b56aed212f4ea6a306e9909e3fac';
-
+  // ── Layout ────────────────────────────────────────────────────────────────────
   static const double horizontalPadding = 16.0;
   static const double sectionSpacing = 40.0;
   static const double cardSpacing = 12.0;
   static const double borderRadius = 4.0;
 
+  // ── Collection handles ────────────────────────────────────────────────────────
   static const List<String> bannerCollectionHandles = [
     'lab-grown-diamond-rings',
     'lab-grown-diamond-earrings',

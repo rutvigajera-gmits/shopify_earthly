@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:nb_utils/nb_utils.dart';
+import 'core/config/api_config.dart';
 import 'core/theme/app_colors.dart';
 import 'app.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  Stripe.publishableKey = ApiConfig.stripePublishableKey;
+  await Stripe.instance.applySettings();
 
   // Wire nb_utils text color globals to brand tokens so that
   // primaryTextStyle() / boldTextStyle() / secondaryTextStyle() called

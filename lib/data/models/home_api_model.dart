@@ -355,6 +355,7 @@ class HomeSection {
   OccasionsData get occasionsData => OccasionsData.fromJson(data);
   FullWidthCtaData get fullWidthCtaData => FullWidthCtaData.fromJson(data);
   ProductGridData get orioleExclusiveData => ProductGridData.fromJson(data);
+  InstagramReelsData get instagramReelsData => InstagramReelsData.fromJson(data);
 }
 
 // ─── Section data: hero_banner ────────────────────────────────────────────────
@@ -847,6 +848,53 @@ class OccasionsData {
             );
           })
           .where((t) => t.title.isNotEmpty)
+          .toList(),
+    );
+  }
+}
+
+// ─── Section data: instagram_reels ───────────────────────────────────────────
+
+class InstagramReelItem {
+  final String thumbnailUrl;
+  final String reelUrl;
+  final String caption;
+
+  const InstagramReelItem({
+    required this.thumbnailUrl,
+    required this.reelUrl,
+    required this.caption,
+  });
+}
+
+class InstagramReelsData {
+  final String title;
+  final String instagramHandle;
+  final List<InstagramReelItem> reels;
+
+  const InstagramReelsData({
+    required this.title,
+    required this.instagramHandle,
+    required this.reels,
+  });
+
+  bool get hasContent => reels.isNotEmpty;
+
+  factory InstagramReelsData.fromJson(Map<String, dynamic> json) {
+    final list = json['reels'] as List? ?? [];
+    return InstagramReelsData(
+      title: json['title'] as String? ?? 'Instagram Reels & Feeds',
+      instagramHandle: json['instagram_handle'] as String? ?? '@earthlyjewels.co',
+      reels: list
+          .map((e) {
+            final m = _asMap(e);
+            return InstagramReelItem(
+              thumbnailUrl: m['thumbnail_url'] as String? ?? '',
+              reelUrl: m['reel_url'] as String? ?? '',
+              caption: m['caption'] as String? ?? '',
+            );
+          })
+          .where((r) => r.thumbnailUrl.isNotEmpty || r.reelUrl.isNotEmpty)
           .toList(),
     );
   }

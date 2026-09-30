@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/product_model.dart';
 import '../models/collection_model.dart';
 import '../services/shopify_service.dart';
+import '../../core/utils/format_utils.dart';
 
 class ProductProvider extends ChangeNotifier {
   final _service = ShopifyService.instance;
@@ -94,7 +95,7 @@ class ProductProvider extends ChangeNotifier {
     try {
       _selectedProduct = await _service.fetchProductByHandle(handle);
     } catch (e) {
-      _productError = e.toString().replaceFirst('Exception: ', '');
+      _productError = FormatUtils.trimException(e);
       _error = _productError;
     } finally {
       _loadingProduct = false;

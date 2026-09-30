@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/providers/cart_provider.dart';
@@ -318,12 +318,7 @@ class _OrderSummary extends StatelessWidget {
     );
   }
 
-  Future<void> _checkout(BuildContext context) async {
-    final url = cart.checkoutUrl;
-    if (url == null) return;
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  void _checkout(BuildContext context) {
+    Navigator.of(context).pushNamed(AppRoutes.checkout);
   }
 }

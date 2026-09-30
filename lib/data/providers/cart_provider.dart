@@ -69,4 +69,10 @@ class CartProvider extends ChangeNotifier {
   }
 
   String? get checkoutUrl => _cart.checkoutUrl;
+
+  void clearCart() {
+    _cart = const Cart();
+    _error = null;
+    notifyListeners();
+  }
 }

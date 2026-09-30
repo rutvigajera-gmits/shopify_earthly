@@ -1,8 +1,9 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/constants/app_strings.dart';
 
 class RecentlyViewedService {
   RecentlyViewedService._();
-  static const _key = 'recently_viewed';
+  static const _key = AppStrings.recentlyViewedKey;
   static const _max = 10;
 
   static Future<List<String>> getHandles() async {

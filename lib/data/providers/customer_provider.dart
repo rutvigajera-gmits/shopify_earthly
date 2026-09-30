@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/customer_model.dart';
 import '../services/shopify_service.dart';
+import '../../core/constants/app_strings.dart';
+import '../../core/utils/format_utils.dart';
 
 class CustomerProvider extends ChangeNotifier {
   final _service = ShopifyService.instance;
@@ -30,14 +32,14 @@ class CustomerProvider extends ChangeNotifier {
   Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('customer_token');
+      final token = prefs.getString(AppStrings.customerTokenKey);
       if (token == null || token.isEmpty) return;
       final customer = await _service.fetchCustomer(token);
       if (customer != null) {
         _customer = customer;
         _accessToken = token;
       } else {
-        await prefs.remove('customer_token');
+        await prefs.remove(AppStrings.customerTokenKey);
       }
     } catch (_) {}
     notifyListeners();
@@ -54,9 +56,9 @@ class CustomerProvider extends ChangeNotifier {
       _customer = await _service.fetchCustomer(token);
       _ordersLoaded = false;
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('customer_token', token);
+      await prefs.setString(AppStrings.customerTokenKey, token);
     } catch (e) {
-      _error = e.toString().replaceFirst('Exception: ', '');
+      _error = FormatUtils.trimException(e);
     } finally {
       _loading = false;
       notifyListeners();
@@ -85,9 +87,9 @@ class CustomerProvider extends ChangeNotifier {
       _accessToken = token;
       _customer = await _service.fetchCustomer(token);
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('customer_token', token);
+      await prefs.setString(AppStrings.customerTokenKey, token);
     } catch (e) {
-      _error = e.toString().replaceFirst('Exception: ', '');
+      _error = FormatUtils.trimException(e);
     } finally {
       _loading = false;
       notifyListeners();
@@ -109,7 +111,7 @@ class CustomerProvider extends ChangeNotifier {
     _orders = [];
     _ordersLoaded = false;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('customer_token');
+    await prefs.remove(AppStrings.customerTokenKey);
     notifyListeners();
   }
 
@@ -153,7 +155,7 @@ class CustomerProvider extends ChangeNotifier {
       );
       if (updated != null) _customer = updated;
     } catch (e) {
-      _error = e.toString().replaceFirst('Exception: ', '');
+      _error = FormatUtils.trimException(e);
     } finally {
       _loading = false;
       notifyListeners();
@@ -187,7 +189,7 @@ class CustomerProvider extends ChangeNotifier {
       notifyListeners();
       return null;
     } catch (e) {
-      return e.toString().replaceFirst('Exception: ', '');
+      return FormatUtils.trimException(e);
     }
   }
 
@@ -207,7 +209,7 @@ class CustomerProvider extends ChangeNotifier {
       notifyListeners();
       return null;
     } catch (e) {
-      return e.toString().replaceFirst('Exception: ', '');
+      return FormatUtils.trimException(e);
     }
   }
 
@@ -222,7 +224,7 @@ class CustomerProvider extends ChangeNotifier {
       notifyListeners();
       return null;
     } catch (e) {
-      return e.toString().replaceFirst('Exception: ', '');
+      return FormatUtils.trimException(e);
     }
   }
 
@@ -239,7 +241,7 @@ class CustomerProvider extends ChangeNotifier {
       notifyListeners();
       return null;
     } catch (e) {
-      return e.toString().replaceFirst('Exception: ', '');
+      return FormatUtils.trimException(e);
     }
   }
 }

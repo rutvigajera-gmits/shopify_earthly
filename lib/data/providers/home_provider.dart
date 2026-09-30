@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import '../models/home_api_model.dart';
 import '../services/storefront_home_service.dart';
+import '../../core/constants/app_strings.dart';
+import '../../core/utils/format_utils.dart';
 
 class HomeProvider extends ChangeNotifier {
   final _service = StorefrontHomeService.instance;
@@ -20,13 +22,11 @@ class HomeProvider extends ChangeNotifier {
   List<HomeSection> get sections => _data?.sections ?? [];
 
   String get logoUrl => _data?.theme.logo.url ?? '';
-  String get shopName => _data?.global.shopName ?? 'Earthly Jewels';
+  String get shopName => _data?.global.shopName ?? AppStrings.defaultShopName;
 
   List<String> get announcements {
     final msgs = _data?.global.announcements ?? [];
-    return msgs.isNotEmpty
-        ? msgs
-        : const ['BOOK YOUR STORE VISIT - ANDHERI WEST MUMBAI'];
+    return msgs.isNotEmpty ? msgs : const [AppStrings.defaultAnnouncement];
   }
 
   Future<void> initialize() async {
@@ -37,7 +37,7 @@ class HomeProvider extends ChangeNotifier {
       _data = await _service.fetchHome();
       _error = null;
     } catch (e) {
-      _error = e.toString().replaceFirst('Exception: ', '');
+      _error = FormatUtils.trimException(e);
     }
     _loading = false;
     _initialized = true;
@@ -51,7 +51,7 @@ class HomeProvider extends ChangeNotifier {
     try {
       _data = await _service.fetchHome();
     } catch (e) {
-      _error = e.toString().replaceFirst('Exception: ', '');
+      _error = FormatUtils.trimException(e);
     }
     _loading = false;
     _initialized = true;

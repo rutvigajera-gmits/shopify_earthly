@@ -1,3 +1,5 @@
+import '../../core/utils/format_utils.dart';
+
 class ProductImage {
   final String url;
   final String? altText;
@@ -157,11 +159,7 @@ class Product {
 
   String get formattedMinPrice {
     final price = double.tryParse(minPrice) ?? 0;
-    final formatted = price.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
-    return '₹$formatted';
+    return FormatUtils.formatPrice(price);
   }
 
   ProductImage? get primaryImage => images.isNotEmpty ? images.first : null;

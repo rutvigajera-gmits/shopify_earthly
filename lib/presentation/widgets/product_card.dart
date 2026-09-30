@@ -45,9 +45,7 @@ class ProductCard extends StatelessWidget {
               aspectRatio: 1.0,
               child: _ProductImage(product: product),
             ),
-            // Info fills remaining height (works in both GridView cells and
-            // height-constrained horizontal ListViews)
-            Expanded(
+            Flexible(
               child: _ProductInfo(product: product),
             ),
           ],
@@ -120,39 +118,41 @@ class _ProductInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtitle = product.vendor?.isNotEmpty == true ? product.vendor! : '';
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Text(
-            product.title,
-            style: AppTextStyles.productName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (subtitle.isNotEmpty) ...[
-            const SizedBox(height: 3),
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Text(
-              subtitle,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textMuted,
-                fontSize: 11,
-              ),
+              product.title,
+              style: AppTextStyles.productName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-          ],
-          const SizedBox(height: 5),
-          Text(
-            product.formattedMinPrice,
-            style: AppTextStyles.priceText.copyWith(
-              color: AppColors.teal,
-              fontSize: 13,
+            if (subtitle.isNotEmpty) ...[
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textMuted,
+                  fontSize: 11,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            const SizedBox(height: 5),
+            Text(
+              product.formattedMinPrice,
+              style: AppTextStyles.priceText.copyWith(
+                color: AppColors.teal,
+                fontSize: 13,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -33,6 +33,7 @@ dependencies:
   share_plus: ^10.1.0
   video_player: ^2.9.2
   nb_utils: ^7.0.0
+  flutter_stripe: ^10.1.0
 
 dev_dependencies:
   flutter_test:

@@ -1,8 +1,9 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/constants/app_strings.dart';
 
 class WishlistService {
   WishlistService._();
-  static const _key = 'wishlist_handles';
+  static const _key = AppStrings.wishlistKey;
 
   static Future<List<String>> getHandles() async {
     final prefs = await SharedPreferences.getInstance();

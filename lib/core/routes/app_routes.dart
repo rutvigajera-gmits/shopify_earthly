@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../presentation/screens/products/product_detail_screen.dart';
 import '../../presentation/screens/products/shape_products_screen.dart';
 import '../../presentation/screens/cart/cart_screen.dart';
+import '../../presentation/screens/checkout/checkout_screen.dart';
+import '../../presentation/screens/checkout/order_confirmation_screen.dart';
 import '../../presentation/screens/search/search_screen.dart';
 import '../../presentation/screens/wishlist/wishlist_screen.dart';
 import '../../presentation/screens/account/addresses_screen.dart';
@@ -12,6 +14,8 @@ class AppRoutes {
   static const String home = '/';
   static const String product = '/product';
   static const String cart = '/cart';
+  static const String checkout = '/checkout';
+  static const String orderConfirmation = '/order-confirmation';
   static const String search = '/search';
   static const String wishlist = '/wishlist';
   static const String addresses = '/addresses';
@@ -26,6 +30,11 @@ class AppRoutes {
         );
       case cart:
         return MaterialPageRoute(builder: (_) => const CartScreen());
+      case checkout:
+        return MaterialPageRoute(builder: (_) => const CheckoutScreen());
+      case orderConfirmation:
+        return MaterialPageRoute(
+            builder: (_) => const OrderConfirmationScreen());
       case search:
         return MaterialPageRoute(builder: (_) => const SearchScreen());
       case wishlist:
