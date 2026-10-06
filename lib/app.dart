@@ -10,6 +10,7 @@ import 'presentation/providers/customer_provider.dart';
 import 'presentation/providers/home_provider.dart';
 import 'presentation/providers/order_provider.dart';
 import 'presentation/providers/wishlist_provider.dart';
+import 'presentation/providers/chatbot_provider.dart';
 import 'presentation/screens/splash/splash_screen.dart';
 
 class EarthlyApp extends StatelessWidget {
@@ -27,6 +28,7 @@ class EarthlyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CustomerProvider()),
         ChangeNotifierProvider(create: (_) => WishlistProvider()),
         ChangeNotifierProvider(create: (_) => OrderProvider()),
+        ChangeNotifierProvider(create: (_) => ChatbotProvider.instance),
       ],
       child: MaterialApp(
         title: 'Earthly Jewels',

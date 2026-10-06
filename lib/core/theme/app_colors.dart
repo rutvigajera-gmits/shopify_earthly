@@ -64,4 +64,13 @@ class AppColors {
   static const Color textLight         = textMuted;
   static const Color shadow            = Color(0x1A000000);
   static const Color badgeBackground   = Color(0xFFFFF0F3);
+
+  // ── Chatbot / Ring Matchmaker ──────────────────────────────────────────────
+  static const Color chatBubbleBot     = neutral100;        // #F5F5F5 — bot message bg
+  static const Color chatBubbleUser    = teal;              // #01414B — user message bg
+  static const Color chatBubbleError   = Color(0xFFFFEEEE); // light red — error message bg
+  static const Color chatAvatar        = Color(0xFFF5F0EB); // warm cream — bot avatar bg
+  static const Color chatFab           = primary;           // dark pill FAB bg
+  static const Color chatFabBorder     = Color(0xFF2A2A2A); // FAB border
+  static const Color chatInputFill     = neutral100;        // text field fill
 }

@@ -8,6 +8,7 @@ import '../home/home_screen.dart';
 import '../products/products_screen.dart';
 import '../account/account_screen.dart';
 import '../../common/widgets/bottom_nav.dart';
+import '../../common/widgets/chatbot_fab.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -36,23 +37,33 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
+      body: Stack(
         children: [
-          HomeScreen(
-            onSearchTap: _openSearch,
-            onCartTap: _openCart,
-            onWishlistTap: () =>
-                Navigator.of(context).pushNamed(AppRoutes.wishlist),
-            onNavTap: _navigate,
+          IndexedStack(
+            index: _currentIndex,
+            children: [
+              HomeScreen(
+                onSearchTap: _openSearch,
+                onCartTap: _openCart,
+                onWishlistTap: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.wishlist),
+                onNavTap: _navigate,
+              ),
+              ProductsScreen(
+                onSearchTap: _openSearch,
+                onCartTap: _openCart,
+              ),
+              const _SearchTab(),
+              const _CartTab(),
+              const AccountScreen(),
+            ],
           ),
-          ProductsScreen(
-            onSearchTap: _openSearch,
-            onCartTap: _openCart,
+          // Ring Matchmaker FAB — floats above all tabs
+          const Positioned(
+            right: 16,
+            bottom: 16,
+            child: ChatbotFab(),
           ),
-          const _SearchTab(),
-          const _CartTab(),
-          const AccountScreen(),
         ],
       ),
       bottomNavigationBar: EarthlyBottomNav(

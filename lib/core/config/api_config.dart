@@ -20,4 +20,8 @@ class ApiConfig {
   // The secret key is no longer needed in the app — Shopify uses it server-side.
   static const String stripePublishableKey = 'pk_live_REPLACE_WITH_EARTHLY_JEWELS_LIVE_KEY';
   static const String stripeCurrency = 'inr';
+
+  // Groq API key — free at console.groq.com (no credit card needed, 14,400 req/day free)
+  static const String groqApiKey = 'PASTE_YOUR_GROQ_KEY_HERE';
+  static const String groqModel = 'openai/gpt-oss-20b';
 }
