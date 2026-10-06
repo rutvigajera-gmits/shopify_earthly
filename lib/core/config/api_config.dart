@@ -1,3 +1,5 @@
+import 'api_secrets.dart';
+
 class ApiConfig {
   ApiConfig._();
 
@@ -14,14 +16,10 @@ class ApiConfig {
   static const String judgeMeShopDomain = 'gold-rate-update.myshopify.com';
 
   // Stripe publishable key — public-facing, safe to commit.
-  // Replace with the live key (pk_live_...) from the Earthly Jewels Stripe account.
-  // The Stripe account here must match the one configured as the payment gateway
-  // in the Shopify admin (Settings → Payments → Stripe).
-  // The secret key is no longer needed in the app — Shopify uses it server-side.
   static const String stripePublishableKey = 'pk_live_REPLACE_WITH_EARTHLY_JEWELS_LIVE_KEY';
   static const String stripeCurrency = 'inr';
 
-  // Groq API key — free at console.groq.com (no credit card needed, 14,400 req/day free)
-  static const String groqApiKey = 'PASTE_YOUR_GROQ_KEY_HERE';
+  // Groq — key lives in api_secrets.dart (gitignored), never committed.
+  static const String groqApiKey = ApiSecrets.groqApiKey;
   static const String groqModel = 'openai/gpt-oss-20b';
 }
