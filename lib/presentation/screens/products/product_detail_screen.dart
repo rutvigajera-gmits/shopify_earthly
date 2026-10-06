@@ -110,12 +110,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     try {
       await context.read<CartProvider>().addItem(variant.id, 1);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('${product.title} added to cart'),
-          backgroundColor: AppColors.textPrimary,
-          behavior: SnackBarBehavior.floating,
-          shape: const RoundedRectangleBorder(),
-        ));
+        Navigator.of(context).pushNamed(AppRoutes.cart);
       }
     } finally {
       if (mounted) setState(() => _addingToCart = false);
@@ -142,10 +137,41 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           onPressed: () =>
               Navigator.of(context).pushNamed(AppRoutes.wishlist),
         ),
-        IconButton(
-          icon: const Icon(Icons.shopping_bag_outlined,
-              size: 22, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pushNamed(AppRoutes.cart),
+        Consumer<CartProvider>(
+          builder: (context, cart, _) => Stack(
+            clipBehavior: Clip.none,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.shopping_bag_outlined,
+                    size: 22, color: AppColors.textPrimary),
+                onPressed: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.cart),
+              ),
+              if (cart.itemCount > 0)
+                Positioned(
+                  right: 4,
+                  top: 4,
+                  child: Container(
+                    width: 15,
+                    height: 15,
+                    decoration: const BoxDecoration(
+                      color: AppColors.badge,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        cart.itemCount > 9 ? '9+' : '${cart.itemCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ],
     );

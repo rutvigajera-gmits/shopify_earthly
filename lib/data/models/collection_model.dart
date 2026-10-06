@@ -1,3 +1,4 @@
+import '../../core/utils/format_utils.dart';
 import 'product_model.dart';
 
 class CollectionImage {
@@ -8,7 +9,8 @@ class CollectionImage {
 
   factory CollectionImage.fromJson(Map<String, dynamic> json) {
     return CollectionImage(
-      url: json['url'] as String? ?? json['src'] as String? ?? '',
+      url: FormatUtils.shopifyImageJpeg(
+          json['url'] as String? ?? json['src'] as String? ?? ''),
       altText: json['altText'] as String?,
     );
   }

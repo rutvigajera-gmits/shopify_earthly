@@ -1,3 +1,4 @@
+import '../../core/utils/format_utils.dart';
 import 'product_model.dart';
 
 // Safely converts any Map (dynamic, String→Object, etc.) to Map<String, dynamic>.
@@ -401,7 +402,7 @@ class HeroBannerSlide {
 
   factory HeroBannerSlide.fromJson(Map<String, dynamic> json) =>
       HeroBannerSlide(
-        image: json['image'] as String? ?? '',
+        image: FormatUtils.shopifyImageJpeg(json['image'] as String? ?? ''),
         videoUrl: json['video_url'] as String? ?? '',
         title: json['title'] as String? ?? '',
         subtitle: json['subtitle'] as String? ?? '',
@@ -473,7 +474,7 @@ class ImageTextData {
       image.isNotEmpty || title.isNotEmpty || body.isNotEmpty;
 
   factory ImageTextData.fromJson(Map<String, dynamic> json) => ImageTextData(
-        image: json['image'] as String? ?? '',
+        image: FormatUtils.shopifyImageJpeg(json['image'] as String? ?? ''),
         imageSide: json['image_side'] as String? ?? 'left',
         title: json['title'] as String? ?? '',
         body: json['body'] as String? ?? '',
@@ -583,7 +584,7 @@ class HomeProduct {
     final imgs = <HomeProductImage>[];
     for (final img in (json['images'] as List? ?? [])) {
       final m = img as Map<String, dynamic>;
-      final imgUrl = m['url'] as String? ?? '';
+      final imgUrl = FormatUtils.shopifyImageJpeg(m['url'] as String? ?? '');
       if (imgUrl.isNotEmpty) {
         imgs.add(HomeProductImage(
           url: imgUrl,
@@ -593,7 +594,8 @@ class HomeProduct {
     }
     if (imgs.isEmpty && json['featured_image'] is String) {
       imgs.add(HomeProductImage(
-          url: json['featured_image'] as String, alt: ''));
+          url: FormatUtils.shopifyImageJpeg(json['featured_image'] as String),
+          alt: ''));
     }
 
     return HomeProduct(
@@ -657,7 +659,8 @@ class CollectionRowData {
             return CollectionTile(
               handle: m['handle'] as String? ?? '',
               title: m['title'] as String? ?? '',
-              imageUrl: m['image_url'] as String? ?? '',
+              imageUrl: FormatUtils.shopifyImageJpeg(
+                  m['image_url'] as String? ?? ''),
               description: m['description'] as String? ?? '',
             );
           })
@@ -840,7 +843,8 @@ class OccasionsData {
             final productList = m['products'] as List? ?? [];
             return OccasionTab(
               title: m['title'] as String? ?? '',
-              imageUrl: m['image_url'] as String? ?? '',
+              imageUrl: FormatUtils.shopifyImageJpeg(
+                  m['image_url'] as String? ?? ''),
               handle: m['handle'] as String? ?? '',
               products: productList
                   .map((p) => HomeProduct.fromJson(_asMap(p)))
@@ -889,7 +893,8 @@ class InstagramReelsData {
           .map((e) {
             final m = _asMap(e);
             return InstagramReelItem(
-              thumbnailUrl: m['thumbnail_url'] as String? ?? '',
+              thumbnailUrl: FormatUtils.shopifyImageJpeg(
+                  m['thumbnail_url'] as String? ?? ''),
               reelUrl: m['reel_url'] as String? ?? '',
               caption: m['caption'] as String? ?? '',
             );
@@ -921,7 +926,8 @@ class FullWidthCtaData {
 
   factory FullWidthCtaData.fromJson(Map<String, dynamic> json) =>
       FullWidthCtaData(
-        imageUrl: json['image_url'] as String? ?? '',
+        imageUrl: FormatUtils.shopifyImageJpeg(
+            json['image_url'] as String? ?? ''),
         title: json['title'] as String? ?? '',
         subtitle: json['subtitle'] as String? ?? '',
         ctaLabel: json['cta_label'] as String? ?? 'Shop Now',

@@ -56,7 +56,8 @@ class CartLineItem {
       productId: merchandise['product']?['id'] as String? ?? '',
       productTitle: merchandise['product']?['title'] as String? ?? '',
       variantTitle: merchandise['title'] as String? ?? '',
-      imageUrl: merchandise['image']?['url'] as String? ?? '',
+      imageUrl: FormatUtils.shopifyImageJpeg(
+          merchandise['image']?['url'] as String? ?? ''),
       quantity: qty,
       price: qty > 0 ? totalAmount / qty : totalAmount,
     );

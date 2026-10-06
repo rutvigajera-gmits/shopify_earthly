@@ -8,7 +8,8 @@ class ProductImage {
 
   factory ProductImage.fromJson(Map<String, dynamic> json) {
     return ProductImage(
-      url: json['url'] as String? ?? json['src'] as String? ?? '',
+      url: FormatUtils.shopifyImageJpeg(
+          json['url'] as String? ?? json['src'] as String? ?? ''),
       altText: json['altText'] as String?,
     );
   }
@@ -45,16 +46,19 @@ class ProductMediaItem {
         if (sourceUrl.isEmpty && sources.isNotEmpty) {
           sourceUrl = sources.first['url'] as String? ?? '';
         }
-        final thumb = (node['previewImage'] as Map?)?['url'] as String? ?? '';
+        final thumb = FormatUtils.shopifyImageJpeg(
+            (node['previewImage'] as Map?)?['url'] as String? ?? '');
         if (sourceUrl.isEmpty) return null;
         return ProductMediaItem(type: ProductMediaType.video, url: sourceUrl, thumbnailUrl: thumb);
       case 'EXTERNAL_VIDEO':
         final embedUrl = node['embeddedUrl'] as String? ?? '';
-        final thumb = (node['previewImage'] as Map?)?['url'] as String? ?? '';
+        final thumb = FormatUtils.shopifyImageJpeg(
+            (node['previewImage'] as Map?)?['url'] as String? ?? '');
         if (embedUrl.isEmpty) return null;
         return ProductMediaItem(type: ProductMediaType.externalVideo, url: embedUrl, thumbnailUrl: thumb);
       default:
-        final imageUrl = (node['image'] as Map?)?['url'] as String? ?? '';
+        final imageUrl = FormatUtils.shopifyImageJpeg(
+            (node['image'] as Map?)?['url'] as String? ?? '');
         final altText = (node['image'] as Map?)?['altText'] as String?;
         if (imageUrl.isEmpty) return null;
         return ProductMediaItem(type: ProductMediaType.image, url: imageUrl, altText: altText);

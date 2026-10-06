@@ -22,6 +22,14 @@ class FormatUtils {
   static String trimException(dynamic e) =>
       e.toString().replaceFirst('Exception: ', '');
 
+  // Appends `format=jpg` to Shopify CDN image URLs so the CDN converts
+  // WebP/AVIF variants to JPEG, preventing Android ImageDecoder failures.
+  static String shopifyImageJpeg(String url) {
+    if (url.isEmpty || !url.contains('cdn.shopify.com')) return url;
+    final sep = url.contains('?') ? '&' : '?';
+    return '$url${sep}format=jpg';
+  }
+
   // Formats a DateTime as "Month DD, YYYY".
   static String formatDate(DateTime date) {
     const months = [
