@@ -1,11 +1,11 @@
-import 'package:flutter/foundation.dart';
-import '../models/product_model.dart';
-import '../models/collection_model.dart';
-import '../services/shopify_service.dart';
+import '../../data/models/product_model.dart';
+import '../../data/models/collection_model.dart';
+import '../../data/repositories/product_repository.dart';
 import '../../core/utils/format_utils.dart';
+import '../common/base_provider.dart';
 
-class ProductProvider extends ChangeNotifier {
-  final _service = ShopifyService.instance;
+class ProductProvider extends BaseProvider {
+  final _repo = ProductRepository.instance;
 
   List<Product> _featuredProducts = [];
   List<Product> _collectionProducts = [];
@@ -19,8 +19,6 @@ class ProductProvider extends ChangeNotifier {
   bool _loadingCollections = false;
   bool _loadingSearch = false;
   bool _loadingProduct = false;
-
-  String? _error;
   String? _productError;
 
   List<Product> get featuredProducts => _featuredProducts;
@@ -35,19 +33,16 @@ class ProductProvider extends ChangeNotifier {
   bool get loadingCollections => _loadingCollections;
   bool get loadingSearch => _loadingSearch;
   bool get loadingProduct => _loadingProduct;
-
-  String? get error => _error;
   String? get productError => _productError;
 
   Future<void> loadFeaturedProducts() async {
     if (_loadingFeatured) return;
     _loadingFeatured = true;
-    _error = null;
     notifyListeners();
     try {
-      _featuredProducts = await _service.fetchBestSellingProducts(first: 24);
+      _featuredProducts = await _repo.fetchBestSelling(count: 24);
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
     } finally {
       _loadingFeatured = false;
       notifyListeners();
@@ -58,14 +53,12 @@ class ProductProvider extends ChangeNotifier {
     if (_loadingCollection) return;
     if (_loadedCollectionHandle == handle && _collectionProducts.isNotEmpty) return;
     _loadingCollection = true;
-    _error = null;
     notifyListeners();
     try {
-      final col = await _service.fetchCollectionByHandle(handle, productCount: 24);
-      _collectionProducts = col?.products ?? [];
+      _collectionProducts = await _repo.fetchByCollection(handle, count: 24);
       _loadedCollectionHandle = handle;
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
       _collectionProducts = [];
     } finally {
       _loadingCollection = false;
@@ -78,9 +71,9 @@ class ProductProvider extends ChangeNotifier {
     _loadingCollections = true;
     notifyListeners();
     try {
-      _collections = await _service.fetchCollections(first: 8);
+      _collections = await _repo.fetchCollections(count: 8);
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
     } finally {
       _loadingCollections = false;
       notifyListeners();
@@ -93,10 +86,10 @@ class ProductProvider extends ChangeNotifier {
     _productError = null;
     notifyListeners();
     try {
-      _selectedProduct = await _service.fetchProductByHandle(handle);
+      _selectedProduct = await _repo.fetchByHandle(handle);
     } catch (e) {
       _productError = FormatUtils.trimException(e);
-      _error = _productError;
+      setError(_productError!);
     } finally {
       _loadingProduct = false;
       notifyListeners();
@@ -112,13 +105,12 @@ class ProductProvider extends ChangeNotifier {
     _loadingSearch = true;
     notifyListeners();
     try {
-      _searchResults = await _service.searchProducts(query.trim());
+      _searchResults = await _repo.search(query.trim());
     } catch (_) {
       _searchResults = _featuredProducts
           .where((p) =>
               p.title.toLowerCase().contains(query.toLowerCase()) ||
-              (p.description?.toLowerCase().contains(query.toLowerCase()) ??
-                  false))
+              (p.description?.toLowerCase().contains(query.toLowerCase()) ?? false))
           .toList();
     } finally {
       _loadingSearch = false;

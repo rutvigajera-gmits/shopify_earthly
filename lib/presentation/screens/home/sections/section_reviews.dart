@@ -7,7 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../data/models/home_api_model.dart';
 import '../../../../data/models/review_model.dart';
-import '../../../../data/providers/review_provider.dart';
+import '../../../providers/review_provider.dart';
 
 class ReviewsCarouselSection extends StatefulWidget {
   final ReviewsCarouselData data;

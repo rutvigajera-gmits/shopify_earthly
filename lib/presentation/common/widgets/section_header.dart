@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 
 class SectionHeader extends StatelessWidget {
   final String title;
@@ -24,27 +24,22 @@ class SectionHeader extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Expanded(
-              child: Text(title, style: AppTextStyles.headlineLarge),
-            ),
+            Expanded(child: Text(title, style: AppTextStyles.headlineLarge)),
             if (actionLabel != null)
               GestureDetector(
                 onTap: onActionTap,
-                child: Text(
-                  actionLabel!,
-                  style: AppTextStyles.labelMedium.copyWith(
-                    decoration: TextDecoration.underline,
-                    decorationColor: AppColors.textSecondary,
-                  ),
-                ),
+                child: Text(actionLabel!,
+                    style: AppTextStyles.labelMedium.copyWith(
+                      decoration: TextDecoration.underline,
+                      decorationColor: AppColors.textSecondary,
+                    )),
               ),
           ],
         ),
         if (subtitle != null) ...[
           const SizedBox(height: 6),
-          Text(subtitle!, style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-          )),
+          Text(subtitle!,
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
         ],
       ],
     );

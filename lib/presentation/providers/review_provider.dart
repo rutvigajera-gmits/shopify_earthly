@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
-import '../models/review_model.dart';
-import '../services/shopify_service.dart';
+import '../../data/models/review_model.dart';
+import '../../data/repositories/review_repository.dart';
+import '../common/base_provider.dart';
 
-class ReviewProvider extends ChangeNotifier {
-  final _service = ShopifyService.instance;
+class ReviewProvider extends BaseProvider {
+  final _repo = ReviewRepository.instance;
 
   List<Review> _storeReviews = [];
   final Map<String, ReviewSummary> _productReviews = {};
@@ -24,7 +24,7 @@ class ReviewProvider extends ChangeNotifier {
     _loadingStore = true;
     notifyListeners();
     try {
-      _storeReviews = await _service.fetchStoreReviews(perPage: 10);
+      _storeReviews = await _repo.fetchStoreReviews();
     } catch (_) {
       _storeReviews = [];
     } finally {
@@ -39,9 +39,8 @@ class ReviewProvider extends ChangeNotifier {
     if (_loadingProducts.contains(handle)) return;
     _loadingProducts.add(handle);
     notifyListeners();
-
     try {
-      final summary = await _service.fetchProductReviews(handle);
+      final summary = await _repo.fetchProductReviews(handle);
       _productReviews[handle] = summary;
     } catch (_) {
       _productReviews[handle] = ReviewSummary.empty();

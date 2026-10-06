@@ -10,6 +10,7 @@ import '../models/cart_model.dart';
 import '../models/shop_model.dart';
 import '../models/review_model.dart';
 import '../models/customer_model.dart';
+import '../models/shopify_checkout_model.dart';
 
 class ShopifyService {
   ShopifyService._();
@@ -633,6 +634,25 @@ class ShopifyService {
 
   // ─── Cart ─────────────────────────────────────────────────────────────────
 
+  Future<Cart?> fetchCart(String cartId) async {
+    try {
+      final data = await _query('''
+        {
+          cart(id: "$cartId") {
+            id checkoutUrl
+            estimatedCost { subtotalAmount { amount currencyCode } }
+            lines(first: 50) { edges { node { ${_cartLineFragment()} } } }
+          }
+        }
+      ''');
+      final cartData = data['cart'] as Map<String, dynamic>?;
+      if (cartData == null) return null;
+      return Cart.fromStorefrontJson({'cart': cartData});
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<Cart> createCart() async {
     final data = await _query('''
       mutation {
@@ -714,6 +734,124 @@ class ShopifyService {
       }
     }
   ''';
+
+  // ─── Storefront Checkout (creates real Shopify orders) ───────────────────
+
+  Future<ShopifyCheckout> createCheckout({
+    required List<CartLineItem> lineItems,
+    required String email,
+    required Map<String, String> shippingAddress,
+    String? customerAccessToken,
+  }) async {
+    final input = <String, dynamic>{
+      'email': email,
+      'lineItems': lineItems
+          .map((i) => {'variantId': i.variantId, 'quantity': i.quantity})
+          .toList(),
+      'shippingAddress': shippingAddress,
+    };
+    if (customerAccessToken != null && customerAccessToken.isNotEmpty) {
+      input['buyerIdentity'] = {'customerAccessToken': customerAccessToken};
+    }
+
+    final data = await _queryWithVars('''
+      mutation checkoutCreate(\$input: CheckoutCreateInput!) {
+        checkoutCreate(input: \$input) {
+          checkout {
+            id webUrl
+            totalPriceV2 { amount currencyCode }
+          }
+          checkoutUserErrors { code field message }
+        }
+      }
+    ''', {'input': input});
+
+    final result = data['checkoutCreate'] as Map<String, dynamic>? ?? {};
+    final errors = result['checkoutUserErrors'] as List?;
+    if (errors != null && errors.isNotEmpty) {
+      throw Exception(
+          (errors.first as Map)['message'] as String? ?? 'Checkout creation failed');
+    }
+    return ShopifyCheckout.fromCreateJson(result);
+  }
+
+  /// Submits a Stripe vault token to complete the Shopify checkout.
+  /// Returns the Shopify order name (e.g. "#1001") if immediately available.
+  Future<String?> checkoutCompleteWithToken({
+    required String checkoutId,
+    required String amount,
+    required String currencyCode,
+    required String stripeToken,
+    required Map<String, String> billingAddress,
+  }) async {
+    final payment = <String, dynamic>{
+      'paymentAmount': {'amount': amount, 'currencyCode': currencyCode},
+      'idempotencyKey': '${checkoutId}_${DateTime.now().millisecondsSinceEpoch}',
+      'billingAddress': billingAddress,
+      'paymentData': stripeToken,
+      'type': 'STRIPE_VAULT_TOKEN',
+    };
+
+    final data = await _queryWithVars('''
+      mutation completeCheckout(\$checkoutId: ID!, \$payment: TokenizedPaymentInputV3!) {
+        checkoutCompleteWithTokenizedPaymentV3(
+          checkoutId: \$checkoutId,
+          payment: \$payment
+        ) {
+          checkout {
+            id completedAt
+            order { id name orderNumber }
+          }
+          checkoutUserErrors { code field message }
+          payment { id errorMessage ready }
+        }
+      }
+    ''', {'checkoutId': checkoutId, 'payment': payment});
+
+    final result =
+        data['checkoutCompleteWithTokenizedPaymentV3'] as Map<String, dynamic>? ?? {};
+    final errors = result['checkoutUserErrors'] as List?;
+    if (errors != null && errors.isNotEmpty) {
+      throw Exception(
+          (errors.first as Map)['message'] as String? ?? 'Payment failed');
+    }
+    final paymentObj = result['payment'] as Map?;
+    if (paymentObj?['errorMessage'] != null &&
+        (paymentObj!['errorMessage'] as String).isNotEmpty) {
+      throw Exception(paymentObj['errorMessage']);
+    }
+    final checkout = result['checkout'] as Map?;
+    if (checkout?['completedAt'] != null) {
+      return (checkout!['order'] as Map?)?['name'] as String?;
+    }
+    return null; // not yet complete — caller should poll
+  }
+
+  /// Polls until `checkout.completedAt` is set or retries are exhausted.
+  /// Returns the Shopify order name (e.g. "#1001") on success.
+  Future<String?> pollCheckoutOrder(String checkoutId,
+      {int maxRetries = 8}) async {
+    for (int i = 0; i < maxRetries; i++) {
+      await Future.delayed(const Duration(seconds: 2));
+      try {
+        final data = await _queryWithVars('''
+          query getCheckout(\$id: ID!) {
+            node(id: \$id) {
+              ... on Checkout {
+                id completedAt
+                order { id name orderNumber }
+              }
+            }
+          }
+        ''', {'id': checkoutId});
+        final node = data['node'] as Map<String, dynamic>?;
+        if (node != null && node['completedAt'] != null) {
+          return (node['order'] as Map?)?['name'] as String?;
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
 
   // ─── Section Titles & Store Contact ──────────────────────────────────────
   // Replaces the earlier fetchSectionTitles — now also includes store contact

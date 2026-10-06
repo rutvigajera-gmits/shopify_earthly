@@ -150,6 +150,26 @@ class OrderLineItem {
     );
   }
 
+  factory OrderLineItem.fromLocalJson(Map<String, dynamic> json) {
+    return OrderLineItem(
+      title: json['title'] as String? ?? '',
+      quantity: (json['quantity'] as num?)?.toInt() ?? 1,
+      variantTitle: json['variantTitle'] as String?,
+      imageUrl: json['imageUrl'] as String?,
+      price: (json['price'] as num?)?.toDouble() ?? 0,
+      currencyCode: json['currencyCode'] as String? ?? 'INR',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'quantity': quantity,
+        'variantTitle': variantTitle,
+        'imageUrl': imageUrl,
+        'price': price,
+        'currencyCode': currencyCode,
+      };
+
   String get formattedPrice {
     final symbol = currencyCode == 'INR' ? '₹' : currencyCode;
     return '$symbol${price.toStringAsFixed(0)}';
@@ -178,6 +198,39 @@ class CustomerOrder {
     required this.processedAt,
     required this.lineItems,
   });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'orderNumber': orderNumber,
+        'fulfillmentStatus': fulfillmentStatus,
+        'financialStatus': financialStatus,
+        'totalPrice': totalPrice,
+        'currencyCode': currencyCode,
+        'processedAt': processedAt.toIso8601String(),
+        'lineItems': lineItems.map((l) => l.toJson()).toList(),
+      };
+
+  factory CustomerOrder.fromLocalJson(Map<String, dynamic> json) {
+    DateTime processedAt = DateTime.now();
+    try {
+      processedAt = DateTime.parse(json['processedAt'] as String? ?? '');
+    } catch (_) {}
+    return CustomerOrder(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      orderNumber: (json['orderNumber'] as num?)?.toInt() ?? 0,
+      fulfillmentStatus: json['fulfillmentStatus'] as String? ?? '',
+      financialStatus: json['financialStatus'] as String? ?? '',
+      totalPrice: (json['totalPrice'] as num?)?.toDouble() ?? 0,
+      currencyCode: json['currencyCode'] as String? ?? 'INR',
+      processedAt: processedAt,
+      lineItems: (json['lineItems'] as List? ?? [])
+          .map((e) =>
+              OrderLineItem.fromLocalJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
 
   factory CustomerOrder.fromStorefrontJson(Map<String, dynamic> json) {
     final node = json['node'] ?? json;

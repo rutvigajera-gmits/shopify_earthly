@@ -2,22 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
-import '../../data/models/product_model.dart';
-import '../../data/providers/wishlist_provider.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../data/models/product_model.dart';
+import '../../providers/wishlist_provider.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback? onTap;
   final double? width;
 
-  const ProductCard({
-    super.key,
-    required this.product,
-    this.onTap,
-    this.width,
-  });
+  const ProductCard({super.key, required this.product, this.onTap, this.width});
 
   @override
   Widget build(BuildContext context) {
@@ -40,14 +35,8 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Square image — AspectRatio makes height = width on any parent
-            AspectRatio(
-              aspectRatio: 1.0,
-              child: _ProductImage(product: product),
-            ),
-            Flexible(
-              child: _ProductInfo(product: product),
-            ),
+            AspectRatio(aspectRatio: 1.0, child: _ProductImage(product: product)),
+            Flexible(child: _ProductInfo(product: product)),
           ],
         ),
       ),
@@ -72,7 +61,6 @@ class _ProductImage extends StatelessWidget {
                 errorWidget: (_, __, ___) => _placeholder(),
               )
             : _placeholder(),
-        // Wishlist heart — white circle top-right
         Positioned(
           top: 8,
           right: 8,
@@ -84,10 +72,7 @@ class _ProductImage extends StatelessWidget {
                 child: Container(
                   width: 30,
                   height: 30,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                   child: Icon(
                     saved ? Icons.favorite : Icons.favorite_border,
                     size: 15,
@@ -125,32 +110,21 @@ class _ProductInfo extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              product.title,
-              style: AppTextStyles.productName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+            Text(product.title,
+                style: AppTextStyles.productName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
             if (subtitle.isNotEmpty) ...[
               const SizedBox(height: 3),
-              Text(
-                subtitle,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textMuted,
-                  fontSize: 11,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              Text(subtitle,
+                  style: AppTextStyles.bodySmall
+                      .copyWith(color: AppColors.textMuted, fontSize: 11),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
             ],
             const SizedBox(height: 5),
-            Text(
-              product.formattedMinPrice,
-              style: AppTextStyles.priceText.copyWith(
-                color: AppColors.teal,
-                fontSize: 13,
-              ),
-            ),
+            Text(product.formattedMinPrice,
+                style: AppTextStyles.priceText.copyWith(color: AppColors.teal, fontSize: 13)),
           ],
         ),
       ),
@@ -158,7 +132,6 @@ class _ProductInfo extends StatelessWidget {
   }
 }
 
-// Skeleton card — matches new card shape
 class ProductCardSkeleton extends StatelessWidget {
   final double? width;
   const ProductCardSkeleton({super.key, this.width});
@@ -196,16 +169,11 @@ class ProductCardSkeleton extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                        height: 13,
-                        width: double.infinity,
-                        color: AppColors.shimmerBase),
+                    Container(height: 13, width: double.infinity, color: AppColors.shimmerBase),
                     const SizedBox(height: 6),
-                    Container(
-                        height: 11, width: 90, color: AppColors.shimmerBase),
+                    Container(height: 11, width: 90, color: AppColors.shimmerBase),
                     const SizedBox(height: 6),
-                    Container(
-                        height: 13, width: 70, color: AppColors.shimmerBase),
+                    Container(height: 13, width: 70, color: AppColors.shimmerBase),
                   ],
                 ),
               ),

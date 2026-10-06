@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/routes/app_routes.dart';
-import '../../../data/providers/customer_provider.dart';
-import '../../../data/providers/wishlist_provider.dart';
+import '../../providers/cart_provider.dart';
+import '../../providers/customer_provider.dart';
+import '../../providers/wishlist_provider.dart';
 import '../home/home_screen.dart';
 import '../products/products_screen.dart';
 import '../account/account_screen.dart';
-import '../../widgets/bottom_nav.dart';
+import '../../common/widgets/bottom_nav.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -24,6 +25,7 @@ class _AppShellState extends State<AppShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CustomerProvider>().init();
       context.read<WishlistProvider>().init();
+      context.read<CartProvider>().init();
     });
   }
 

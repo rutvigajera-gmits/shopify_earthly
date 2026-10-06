@@ -13,10 +13,11 @@ class ApiConfig {
   static const String judgeMePublicToken = '1lo-Qc8pmxTOpzmH2b36IiheWrg';
   static const String judgeMeShopDomain = 'gold-rate-update.myshopify.com';
 
-  // Stripe — replace with your actual Stripe test keys before running.
-  // stripePublishableKey is public-facing (safe to commit).
-  // DEMO ONLY: stripeSecretKey must move to a backend server for production.
-  static const String stripePublishableKey = 'pk_test_REPLACE_WITH_YOUR_KEY';
-  static const String stripeSecretKey = 'sk_test_REPLACE_WITH_YOUR_KEY';
+  // Stripe publishable key — public-facing, safe to commit.
+  // Replace with the live key (pk_live_...) from the Earthly Jewels Stripe account.
+  // The Stripe account here must match the one configured as the payment gateway
+  // in the Shopify admin (Settings → Payments → Stripe).
+  // The secret key is no longer needed in the app — Shopify uses it server-side.
+  static const String stripePublishableKey = 'pk_live_REPLACE_WITH_EARTHLY_JEWELS_LIVE_KEY';
   static const String stripeCurrency = 'inr';
 }

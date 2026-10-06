@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:nb_utils/nb_utils.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../data/models/home_api_model.dart';
-import '../../../widgets/section_header.dart';
-import '../../../widgets/product_card.dart';
+import '../../../common/widgets/section_header.dart';
+import '../../../common/widgets/product_card.dart';
 
 class ProductCarouselSection extends StatelessWidget {
   final ProductGridData data;

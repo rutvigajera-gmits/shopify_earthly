@@ -1,16 +1,16 @@
-import 'package:flutter/foundation.dart';
-import '../models/product_model.dart';
-import '../services/shopify_service.dart';
-import '../services/wishlist_service.dart';
+import '../../data/models/product_model.dart';
+import '../../data/repositories/product_repository.dart';
+import '../../data/services/wishlist_service.dart';
+import '../common/base_provider.dart';
 
-class WishlistProvider extends ChangeNotifier {
+class WishlistProvider extends BaseProvider {
   final Set<String> _handles = {};
   List<Product> _products = [];
-  bool _loading = false;
+  bool _loadingProducts = false;
 
   List<String> get handles => List.unmodifiable(_handles.toList());
   List<Product> get products => _products;
-  bool get loading => _loading;
+  bool get loadingProducts => _loadingProducts;
   bool contains(String handle) => _handles.contains(handle);
 
   Future<void> init() async {
@@ -37,18 +37,17 @@ class WishlistProvider extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    if (_loading) return;
-    _loading = true;
+    if (_loadingProducts) return;
+    _loadingProducts = true;
     notifyListeners();
     try {
-      final futures = _handles
-          .map((h) => ShopifyService.instance.fetchProductByHandle(h));
+      final futures = _handles.map((h) => ProductRepository.instance.fetchByHandle(h));
       final results = await Future.wait(futures);
       _products = results.whereType<Product>().toList();
     } catch (_) {
       _products = [];
     } finally {
-      _loading = false;
+      _loadingProducts = false;
       notifyListeners();
     }
   }

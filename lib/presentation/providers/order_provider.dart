@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
-import '../models/cart_model.dart';
+import '../../data/models/cart_model.dart';
+import '../common/base_provider.dart';
 
-class OrderProvider extends ChangeNotifier {
+class OrderProvider extends BaseProvider {
   String? _transactionId;
   List<CartLineItem> _items = const [];
   double _total = 0;

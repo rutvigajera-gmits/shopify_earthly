@@ -5,10 +5,10 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../data/providers/home_provider.dart';
+import '../../providers/home_provider.dart';
 import '../../../data/models/home_api_model.dart';
-import '../../widgets/app_header.dart';
-import '../../widgets/product_card.dart';
+import '../../common/widgets/app_header.dart';
+import '../../common/widgets/product_card.dart';
 import 'sections/section_hero_banner.dart';
 import 'sections/section_shop_by_category.dart';
 import 'sections/section_product_grid.dart';
@@ -72,11 +72,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               Consumer<HomeProvider>(
                 builder: (context, home, _) {
-                  if (home.loading) {
+                  if (home.isLoading) {
                     return SliverToBoxAdapter(child: _LoadingView());
                   }
-                  if (home.error != null && home.sections.isEmpty) {
-                    return SliverToBoxAdapter(child: _ErrorView(error: home.error!));
+                  if (home.hasError && home.sections.isEmpty) {
+                    return SliverToBoxAdapter(child: _ErrorView(error: home.errorMessage!));
                   }
 
                   debugPrint('[Home] sections: ${home.sections.map((s) => s.type).toList()}');

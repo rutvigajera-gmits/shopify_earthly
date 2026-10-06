@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 
 const _kSizeRows = [
   (6, '14.6', '45.9'), (7, '15.0', '47.1'), (8, '15.3', '48.1'),
@@ -27,8 +27,7 @@ class SizeChartLink extends StatelessWidget {
         builder: (_) => const SizeChartSheet(),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.straighten_outlined,
-            size: 14, color: AppColors.textSecondary),
+        const Icon(Icons.straighten_outlined, size: 14, color: AppColors.textSecondary),
         const SizedBox(width: 4),
         Text('Size chart',
             style: AppTextStyles.bodySmall.copyWith(
@@ -71,8 +70,7 @@ class SizeChartSheet extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.border)),
                   alignment: Alignment.center,
-                  child: const Icon(Icons.close,
-                      size: 16, color: AppColors.textPrimary),
+                  child: const Icon(Icons.close, size: 16, color: AppColors.textPrimary),
                 ),
               ),
             ]),
@@ -83,12 +81,13 @@ class SizeChartSheet extends StatelessWidget {
               controller: ctrl,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _SizeTable(rows: left)),
-                    const SizedBox(width: 8),
-                    Expanded(child: _SizeTable(rows: right)),
-                  ]),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _SizeTable(rows: left)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _SizeTable(rows: right)),
+                ],
+              ),
             ),
           ),
           SafeArea(
@@ -122,16 +121,12 @@ class _SizeTable extends StatelessWidget {
   const _SizeTable({required this.rows});
 
   static const _h = TextStyle(
-      fontSize: 10,
-      fontWeight: FontWeight.w700,
-      color: Color(0xFF444444),
-      height: 1.4);
+      fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF444444), height: 1.4);
   static const _c = TextStyle(fontSize: 11, color: Color(0xFF333333));
 
   Widget _cell(String t, {bool h = false}) => Padding(
       padding: const EdgeInsets.all(6),
-      child: Text(t,
-          style: h ? _h : _c, textAlign: TextAlign.center, maxLines: 2));
+      child: Text(t, style: h ? _h : _c, textAlign: TextAlign.center, maxLines: 2));
 
   @override
   Widget build(BuildContext context) {

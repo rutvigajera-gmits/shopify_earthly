@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../data/providers/customer_provider.dart';
-import '../../widgets/app_header.dart';
+import '../../providers/customer_provider.dart';
+import '../../common/widgets/app_header.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -48,7 +48,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
     if (!mounted) return;
     setState(() => _saving = false);
-    if (provider.error == null) {
+    if (provider.errorMessage == null) {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -60,7 +60,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(provider.error!),
+          content: Text(provider.errorMessage!),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
         ),
@@ -74,12 +74,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AppHeader(title: 'Edit Profile', showBack: true),
-      body: Column(
-        children: [
-          const Divider(height: 1),
-          Expanded(
-            child: Form(
-              key: _formKey,
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            const Divider(height: 1),
+            Expanded(
+              child: Form(
+                key: _formKey,
               child: ListView(
                 padding: const EdgeInsets.all(AppConstants.horizontalPadding),
                 children: [
@@ -136,6 +138,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }

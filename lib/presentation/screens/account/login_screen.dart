@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../data/providers/customer_provider.dart';
-import '../../../data/providers/shop_provider.dart';
-import '../../widgets/app_header.dart';
+import '../../providers/customer_provider.dart';
+import '../../providers/shop_provider.dart';
+import '../../common/widgets/app_header.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,10 +37,12 @@ class _LoginScreenState extends State<LoginScreen>
         showBack: true,
         title: context.watch<ShopProvider>().brand?.storeName ?? '',
       ),
-      body: Column(
-        children: [
-          const Divider(height: 1),
-          TabBar(
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            const Divider(height: 1),
+            TabBar(
             controller: _tabs,
             labelStyle: AppTextStyles.labelLarge,
             unselectedLabelStyle: AppTextStyles.labelMedium,
@@ -65,6 +67,7 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -131,8 +134,8 @@ class _SignInFormState extends State<_SignInForm> {
             children: [
               const SizedBox(height: 8),
 
-              if (auth.error != null) ...[
-                _ErrorBanner(message: auth.error!,
+              if (auth.errorMessage != null) ...[
+                _ErrorBanner(message: auth.errorMessage!,
                     onClose: () => auth.clearError()),
                 const SizedBox(height: 16),
               ],
@@ -175,7 +178,7 @@ class _SignInFormState extends State<_SignInForm> {
 
               _SubmitButton(
                 label: 'SIGN IN',
-                loading: auth.loading,
+                loading: auth.isLoading,
                 onTap: _submit,
               ),
             ],
@@ -241,8 +244,8 @@ class _RegisterFormState extends State<_RegisterForm> {
             children: [
               const SizedBox(height: 8),
 
-              if (auth.error != null) ...[
-                _ErrorBanner(message: auth.error!,
+              if (auth.errorMessage != null) ...[
+                _ErrorBanner(message: auth.errorMessage!,
                     onClose: () => auth.clearError()),
                 const SizedBox(height: 16),
               ],
@@ -287,7 +290,7 @@ class _RegisterFormState extends State<_RegisterForm> {
 
               _SubmitButton(
                 label: 'CREATE ACCOUNT',
-                loading: auth.loading,
+                loading: auth.isLoading,
                 onTap: _submit,
               ),
             ],

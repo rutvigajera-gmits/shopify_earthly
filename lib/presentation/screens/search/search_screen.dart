@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../data/providers/product_provider.dart';
-import '../../widgets/product_card.dart';
+import '../../providers/product_provider.dart';
+import '../../common/widgets/product_card.dart';
 
 const _kMinQueryLength = 2;
 const _kDebounceDuration = Duration(milliseconds: 500);
@@ -121,9 +121,11 @@ class _SearchScreenState extends State<SearchScreen> {
           child: Divider(height: 1),
         ),
       ),
-      body: Consumer<ProductProvider>(
-        builder: (context, provider, _) {
-          // No query or debounce pending — show trending
+      body: SafeArea(
+        top: false,
+        child: Consumer<ProductProvider>(
+          builder: (context, provider, _) {
+            // No query or debounce pending — show trending
           if (!_hasQuery || _isPending) {
             return _TrendingSearches(
               terms: _trending,
@@ -179,6 +181,7 @@ class _SearchScreenState extends State<SearchScreen> {
           );
         },
       ),
+    ),
     );
   }
 }

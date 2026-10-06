@@ -1,12 +1,11 @@
-import 'package:flutter/foundation.dart';
-import '../models/shop_model.dart';
-import '../models/collection_model.dart';
-import '../models/review_model.dart';
-import '../services/shopify_service.dart';
-import '../../core/constants/app_constants.dart';
+import '../../data/models/shop_model.dart';
+import '../../data/models/collection_model.dart';
+import '../../data/models/review_model.dart';
+import '../../data/repositories/home_repository.dart';
+import '../common/base_provider.dart';
 
-class ShopProvider extends ChangeNotifier {
-  final _service = ShopifyService.instance;
+class ShopProvider extends BaseProvider {
+  final _repo = HomeRepository.instance;
 
   ShopBrand? _brand;
   List<ShopBanner> _banners = [];
@@ -20,10 +19,7 @@ class ShopProvider extends ChangeNotifier {
   List<Review> _homeReviews = [];
   ShopBanner? _ctaBanner;
   Map<String, String> _sectionTitles = {};
-
-  bool _loading = false;
   bool _initialized = false;
-  String? _apiError;
 
   ShopBrand? get brand => _brand;
   List<ShopBanner> get banners => _banners;
@@ -36,25 +32,14 @@ class ShopProvider extends ChangeNotifier {
   List<Collection> get designerCollections => _designerCollections;
   List<Review> get homeReviews => _homeReviews;
   ShopBanner? get ctaBanner => _ctaBanner;
-  bool get loading => _loading;
   bool get initialized => _initialized;
-  String? get apiError => _apiError;
 
   String sectionTitle(String key) => _sectionTitles[key] ?? '';
 
   Future<void> initialize() async {
     if (_initialized) return;
-    _loading = true;
-    notifyListeners();
+    setLoading();
 
-    await _loadFromShopify();
-
-    _loading = false;
-    _initialized = true;
-    notifyListeners();
-  }
-
-  Future<void> _loadFromShopify() async {
     await Future.wait([
       _loadBrand(),
       _loadBanners(),
@@ -69,87 +54,62 @@ class ShopProvider extends ChangeNotifier {
       _loadCtaBanner(),
       _loadSectionTitles(),
     ]);
+
+    _initialized = true;
+    setLoaded();
   }
 
   Future<void> _loadBrand() async {
-    try {
-      _brand = await _service.fetchShopBrand();
-    } catch (e) {
-      _apiError = e.toString().replaceFirst('Exception: ', '');
-    }
+    try { _brand = await _repo.fetchBrand(); } catch (_) {}
   }
 
   Future<void> _loadBanners() async {
     try {
-      final fetched = await _service.fetchBanners();
+      final fetched = await _repo.fetchBanners();
       if (fetched.isNotEmpty) _banners = fetched;
     } catch (_) {}
   }
 
   Future<void> _loadFeatureBanner() async {
-    try {
-      _featureBanner = await _service.fetchFeatureBanner();
-    } catch (_) {}
+    try { _featureBanner = await _repo.fetchFeatureBanner(); } catch (_) {}
   }
 
   Future<void> _loadBrandValues() async {
-    try {
-      _brandValues = await _service.fetchBrandValues();
-    } catch (_) {}
+    try { _brandValues = await _repo.fetchBrandValues(); } catch (_) {}
   }
 
   Future<void> _loadAnnouncements() async {
     try {
-      final msgs = await _service.fetchAnnouncements();
+      final msgs = await _repo.fetchAnnouncements();
       if (msgs.isNotEmpty) _announcements = msgs;
     } catch (_) {}
   }
 
   Future<void> _loadNavItems() async {
-    try {
-      _navItems = await _service.fetchMainMenu();
-    } catch (_) {}
+    try { _navItems = await _repo.fetchMainMenu(); } catch (_) {}
   }
 
   Future<void> _loadCategoryCollections() async {
-    try {
-      _categoryCollections = await _service.fetchOccasionCollections(
-        AppConstants.categoryCollectionHandles,
-      );
-    } catch (_) {}
+    try { _categoryCollections = await _repo.fetchCategoryCollections(); } catch (_) {}
   }
 
   Future<void> _loadOccasionCollections() async {
-    try {
-      _occasionCollections = await _service.fetchOccasionCollections(
-        AppConstants.occasionHandles,
-      );
-    } catch (_) {}
+    try { _occasionCollections = await _repo.fetchOccasionCollections(); } catch (_) {}
   }
 
   Future<void> _loadDesignerCollections() async {
-    try {
-      _designerCollections = await _service.fetchOccasionCollections(
-        AppConstants.designerRingHandles,
-      );
-    } catch (_) {}
+    try { _designerCollections = await _repo.fetchDesignerCollections(); } catch (_) {}
   }
 
   Future<void> _loadReviews() async {
-    try {
-      _homeReviews = await _service.fetchStoreReviews(perPage: 10);
-    } catch (_) {}
+    try { _homeReviews = await _repo.fetchHomeReviews(); } catch (_) {}
   }
 
   Future<void> _loadCtaBanner() async {
-    try {
-      _ctaBanner = await _service.fetchCtaBanner();
-    } catch (_) {}
+    try { _ctaBanner = await _repo.fetchCtaBanner(); } catch (_) {}
   }
 
   Future<void> _loadSectionTitles() async {
-    try {
-      _sectionTitles = await _service.fetchSectionTitles();
-    } catch (_) {}
+    try { _sectionTitles = await _repo.fetchSectionTitles(); } catch (_) {}
   }
 }

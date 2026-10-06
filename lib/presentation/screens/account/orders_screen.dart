@@ -1,3 +1,4 @@
+import 'package:demo_earthly/presentation/common/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -6,8 +7,8 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/customer_model.dart';
-import '../../../data/providers/customer_provider.dart';
-import '../../widgets/app_header.dart';
+import '../../providers/customer_provider.dart';
+import '../../common/widgets/app_header.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -27,15 +28,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: AppColors.background,
       appBar: AppHeader(showBack: true, title: 'My Orders'),
-      body: Column(
-        children: [
-          const Divider(height: 1),
-          Expanded(
-            child: Consumer<CustomerProvider>(
-              builder: (_, auth, __) {
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            const Divider(height: 1),
+            Expanded(
+              child: Consumer<CustomerProvider>(
+                builder: (_, auth, __) {
                 if (auth.ordersLoading) {
                   return _OrdersShimmer();
                 }
@@ -54,6 +57,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }

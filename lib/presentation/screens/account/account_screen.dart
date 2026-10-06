@@ -4,9 +4,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../data/providers/customer_provider.dart';
-import '../../../data/providers/shop_provider.dart';
-import '../../widgets/app_header.dart';
+import '../../providers/customer_provider.dart';
+import '../../providers/shop_provider.dart';
+import '../../common/widgets/app_header.dart';
 import 'login_screen.dart';
 import 'orders_screen.dart';
 import 'edit_profile_screen.dart';
@@ -33,12 +33,14 @@ class AccountScreen extends StatelessWidget {
       appBar: AppHeader(
         title: context.watch<ShopProvider>().brand?.storeName ?? 'Account',
       ),
-      body: Column(
-        children: [
-          const Divider(height: 1),
-          Expanded(
-            child: Consumer<CustomerProvider>(
-              builder: (_, auth, __) => ListView(
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            const Divider(height: 1),
+            Expanded(
+              child: Consumer<CustomerProvider>(
+                builder: (_, auth, __) => ListView(
                 children: [
                   auth.isLoggedIn
                       ? _LoggedInHeader(auth: auth)
@@ -193,6 +195,7 @@ class AccountScreen extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

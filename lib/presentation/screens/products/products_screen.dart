@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../data/providers/product_provider.dart';
+import '../../providers/product_provider.dart';
 import '../../../data/models/product_model.dart';
-import '../../widgets/app_header.dart';
-import '../../widgets/product_card.dart';
+import '../../common/widgets/app_header.dart';
+import '../../common/widgets/product_card.dart';
 
 // Category tab definition
 class _Category {
@@ -195,10 +195,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
         onSearchTap: widget.onSearchTap,
         onCartTap: widget.onCartTap,
       ),
-      body: Column(
-        children: [
-          const Divider(height: 1),
-          _CategoryTabBar(
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            const Divider(height: 1),
+            _CategoryTabBar(
             categories: _categories,
             selectedIndex: _selectedCategory,
             onSelected: _onCategoryChanged,
@@ -221,6 +223,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }

@@ -4,8 +4,8 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/customer_model.dart';
-import '../../../data/providers/customer_provider.dart';
-import '../../widgets/app_header.dart';
+import '../../providers/customer_provider.dart';
+import '../../common/widgets/app_header.dart';
 
 // ─── Addresses List Screen ────────────────────────────────────────────────────
 
@@ -89,12 +89,14 @@ class _AddressesScreenState extends State<AddressesScreen> {
         shape: const RoundedRectangleBorder(),
         child: const Icon(Icons.add),
       ),
-      body: Column(
-        children: [
-          const Divider(height: 1),
-          Expanded(
-            child: Consumer<CustomerProvider>(
-              builder: (_, provider, __) {
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            const Divider(height: 1),
+            Expanded(
+              child: Consumer<CustomerProvider>(
+                builder: (_, provider, __) {
                 if (provider.addressesLoading) {
                   return const Center(
                     child: CircularProgressIndicator(
@@ -143,6 +145,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }

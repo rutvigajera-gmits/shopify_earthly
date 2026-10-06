@@ -6,7 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/format_utils.dart';
 import '../../../data/models/cart_model.dart';
-import '../../../data/providers/order_provider.dart';
+import '../../providers/order_provider.dart';
 
 class OrderConfirmationScreen extends StatelessWidget {
   const OrderConfirmationScreen({super.key});

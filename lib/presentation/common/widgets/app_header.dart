@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
-import '../../data/providers/cart_provider.dart';
+import '../../../core/constants/app_assets.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../providers/cart_provider.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final bool showBack;
@@ -33,8 +34,10 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
     return Container(
       color: AppColors.background,
+      padding: EdgeInsets.only(top: topPadding),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -42,7 +45,6 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
             height: _barHeight,
             child: Row(
               children: [
-                // Left
                 SizedBox(
                   width: 52,
                   child: showBack
@@ -57,8 +59,6 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                           color: AppColors.textPrimary,
                         ),
                 ),
-
-                // Center — logo or title
                 Expanded(
                   child: Center(
                     child: title != null
@@ -66,8 +66,6 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                         : const _DynamicLogo(),
                   ),
                 ),
-
-                // Right — wishlist + cart
                 SizedBox(
                   width: 96,
                   child: Row(
@@ -78,10 +76,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                         onPressed: onWishlistTap,
                         color: AppColors.textPrimary,
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 40,
-                          minHeight: 40,
-                        ),
+                        constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                       ),
                       _CartIcon(onTap: onCartTap),
                     ],
@@ -90,8 +85,6 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               ],
             ),
           ),
-
-          // Optional search bar
           if (showSearchBar) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -110,9 +103,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                       const SizedBox(width: 10),
                       Text(
                         'Search jewellery, diamonds...',
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.textMuted,
-                        ),
+                        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -131,11 +122,7 @@ class _DynamicLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      'assets/images/logo.png',
-      height: 48,
-      fit: BoxFit.contain,
-    );
+    return Image.asset(AppAssets.logo, height: 48, fit: BoxFit.contain);
   }
 }
 

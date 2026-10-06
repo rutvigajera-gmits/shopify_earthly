@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:demo_earthly/core/constants/app_constants.dart';
 import 'package:demo_earthly/data/models/home_api_model.dart';
-import '../../../widgets/section_header.dart';
+import '../../../common/widgets/section_header.dart';
 import 'home_shared.dart';
 
 class ProductGridSection extends StatelessWidget {

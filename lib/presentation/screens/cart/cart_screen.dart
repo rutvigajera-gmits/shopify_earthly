@@ -5,7 +5,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../data/providers/cart_provider.dart';
+import '../../providers/cart_provider.dart';
 import '../../../data/models/cart_model.dart';
 
 class CartScreen extends StatelessWidget {
@@ -287,7 +287,7 @@ class _OrderSummary extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: cart.loading ? null : () => _checkout(context),
+                onPressed: cart.isLoading ? null : () => _checkout(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.textPrimary,
                   foregroundColor: AppColors.textWhite,
@@ -295,7 +295,7 @@ class _OrderSummary extends StatelessWidget {
                   shape: const RoundedRectangleBorder(),
                   elevation: 0,
                 ),
-                child: cart.loading
+                child: cart.isLoading
                     ? const SizedBox(
                         height: 20,
                         width: 20,

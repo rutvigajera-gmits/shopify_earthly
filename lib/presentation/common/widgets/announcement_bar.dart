@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
-import '../../data/providers/home_provider.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../providers/home_provider.dart';
 
 class AnnouncementBar extends StatefulWidget {
   const AnnouncementBar({super.key});

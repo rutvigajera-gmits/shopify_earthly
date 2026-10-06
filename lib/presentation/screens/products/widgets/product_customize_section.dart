@@ -3,7 +3,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../data/models/product_model.dart';
-import '../../../widgets/size_chart_sheet.dart';
+import '../../../common/widgets/size_chart_sheet.dart';
 
 class ProductCustomizeSection extends StatelessWidget {
   final Product product;

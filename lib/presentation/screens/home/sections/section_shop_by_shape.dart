@@ -5,7 +5,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../data/models/home_api_model.dart';
-import '../../../widgets/section_header.dart';
+import '../../../common/widgets/section_header.dart';
 
 const _kAllShapes = [
   ('Round',    'assets/icons/Round.svg',    'round-cut-diamonds'),

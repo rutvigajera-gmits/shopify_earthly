@@ -5,7 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/services/shopify_service.dart';
-import '../../widgets/product_card.dart';
+import '../../common/widgets/product_card.dart';
 
 const _kSortOptions = ['Featured', 'Price: Low to High', 'Price: High to Low'];
 
@@ -96,10 +96,12 @@ class _ShapeProductsScreenState extends State<ShapeProductsScreen> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          const Divider(height: 1, color: AppColors.neutral200),
-          _SortBar(
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            const Divider(height: 1, color: AppColors.neutral200),
+            _SortBar(
             sortBy: _sortBy,
             onChanged: (v) => setState(() => _sortBy = v),
           ),
@@ -107,6 +109,7 @@ class _ShapeProductsScreenState extends State<ShapeProductsScreen> {
           Expanded(child: _body()),
         ],
       ),
+    ),
     );
   }
 

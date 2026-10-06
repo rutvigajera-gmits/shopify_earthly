@@ -1,40 +1,37 @@
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/customer_model.dart';
-import '../services/shopify_service.dart';
+import '../../data/models/customer_model.dart';
+import '../../data/repositories/customer_repository.dart';
+import '../../data/services/local_order_service.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/format_utils.dart';
+import '../common/base_provider.dart';
 
-class CustomerProvider extends ChangeNotifier {
-  final _service = ShopifyService.instance;
+class CustomerProvider extends BaseProvider {
+  final _repo = CustomerRepository.instance;
 
   Customer? _customer;
   String? _accessToken;
   List<CustomerOrder> _orders = [];
   List<CustomerAddress> _addresses = [];
 
-  bool _loading = false;
   bool _ordersLoading = false;
   bool _ordersLoaded = false;
   bool _addressesLoading = false;
-  String? _error;
 
   bool get isLoggedIn => _customer != null && _accessToken != null;
   Customer? get customer => _customer;
+  String? get accessToken => _accessToken;
   List<CustomerOrder> get orders => _orders;
   List<CustomerAddress> get addresses => _addresses;
-  bool get loading => _loading;
   bool get ordersLoading => _ordersLoading;
   bool get addressesLoading => _addressesLoading;
-  String? get error => _error;
 
-  // Called on app start — restores session from SharedPreferences.
   Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(AppStrings.customerTokenKey);
       if (token == null || token.isEmpty) return;
-      final customer = await _service.fetchCustomer(token);
+      final customer = await _repo.fetchProfile(token);
       if (customer != null) {
         _customer = customer;
         _accessToken = token;
@@ -46,22 +43,17 @@ class CustomerProvider extends ChangeNotifier {
   }
 
   Future<void> login(String email, String password) async {
-    _loading = true;
-    _error = null;
-    notifyListeners();
+    setLoading();
     try {
-      final token =
-          await _service.loginCustomer(email: email, password: password);
+      final token = await _repo.login(email: email, password: password);
       _accessToken = token;
-      _customer = await _service.fetchCustomer(token);
+      _customer = await _repo.fetchProfile(token);
       _ordersLoaded = false;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(AppStrings.customerTokenKey, token);
+      setLoaded();
     } catch (e) {
-      _error = FormatUtils.trimException(e);
-    } finally {
-      _loading = false;
-      notifyListeners();
+      setError(FormatUtils.trimException(e));
     }
   }
 
@@ -71,41 +63,33 @@ class CustomerProvider extends ChangeNotifier {
     String firstName = '',
     String lastName = '',
   }) async {
-    _loading = true;
-    _error = null;
-    notifyListeners();
+    setLoading();
     try {
-      await _service.createCustomer(
+      await _repo.register(
         email: email,
         password: password,
         firstName: firstName,
         lastName: lastName,
       );
-      // Auto-login after successful registration.
-      final token =
-          await _service.loginCustomer(email: email, password: password);
+      final token = await _repo.login(email: email, password: password);
       _accessToken = token;
-      _customer = await _service.fetchCustomer(token);
+      _customer = await _repo.fetchProfile(token);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(AppStrings.customerTokenKey, token);
+      setLoaded();
     } catch (e) {
-      _error = FormatUtils.trimException(e);
-    } finally {
-      _loading = false;
-      notifyListeners();
+      setError(FormatUtils.trimException(e));
     }
   }
 
   Future<void> sendPasswordReset(String email) async {
     try {
-      await _service.sendPasswordReset(email);
+      await _repo.sendPasswordReset(email);
     } catch (_) {}
   }
 
   Future<void> logout() async {
-    if (_accessToken != null) {
-      await _service.logoutCustomer(_accessToken!);
-    }
+    if (_accessToken != null) await _repo.logout(_accessToken!);
     _customer = null;
     _accessToken = null;
     _orders = [];
@@ -115,12 +99,29 @@ class CustomerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadOrders() async {
-    if (_accessToken == null || _ordersLoaded) return;
+  Future<void> loadOrders({bool forceRefresh = false}) async {
+    if (_ordersLoading || (_ordersLoaded && !forceRefresh)) return;
     _ordersLoading = true;
     notifyListeners();
     try {
-      _orders = await _service.fetchCustomerOrders(_accessToken!);
+      // Fetch from Shopify (requires login) and local storage in parallel.
+      final results = await Future.wait([
+        _accessToken != null
+            ? _repo.fetchOrders(_accessToken!).catchError((_) => <CustomerOrder>[])
+            : Future.value(<CustomerOrder>[]),
+        LocalOrderService.instance.loadOrders(),
+      ]);
+
+      final shopifyOrders = results[0];
+      final localOrders = results[1];
+
+      // Merge: show Shopify orders first, then any local orders not already
+      // present in Shopify (identified by their 'local_' prefixed id).
+      final shopifyIds = shopifyOrders.map((o) => o.id).toSet();
+      final localOnly =
+          localOrders.where((o) => !shopifyIds.contains(o.id)).toList();
+
+      _orders = [...shopifyOrders, ...localOnly];
       _ordersLoaded = true;
     } catch (_) {
       _orders = [];
@@ -130,46 +131,34 @@ class CustomerProvider extends ChangeNotifier {
     }
   }
 
-  void clearError() {
-    _error = null;
-    notifyListeners();
+  /// Call after placing a new order so the next [loadOrders] re-fetches.
+  void invalidateOrders() {
+    _ordersLoaded = false;
   }
 
-  // ─── Profile update ───────────────────────────────────────────────────────
-
-  Future<void> updateProfile({
-    String? firstName,
-    String? lastName,
-    String? phone,
-  }) async {
+  Future<void> updateProfile({String? firstName, String? lastName, String? phone}) async {
     if (_accessToken == null) return;
-    _loading = true;
-    _error = null;
-    notifyListeners();
+    setLoading();
     try {
-      final updated = await _service.updateCustomer(
-        accessToken: _accessToken!,
+      final updated = await _repo.updateProfile(
+        token: _accessToken!,
         firstName: firstName,
         lastName: lastName,
         phone: phone,
       );
       if (updated != null) _customer = updated;
+      setLoaded();
     } catch (e) {
-      _error = FormatUtils.trimException(e);
-    } finally {
-      _loading = false;
-      notifyListeners();
+      setError(FormatUtils.trimException(e));
     }
   }
-
-  // ─── Address management ───────────────────────────────────────────────────
 
   Future<void> loadAddresses() async {
     if (_accessToken == null || _addressesLoading) return;
     _addressesLoading = true;
     notifyListeners();
     try {
-      _addresses = await _service.fetchCustomerAddresses(_accessToken!);
+      _addresses = await _repo.fetchAddresses(_accessToken!);
     } catch (_) {
       _addresses = [];
     } finally {
@@ -181,10 +170,7 @@ class CustomerProvider extends ChangeNotifier {
   Future<String?> addAddress(Map<String, String> address) async {
     if (_accessToken == null) return 'Not logged in';
     try {
-      final created = await _service.createCustomerAddress(
-        accessToken: _accessToken!,
-        address: address,
-      );
+      final created = await _repo.createAddress(token: _accessToken!, address: address);
       _addresses.insert(0, created);
       notifyListeners();
       return null;
@@ -193,12 +179,11 @@ class CustomerProvider extends ChangeNotifier {
     }
   }
 
-  Future<String?> editAddress(
-      String addressId, Map<String, String> address) async {
+  Future<String?> editAddress(String addressId, Map<String, String> address) async {
     if (_accessToken == null) return 'Not logged in';
     try {
-      final updated = await _service.updateCustomerAddress(
-        accessToken: _accessToken!,
+      final updated = await _repo.updateAddress(
+        token: _accessToken!,
         addressId: addressId,
         address: address,
       );
@@ -216,10 +201,7 @@ class CustomerProvider extends ChangeNotifier {
   Future<String?> removeAddress(String addressId) async {
     if (_accessToken == null) return 'Not logged in';
     try {
-      await _service.deleteCustomerAddress(
-        accessToken: _accessToken!,
-        addressId: addressId,
-      );
+      await _repo.deleteAddress(token: _accessToken!, addressId: addressId);
       _addresses.removeWhere((a) => a.id == addressId);
       notifyListeners();
       return null;
@@ -231,13 +213,8 @@ class CustomerProvider extends ChangeNotifier {
   Future<String?> makeDefaultAddress(String addressId) async {
     if (_accessToken == null) return 'Not logged in';
     try {
-      await _service.setDefaultCustomerAddress(
-        accessToken: _accessToken!,
-        addressId: addressId,
-      );
-      _addresses = _addresses
-          .map((a) => a.copyWith(isDefault: a.id == addressId))
-          .toList();
+      await _repo.setDefaultAddress(token: _accessToken!, addressId: addressId);
+      _addresses = _addresses.map((a) => a.copyWith(isDefault: a.id == addressId)).toList();
       notifyListeners();
       return null;
     } catch (e) {

@@ -5,6 +5,8 @@ class AppStrings {
   static const String recentlyViewedKey = 'recently_viewed';
   static const String wishlistKey = 'wishlist_handles';
   static const String customerTokenKey = 'customer_token';
+  static const String cartIdKey = 'cart_id';
+  static const String localOrdersKey = 'local_orders';
 
   // ── Default fallback copy ─────────────────────────────────────────────────────
   static const String defaultShopName = 'Earthly Jewels';

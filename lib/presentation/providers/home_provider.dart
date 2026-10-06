@@ -1,21 +1,17 @@
-import 'package:flutter/foundation.dart';
-import '../models/home_api_model.dart';
-import '../services/storefront_home_service.dart';
+import '../../data/models/home_api_model.dart';
+import '../../data/repositories/home_repository.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/format_utils.dart';
+import '../common/base_provider.dart';
 
-class HomeProvider extends ChangeNotifier {
-  final _service = StorefrontHomeService.instance;
+class HomeProvider extends BaseProvider {
+  final _repo = HomeRepository.instance;
 
   HomeApiResponse? _data;
-  bool _loading = false;
   bool _initialized = false;
-  String? _error;
 
   HomeApiResponse? get data => _data;
-  bool get loading => _loading;
   bool get initialized => _initialized;
-  String? get error => _error;
 
   HomeTheme? get theme => _data?.theme;
   HomeGlobal? get global => _data?.global;
@@ -31,30 +27,25 @@ class HomeProvider extends ChangeNotifier {
 
   Future<void> initialize() async {
     if (_initialized) return;
-    _loading = true;
-    notifyListeners();
+    setLoading();
     try {
-      _data = await _service.fetchHome();
-      _error = null;
+      _data = await _repo.fetchHome();
+      _initialized = true;
+      setLoaded();
     } catch (e) {
-      _error = FormatUtils.trimException(e);
+      setError(FormatUtils.trimException(e));
+      _initialized = true;
     }
-    _loading = false;
-    _initialized = true;
-    notifyListeners();
   }
 
   Future<void> refresh() async {
-    _loading = true;
-    _error = null;
-    notifyListeners();
+    setLoading();
     try {
-      _data = await _service.fetchHome();
+      _data = await _repo.fetchHome();
+      _initialized = true;
+      setLoaded();
     } catch (e) {
-      _error = FormatUtils.trimException(e);
+      setError(FormatUtils.trimException(e));
     }
-    _loading = false;
-    _initialized = true;
-    notifyListeners();
   }
 }
