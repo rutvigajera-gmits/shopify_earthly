@@ -6,6 +6,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../providers/product_provider.dart';
 import '../../../data/models/product_model.dart';
 import '../../common/widgets/app_header.dart';
+import '../../common/widgets/fade_slide_in.dart';
 import '../../common/widgets/product_card.dart';
 
 // Category tab definition
@@ -457,11 +458,14 @@ class _ProductGrid extends StatelessWidget {
             childAspectRatio: 0.65,
           ),
           itemCount: products.length,
-          itemBuilder: (context, i) => ProductCard(
-            product: products[i],
-            onTap: () => Navigator.of(context).pushNamed(
-              '/product',
-              arguments: products[i].handle,
+          itemBuilder: (context, i) => FadeSlideIn(
+            delay: Duration(milliseconds: (i.clamp(0, 8) * 55)),
+            child: ProductCard(
+              product: products[i],
+              onTap: () => Navigator.of(context).pushNamed(
+                '/product',
+                arguments: products[i].handle,
+              ),
             ),
           ),
         );

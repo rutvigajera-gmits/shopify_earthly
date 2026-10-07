@@ -27,8 +27,15 @@ class AppRoutes {
     switch (settings.name) {
       case product:
         final handle = settings.arguments as String? ?? '';
-        return MaterialPageRoute(
-          builder: (_) => ProductDetailScreen(handle: handle),
+        return PageRouteBuilder(
+          settings: settings,
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 250),
+          pageBuilder: (_, __, ___) => ProductDetailScreen(handle: handle),
+          transitionsBuilder: (_, animation, __, child) => FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            child: child,
+          ),
         );
       case cart:
         return MaterialPageRoute(builder: (_) => const CartScreen());

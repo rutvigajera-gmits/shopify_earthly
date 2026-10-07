@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../providers/wishlist_provider.dart';
 import '../../common/widgets/app_header.dart';
+import '../../common/widgets/fade_slide_in.dart';
 import '../../common/widgets/product_card.dart';
 
 class WishlistScreen extends StatefulWidget {
@@ -94,11 +95,14 @@ class _WishlistScreenState extends State<WishlistScreen> {
                     childAspectRatio: 0.62,
                   ),
                   itemCount: products.length,
-                  itemBuilder: (_, i) => ProductCard(
-                    product: products[i],
-                    onTap: () => Navigator.of(context).pushNamed(
-                      '/product',
-                      arguments: products[i].handle,
+                  itemBuilder: (_, i) => FadeSlideIn(
+                    delay: Duration(milliseconds: (i.clamp(0, 8) * 55)),
+                    child: ProductCard(
+                      product: products[i],
+                      onTap: () => Navigator.of(context).pushNamed(
+                        '/product',
+                        arguments: products[i].handle,
+                      ),
                     ),
                   ),
                 );

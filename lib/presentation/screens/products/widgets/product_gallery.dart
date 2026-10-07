@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:nb_utils/nb_utils.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -10,6 +11,7 @@ class ProductGallerySection extends StatelessWidget {
   final int currentIndex;
   final PageController controller;
   final ValueChanged<int> onChanged;
+  final String? heroTag;
 
   const ProductGallerySection({
     super.key,
@@ -17,11 +19,16 @@ class ProductGallerySection extends StatelessWidget {
     required this.currentIndex,
     required this.controller,
     required this.onChanged,
+    this.heroTag,
   });
 
   @override
   Widget build(BuildContext context) {
     final total = mediaItems.length;
+    // Index of the first non-video item — this is what the card's Hero shows.
+    final firstImageIdx =
+        mediaItems.indexWhere((m) => m.type == ProductMediaType.image);
+
     return Column(
       children: [
         SizedBox(
@@ -40,17 +47,20 @@ class ProductGallerySection extends StatelessWidget {
                               videoUrl: item.url,
                               thumbnailUrl: item.thumbnailUrl);
                         }
-                        return CachedNetworkImage(
+                        final img = CachedNetworkImage(
                           imageUrl: item.url,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) => Shimmer.fromColors(
-                            baseColor: AppColors.shimmerBase,
-                            highlightColor: AppColors.shimmerHighlight,
-                            child: Container(color: AppColors.shimmerBase),
-                          ),
+                          placeholder: (_, __) => Container(
+                              color: AppColors.surfaceCream),
                           errorWidget: (_, __, ___) =>
                               Container(color: AppColors.cardBackground),
                         );
+                        // Only the first image gets the Hero so it matches
+                        // the card's primaryImage slot (which skips videos).
+                        if (heroTag != null && i == firstImageIdx) {
+                          return Hero(tag: heroTag!, child: img);
+                        }
+                        return img;
                       },
                     )
                   : Container(color: AppColors.cardBackground),
@@ -126,15 +136,17 @@ class _ThumbnailItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
         width: 52,
         height: 52,
         margin: const EdgeInsets.only(right: 8),
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           border: Border.all(
-            color: selected ? AppColors.textPrimary : AppColors.border,
-            width: selected ? 1.5 : 1,
+            color: selected ? AppColors.teal : AppColors.border,
+            width: selected ? 2.0 : 1.0,
           ),
           borderRadius: BorderRadius.circular(4),
         ),
@@ -142,14 +154,14 @@ class _ThumbnailItem extends StatelessWidget {
             ? Stack(fit: StackFit.expand, children: [
                 if (item.thumbnailUrl != null)
                   CachedNetworkImage(
-                      imageUrl: item.thumbnailUrl!, fit: BoxFit.cover)
+                      imageUrl: item.thumbnailUrl!, fit: BoxFit.cover).cornerRadiusWithClipRRect(4).paddingSymmetric(horizontal: 0)
                 else
                   Container(color: Colors.black),
                 const Center(
                     child:
                         Icon(Icons.play_arrow, color: Colors.white, size: 18)),
               ])
-            : CachedNetworkImage(imageUrl: item.url, fit: BoxFit.cover),
+            : CachedNetworkImage(imageUrl: item.url, fit: BoxFit.cover).cornerRadiusWithClipRRect(4).paddingSymmetric(horizontal: 0),
       ),
     );
   }

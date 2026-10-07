@@ -5,6 +5,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../providers/product_provider.dart';
+import '../../common/widgets/fade_slide_in.dart';
 import '../../common/widgets/product_card.dart';
 
 const _kMinQueryLength = 2;
@@ -168,11 +169,14 @@ class _SearchScreenState extends State<SearchScreen> {
                     childAspectRatio: 0.65,
                   ),
                   itemCount: provider.searchResults.length,
-                  itemBuilder: (context, i) => ProductCard(
-                    product: provider.searchResults[i],
-                    onTap: () => Navigator.of(context).pushNamed(
-                      '/product',
-                      arguments: provider.searchResults[i].handle,
+                  itemBuilder: (context, i) => FadeSlideIn(
+                    delay: Duration(milliseconds: (i.clamp(0, 8) * 55)),
+                    child: ProductCard(
+                      product: provider.searchResults[i],
+                      onTap: () => Navigator.of(context).pushNamed(
+                        '/product',
+                        arguments: provider.searchResults[i].handle,
+                      ),
                     ),
                   ),
                 ),

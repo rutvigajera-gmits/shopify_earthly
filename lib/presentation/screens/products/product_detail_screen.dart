@@ -231,6 +231,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   currentIndex: _imageIndex,
                   controller: _pageController,
                   onChanged: (i) => setState(() => _imageIndex = i),
+                  heroTag: 'product-img-${product.handle}',
                 ),
               ),
               SliverToBoxAdapter(

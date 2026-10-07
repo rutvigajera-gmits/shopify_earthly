@@ -5,6 +5,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../data/models/home_api_model.dart';
+import '../../../common/widgets/product_card.dart';
 import 'home_shared.dart';
 
 class OccasionsSection extends StatefulWidget {
@@ -88,12 +89,12 @@ class _OccasionsSectionState extends State<OccasionsSection> {
                 crossAxisCount: 2,
                 crossAxisSpacing: AppConstants.cardSpacing,
                 mainAxisSpacing: AppConstants.cardSpacing,
-                mainAxisExtent: 310,
+                mainAxisExtent: 240,
               ),
               itemCount: selected.products.take(4).length,
               itemBuilder: (_, i) {
                 final p = selected.products[i];
-                return HomeFeaturedCard(product: p.toProduct(), onTap: () => widget.onProductTap(p.handle));
+                return ProductCard(product: p.toProduct(), onTap: () => widget.onProductTap(p.handle));
               },
             ),
           )

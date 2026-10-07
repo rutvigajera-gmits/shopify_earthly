@@ -38,14 +38,14 @@ class DesignerRingsSection extends StatelessWidget {
         ),
         14.height,
         SizedBox(
-          height: 230,
+          height: 175,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
             itemCount: tiles.length,
             separatorBuilder: (_, __) => const SizedBox(width: AppConstants.cardSpacing),
             itemBuilder: (_, i) => SizedBox(
-              width: 148,
+              width: 130,
               child: _RingCollectionCard(tile: tiles[i], onTap: () => onTap(tiles[i])),
             ),
           ),
