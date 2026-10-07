@@ -102,56 +102,56 @@ class ProductDeliverySection extends StatelessWidget {
           ])),
         ]),
         const SizedBox(height: 12),
-        Row(children: [
-          Expanded(
-            child: Container(
-              height: 46,
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.border),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(4),
-                  bottomLeft: Radius.circular(4),
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: TextField(
-                controller: pincodeController,
-                keyboardType: TextInputType.number,
-                style: AppTextStyles.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: 'Enter your pincode',
-                  hintStyle: AppTextStyles.bodySmall
-                      .copyWith(color: AppColors.textMuted),
-                  border: InputBorder.none,
-                ),
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              final pin = pincodeController.text.trim();
-              if (pin.isNotEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Delivery available at $pin!')));
-              }
-            },
-            child: Container(
-              height: 46,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: const BoxDecoration(
-                color: AppColors.textPrimary,
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(4),
-                  bottomRight: Radius.circular(4),
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text('Check',
-                  style:
-                      AppTextStyles.button.copyWith(color: Colors.white)),
-            ),
-          ),
-        ]),
+        // Row(children: [
+        //   Expanded(
+        //     child: Container(
+        //       height: 46,
+        //       decoration: BoxDecoration(
+        //         border: Border.all(color: AppColors.border),
+        //         borderRadius: const BorderRadius.only(
+        //           topLeft: Radius.circular(4),
+        //           bottomLeft: Radius.circular(4),
+        //         ),
+        //       ),
+        //       padding: const EdgeInsets.symmetric(horizontal: 12),
+        //       child: TextField(
+        //         controller: pincodeController,
+        //         keyboardType: TextInputType.number,
+        //         style: AppTextStyles.bodyMedium,
+        //         decoration: InputDecoration(
+        //           hintText: 'Enter your pincode',
+        //           hintStyle: AppTextStyles.bodySmall
+        //               .copyWith(color: AppColors.textMuted),
+        //           border: InputBorder.none,
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        //   GestureDetector(
+        //     onTap: () {
+        //       final pin = pincodeController.text.trim();
+        //       if (pin.isNotEmpty) {
+        //         ScaffoldMessenger.of(context).showSnackBar(
+        //             SnackBar(content: Text('Delivery available at $pin!')));
+        //       }
+        //     },
+        //     child: Container(
+        //       height: 46,
+        //       padding: const EdgeInsets.symmetric(horizontal: 20),
+        //       decoration: const BoxDecoration(
+        //         color: AppColors.textPrimary,
+        //         borderRadius: BorderRadius.only(
+        //           topRight: Radius.circular(4),
+        //           bottomRight: Radius.circular(4),
+        //         ),
+        //       ),
+        //       alignment: Alignment.center,
+        //       child: Text('Check',
+        //           style:
+        //               AppTextStyles.button.copyWith(color: Colors.white)),
+        //     ),
+        //   ),
+        // ]),
       ]),
     );
   }

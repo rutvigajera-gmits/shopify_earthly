@@ -2,7 +2,6 @@ import 'package:demo_earthly/component/empty_error_state_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:nb_utils/nb_utils.dart';
-import 'package:shimmer/shimmer.dart';
 import '../../../component/loader_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
@@ -286,21 +285,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     .fadeIn(duration: 360.ms, curve: Curves.easeOut)
                     .slideY(begin: 0.05, end: 0, duration: 360.ms, curve: Curves.easeOut),
               ),
-              SliverToBoxAdapter(
-                child: const ProductConsultationBanner()
-                    .animate(delay: 320.ms)
-                    .fadeIn(duration: 360.ms, curve: Curves.easeOut),
-              ),
-              SliverToBoxAdapter(
-                child: const ProductPickDiamondCard()
-                    .animate(delay: 370.ms)
-                    .fadeIn(duration: 360.ms, curve: Curves.easeOut),
-              ),
-              SliverToBoxAdapter(
-                child: const ProductRatingsGrid()
-                    .animate(delay: 420.ms)
-                    .fadeIn(duration: 360.ms, curve: Curves.easeOut),
-              ),
+              // SliverToBoxAdapter(
+              //   child: const ProductConsultationBanner()
+              //       .animate(delay: 320.ms)
+              //       .fadeIn(duration: 360.ms, curve: Curves.easeOut),
+              // ),
+              // SliverToBoxAdapter(
+              //   child: const ProductPickDiamondCard()
+              //       .animate(delay: 370.ms)
+              //       .fadeIn(duration: 360.ms, curve: Curves.easeOut),
+              // ),
+              // SliverToBoxAdapter(
+              //   child: const ProductRatingsGrid()
+              //       .animate(delay: 420.ms)
+              //       .fadeIn(duration: 360.ms, curve: Curves.easeOut),
+              // ),
               SliverToBoxAdapter(
                 child: ProductAccordionsSection(
                   product: product,

@@ -28,37 +28,60 @@ class ProductCustomizeSection extends StatelessWidget {
     ];
     if (opts.isEmpty) return const SizedBox.shrink();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppConstants.horizontalPadding),
+    return Container(
+      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Divider(color: AppColors.border),
-          const SizedBox(height: 8),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 10),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Text('Customize', style: AppTextStyles.labelLarge),
+          const Divider(height: 1, color: AppColors.border),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppConstants.horizontalPadding, 22,
+                AppConstants.horizontalPadding, 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Section header
+                Row(children: [
+                  Container(
+                    width: 3,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: AppColors.teal,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text('Customize', style: AppTextStyles.headlineSmall),
+                ]),
+                const SizedBox(height: 24),
+                ...List.generate(opts.length, (idx) {
+                  final opt = opts[idx];
+                  return Column(
+                    children: [
+                      _OptionSection(
+                        name: opt.name,
+                        values: opt.values,
+                        selectedValue: selectedOptions[opt.name] ?? '',
+                        onChanged: (val) => onOptionChanged(opt.name, val),
+                      ),
+                      if (idx < opts.length - 1)
+                        const Divider(height: 1, color: AppColors.border),
+                      if (idx < opts.length - 1) const SizedBox(height: 20),
+                    ],
+                  );
+                }),
+                const SizedBox(height: 8),
+              ],
             ),
           ),
-          const SizedBox(height: 20),
-          ...opts.map((opt) => _OptionSection(
-                name: opt.name,
-                values: opt.values,
-                selectedValue: selectedOptions[opt.name] ?? '',
-                onChanged: (val) => onOptionChanged(opt.name, val),
-              )),
-          const SizedBox(height: 4),
         ],
       ),
     );
   }
 }
+
+// ─── Option Section ───────────────────────────────────────────────────────────
 
 class _OptionSection extends StatelessWidget {
   final String name;
@@ -83,49 +106,63 @@ class _OptionSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Label row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              RichText(
-                text: TextSpan(children: [
-                  TextSpan(
-                      text: name,
-                      style: AppTextStyles.labelLarge.copyWith(fontSize: 14)),
-                  if (selectedValue.isNotEmpty) ...[
-                    TextSpan(
-                        text: ':  ',
-                        style: AppTextStyles.labelLarge.copyWith(fontSize: 14)),
-                    TextSpan(
-                        text: selectedValue,
-                        style: AppTextStyles.labelLarge.copyWith(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.teal,
-                        )),
-                  ],
-                ]),
+              Text(
+                name.toUpperCase(),
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: AppColors.textMuted,
+                  fontSize: 10,
+                  letterSpacing: 1.4,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              if (_isSize) const SizeChartLink(),
+              Row(children: [
+                if (selectedValue.isNotEmpty)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.teal.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      selectedValue,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.teal,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                if (_isSize) ...[
+                  const SizedBox(width: 10),
+                  const SizeChartLink(),
+                ],
+              ]),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           if (_isMetal)
             _MetalTypePicker(
                 values: values, selected: selectedValue, onChanged: onChanged)
           else if (_isSize)
-            _SizeDropdown(
+            _SizeChipRow(
                 values: values, selected: selectedValue, onChanged: onChanged)
           else
             _ChipPicker(
                 values: values, selected: selectedValue, onChanged: onChanged),
           if (_isSize) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Row(children: [
-              const Icon(Icons.radio_button_unchecked,
-                  size: 12, color: AppColors.textMuted),
+              const Icon(Icons.info_outline,
+                  size: 11, color: AppColors.textMuted),
               const SizedBox(width: 4),
               Text(
-                'Price and weight will changes as per the size',
+                'Price and weight change with size',
                 style: AppTextStyles.bodySmall
                     .copyWith(color: AppColors.textMuted, fontSize: 11),
               ),
@@ -136,6 +173,8 @@ class _OptionSection extends StatelessWidget {
     );
   }
 }
+
+// ─── Chip Picker ──────────────────────────────────────────────────────────────
 
 class _ChipPicker extends StatelessWidget {
   final List<String> values;
@@ -148,32 +187,41 @@ class _ChipPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+      spacing: 8,
+      runSpacing: 8,
       children: values.map((v) {
-        final isSelected = v == selected;
+        final active = v == selected;
         return GestureDetector(
           onTap: () => onChanged(v),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            duration: const Duration(milliseconds: 180),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: active ? AppColors.textPrimary : Colors.white,
               border: Border.all(
-                color: isSelected ? AppColors.textPrimary : AppColors.border,
-                width: isSelected ? 1.5 : 1,
+                color: active ? AppColors.textPrimary : AppColors.border,
+                width: 1,
               ),
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: active
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
             ),
-            child: Text(v,
-                style: AppTextStyles.labelLarge.copyWith(
-                  fontSize: 13,
-                  color: isSelected
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
-                  fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.w400,
-                )),
+            child: Text(
+              v,
+              style: AppTextStyles.labelLarge.copyWith(
+                fontSize: 13,
+                color: active ? Colors.white : AppColors.textSecondary,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
           ),
         );
       }).toList(),
@@ -181,39 +229,59 @@ class _ChipPicker extends StatelessWidget {
   }
 }
 
-class _SizeDropdown extends StatelessWidget {
+// ─── Size Chip Row ────────────────────────────────────────────────────────────
+
+class _SizeChipRow extends StatelessWidget {
   final List<String> values;
   final String selected;
   final ValueChanged<String> onChanged;
 
-  const _SizeDropdown(
+  const _SizeChipRow(
       {required this.values, required this.selected, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
-    final eff = values.contains(selected) ? selected : values.firstOrNull;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-          border: Border.all(color: AppColors.border),
-          borderRadius: BorderRadius.circular(4)),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: eff,
-          isExpanded: true,
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
-          icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textPrimary),
-          items: values
-              .map((v) => DropdownMenuItem(value: v, child: Text(v)))
-              .toList(),
-          onChanged: (v) {
-            if (v != null) onChanged(v);
-          },
-        ),
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: values.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final v = values[i];
+          final active = v == selected;
+          return GestureDetector(
+            onTap: () => onChanged(v),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              constraints: const BoxConstraints(minWidth: 44),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: active ? AppColors.textPrimary : Colors.white,
+                border: Border.all(
+                  color: active ? AppColors.textPrimary : AppColors.border,
+                  width: 1,
+                ),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                v,
+                style: AppTextStyles.labelLarge.copyWith(
+                  fontSize: 13,
+                  color: active ? Colors.white : AppColors.textSecondary,
+                  fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 }
+
+// ─── Metal Type Picker ────────────────────────────────────────────────────────
 
 class _MetalTypePicker extends StatelessWidget {
   final List<String> values;
@@ -223,56 +291,95 @@ class _MetalTypePicker extends StatelessWidget {
   const _MetalTypePicker(
       {required this.values, required this.selected, required this.onChanged});
 
-  Color _color(String v) {
+  LinearGradient _gradient(String v) {
     final l = v.toLowerCase();
-    if (l.contains('rose') || l.contains('pink')) return const Color(0xFFB87B6A);
-    if (l.contains('white') || l.contains('platinum') || l.contains('silver')) {
-      return const Color(0xFFCECECE);
+    if (l.contains('rose') || l.contains('pink')) {
+      return const LinearGradient(
+        colors: [Color(0xFFF0C4B8), Color(0xFF9E5B4A)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
     }
-    return const Color(0xFFD4AF37);
+    if (l.contains('white') || l.contains('platinum') || l.contains('silver')) {
+      return const LinearGradient(
+        colors: [Color(0xFFFFFFFF), Color(0xFFAAAAAA)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+    }
+    return const LinearGradient(
+      colors: [Color(0xFFFFE57A), Color(0xFFB8860B)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  bool _useDarkCheck(String v) {
+    final l = v.toLowerCase();
+    return l.contains('yellow') || l.contains('white') || l.contains('platinum');
   }
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: values.map((v) {
-        final isSelected = v == selected;
+        final active = v == selected;
+        final label = v
+            .replaceAll(' Gold', '')
+            .replaceAll(' gold', '')
+            .replaceAll('Platinum', 'Plat.');
         return GestureDetector(
           onTap: () => onChanged(v),
           child: Container(
-            margin: const EdgeInsets.only(right: 16),
+            margin: const EdgeInsets.only(right: 20),
             child: Column(children: [
-              Container(
-                padding: const EdgeInsets.all(3),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.all(active ? 3 : 0),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isSelected
-                        ? AppColors.textPrimary
-                        : Colors.transparent,
+                    color: active ? AppColors.textPrimary : Colors.transparent,
                     width: 2,
                   ),
                 ),
                 child: Container(
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _color(v),
+                    gradient: _gradient(v),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.18),
-                          blurRadius: 4,
-                          offset: const Offset(1, 2))
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
                     ],
                   ),
+                  child: active
+                      ? Icon(
+                          Icons.check_rounded,
+                          size: 20,
+                          color: _useDarkCheck(v)
+                              ? const Color(0xFF5A3E00)
+                              : Colors.white70,
+                        )
+                      : null,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                v.replaceFirst(' Gold', '').replaceFirst(' gold', ''),
-                style: AppTextStyles.labelSmall
-                    .copyWith(color: AppColors.textSecondary, fontSize: 10),
+              const SizedBox(height: 6),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 180),
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: active
+                      ? AppColors.textPrimary
+                      : AppColors.textMuted,
+                  fontSize: 10,
+                  fontWeight:
+                      active ? FontWeight.w700 : FontWeight.w400,
+                ),
+                child: Text(label),
               ),
             ]),
           ),
