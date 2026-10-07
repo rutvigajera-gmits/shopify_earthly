@@ -8,7 +8,7 @@ import 'package:nb_utils/nb_utils.dart';
 
 class ShopByCategorySection extends StatelessWidget {
   final CollectionRowData data;
-  final ValueChanged<String> onTap;
+  final ValueChanged<CollectionTile> onTap;
 
   const ShopByCategorySection({super.key, required this.data, required this.onTap});
 
@@ -33,7 +33,7 @@ class ShopByCategorySection extends StatelessWidget {
             separatorBuilder: (_, __) => 14.width,
             itemBuilder: (_, i) => _CategoryTile(
               tile: data.tiles[i],
-              onTap: () => onTap(data.tiles[i].handle),
+              onTap: () => onTap(data.tiles[i]),
             ),
           ),
         ),

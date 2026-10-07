@@ -134,8 +134,14 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.only(top: vPad),
           child: ShopByCategorySection(
             data: data,
-            onTap: (handle) =>
-                Navigator.of(context).pushNamed('/products', arguments: handle),
+            onTap: (tile) => Navigator.of(context).pushNamed(
+              '/designer-rings-collection',
+              arguments: {
+                'title': tile.title,
+                'handle': tile.handle,
+                'imageUrl': tile.imageUrl,
+              },
+            ),
           ),
         );
 
@@ -160,8 +166,14 @@ class _HomeScreenState extends State<HomeScreen> {
           child: DesignerRingsSection(
             data: data,
             onViewAll: () => widget.onNavTap?.call(1),
-            onTap: (handle) =>
-                Navigator.of(context).pushNamed('/products', arguments: handle),
+            onTap: (tile) => Navigator.of(context).pushNamed(
+              '/designer-rings-collection',
+              arguments: {
+                'title': tile.title,
+                'handle': tile.handle,
+                'imageUrl': tile.imageUrl,
+              },
+            ),
           ),
         );
 

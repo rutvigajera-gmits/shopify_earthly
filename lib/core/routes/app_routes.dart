@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../presentation/screens/products/designer_rings_collection_screen.dart';
 import '../../presentation/screens/products/product_detail_screen.dart';
 import '../../presentation/screens/products/shape_products_screen.dart';
 import '../../presentation/screens/cart/cart_screen.dart';
@@ -20,6 +21,7 @@ class AppRoutes {
   static const String wishlist = '/wishlist';
   static const String addresses = '/addresses';
   static const String shapeProducts = '/shape-products';
+  static const String designerRingsCollection = '/designer-rings-collection';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -47,6 +49,16 @@ class AppRoutes {
           builder: (_) => ShapeProductsScreen(
             shapeName: args['shapeName'] ?? '',
             collectionHandle: args['handle'] ?? '',
+          ),
+        );
+      case designerRingsCollection:
+        final args = settings.arguments as Map<String, String>? ?? {};
+        return MaterialPageRoute(
+          builder: (_) => DesignerRingsCollectionScreen(
+            collectionTitle: args['title'] ?? '',
+            collectionHandle: args['handle'] ?? '',
+            collectionImageUrl: args['imageUrl'] ?? '',
+            showShapeFilter: args['showShapeFilter'] != 'false',
           ),
         );
       default:

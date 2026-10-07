@@ -78,15 +78,18 @@ class _ChatbotSheetState extends State<_ChatbotSheet> {
 
     await cartProvider.addItem(firstVariant.id, 1);
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.clearSnackBars();
+      messenger.showSnackBar(SnackBar(
         content: Text('${product.title} added to bag'),
         backgroundColor: AppColors.teal,
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
         action: SnackBarAction(
           label: 'View Bag',
           textColor: AppColors.gold,
           onPressed: () {
+            messenger.clearSnackBars();
             Navigator.of(context)
               ..pop()
               ..pushNamed(AppRoutes.cart);
@@ -246,20 +249,20 @@ class _ChatHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Ring Matchmaker',
+                  'Earthly Jewels Assistant',
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                Text(
-                  'Earthly Jewels Assistant',
-                  style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 11,
-                  ),
-                ),
+                // Text(
+                //   'Earthly Jewels Assistant',
+                //   style: TextStyle(
+                //     color: AppColors.textMuted,
+                //     fontSize: 11,
+                //   ),
+                // ),
               ],
             ),
           ),

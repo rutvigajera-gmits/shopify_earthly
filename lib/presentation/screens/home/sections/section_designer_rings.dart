@@ -11,7 +11,7 @@ import 'home_shared.dart';
 class DesignerRingsSection extends StatelessWidget {
   final CollectionRowData data;
   final VoidCallback onViewAll;
-  final ValueChanged<String> onTap;
+  final ValueChanged<CollectionTile> onTap;
 
   const DesignerRingsSection({
     super.key,
@@ -46,7 +46,7 @@ class DesignerRingsSection extends StatelessWidget {
             separatorBuilder: (_, __) => const SizedBox(width: AppConstants.cardSpacing),
             itemBuilder: (_, i) => SizedBox(
               width: 148,
-              child: _RingCollectionCard(tile: tiles[i], onTap: () => onTap(tiles[i].handle)),
+              child: _RingCollectionCard(tile: tiles[i], onTap: () => onTap(tiles[i])),
             ),
           ),
         ),
