@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import '../../../component/loader_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
@@ -811,12 +812,7 @@ class _PayButton extends StatelessWidget {
                   elevation: 0,
                 ),
                 child: processing
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2),
-                      )
+                    ? const LoaderWidget(size: 22, color: Colors.white)
                     : Text(
                         'PAY  ${cartProvider.cart.formattedSubtotal}',
                         style: AppTextStyles.button

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../component/loader_widget.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -296,14 +297,7 @@ class _OrderSummary extends StatelessWidget {
                   elevation: 0,
                 ),
                 child: cart.isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
+                    ? const LoaderWidget(size: 22, color: Colors.white)
                     : Text(
                         'PROCEED TO CHECKOUT',
                         style: AppTextStyles.button.copyWith(

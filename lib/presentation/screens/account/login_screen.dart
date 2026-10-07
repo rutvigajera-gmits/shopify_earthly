@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../component/loader_widget.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../providers/customer_provider.dart';
@@ -367,12 +368,7 @@ class _SubmitButton extends StatelessWidget {
         color: loading ? AppColors.textLight : AppColors.textPrimary,
         alignment: Alignment.center,
         child: loading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2),
-              )
+            ? const LoaderWidget(size: 22, color: Colors.white)
             : Text(label,
                 style: AppTextStyles.button.copyWith(
                     color: Colors.white, letterSpacing: 2)),

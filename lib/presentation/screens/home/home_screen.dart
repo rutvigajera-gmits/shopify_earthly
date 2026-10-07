@@ -22,6 +22,7 @@ class HomeScreen extends StatefulWidget {
   final VoidCallback? onSearchTap;
   final VoidCallback? onCartTap;
   final VoidCallback? onWishlistTap;
+  final VoidCallback? onProfileTap;
   final ValueChanged<int>? onNavTap;
 
   const HomeScreen({
@@ -29,6 +30,7 @@ class HomeScreen extends StatefulWidget {
     this.onSearchTap,
     this.onCartTap,
     this.onWishlistTap,
+    this.onProfileTap,
     this.onNavTap,
   });
 
@@ -65,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onSearchTap: widget.onSearchTap,
                       onCartTap: widget.onCartTap,
                       onWishlistTap: widget.onWishlistTap,
+                      onProfileTap: widget.onProfileTap,
                     ),
                     const Divider(height: 1, color: AppColors.neutral200),
                   ],

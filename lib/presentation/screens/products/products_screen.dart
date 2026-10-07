@@ -38,8 +38,9 @@ const List<String> _sortOptions = [
 class ProductsScreen extends StatefulWidget {
   final VoidCallback? onSearchTap;
   final VoidCallback? onCartTap;
+  final VoidCallback? onProfileTap;
 
-  const ProductsScreen({super.key, this.onSearchTap, this.onCartTap});
+  const ProductsScreen({super.key, this.onSearchTap, this.onCartTap, this.onProfileTap});
 
   @override
   State<ProductsScreen> createState() => _ProductsScreenState();
@@ -195,6 +196,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
         title: 'Shop',
         onSearchTap: widget.onSearchTap,
         onCartTap: widget.onCartTap,
+        onProfileTap: widget.onProfileTap,
       ),
       body: SafeArea(
         top: false,

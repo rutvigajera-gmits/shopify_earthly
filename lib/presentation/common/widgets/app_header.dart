@@ -4,6 +4,7 @@ import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/customer_provider.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final bool showBack;
@@ -11,6 +12,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onSearchTap;
   final VoidCallback? onCartTap;
   final VoidCallback? onWishlistTap;
+  final VoidCallback? onProfileTap;
   final bool showSearchBar;
 
   const AppHeader({
@@ -20,6 +22,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.onSearchTap,
     this.onCartTap,
     this.onWishlistTap,
+    this.onProfileTap,
     this.showSearchBar = false,
   });
 
@@ -53,11 +56,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                           onPressed: () => Navigator.of(context).pop(),
                           color: AppColors.textPrimary,
                         )
-                      : IconButton(
-                          icon: const Icon(Icons.menu, size: 22),
-                          onPressed: onSearchTap,
-                          color: AppColors.textPrimary,
-                        ),
+                      : _ProfileAvatar(onTap: onProfileTap),
                 ),
                 Expanded(
                   child: Center(
@@ -112,6 +111,40 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  final VoidCallback? onTap;
+  const _ProfileAvatar({this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final customer = context.watch<CustomerProvider>().customer;
+    final isLoggedIn = customer != null;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isLoggedIn ? AppColors.teal : AppColors.neutral100,
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: isLoggedIn
+            ? Text(
+                customer.initials,
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              )
+            : const Icon(Icons.person_outline, size: 20, color: AppColors.textMuted),
       ),
     );
   }

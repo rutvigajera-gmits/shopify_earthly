@@ -47,11 +47,13 @@ class _AppShellState extends State<AppShell> {
                 onCartTap: _openCart,
                 onWishlistTap: () =>
                     Navigator.of(context).pushNamed(AppRoutes.wishlist),
+                onProfileTap: () => _navigate(4),
                 onNavTap: _navigate,
               ),
               ProductsScreen(
                 onSearchTap: _openSearch,
                 onCartTap: _openCart,
+                onProfileTap: () => _navigate(4),
               ),
               const _SearchTab(),
               const _CartTab(),

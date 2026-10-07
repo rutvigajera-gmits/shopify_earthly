@@ -1,5 +1,5 @@
+import 'package:demo_earthly/component/loader_widget.dart';
 import 'package:flutter/material.dart';
-import 'app_loader.dart';
 
 /// Standard scaffold wrapper. When [isLoading] is true an overlay loader is
 /// shown on top of the body — the body remains mounted so state is not lost.
@@ -38,7 +38,7 @@ class AppScaffold extends StatelessWidget {
             const Positioned.fill(
               child: ColoredBox(
                 color: Color(0x33000000),
-                child: AppLoader(),
+                child: LoaderWidget(),
               ),
             ),
         ],

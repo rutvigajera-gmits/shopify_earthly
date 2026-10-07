@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:demo_earthly/component/loader_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
@@ -135,12 +136,7 @@ class _SearchScreenState extends State<SearchScreen> {
           }
 
           if (provider.loadingSearch) {
-            return const Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.textPrimary,
-              ),
-            );
+            return const LoaderWidget();
           }
 
           if (provider.searchResults.isEmpty) {

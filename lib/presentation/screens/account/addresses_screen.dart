@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../component/loader_widget.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -98,12 +99,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
               child: Consumer<CustomerProvider>(
                 builder: (_, provider, __) {
                 if (provider.addressesLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.gold,
-                      strokeWidth: 2,
-                    ),
-                  );
+                  return const LoaderWidget();
                 }
 
                 if (provider.addresses.isEmpty) {
@@ -485,14 +481,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                         elevation: 0,
                       ),
                       child: _saving
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
+                          ? const LoaderWidget(size: 22, color: Colors.white)
                           : Text(
                               _isEditing ? 'UPDATE ADDRESS' : 'SAVE ADDRESS',
                               style: AppTextStyles.button

@@ -1,3 +1,4 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import '../../presentation/screens/products/designer_rings_collection_screen.dart';
 import '../../presentation/screens/products/product_detail_screen.dart';
@@ -29,11 +30,14 @@ class AppRoutes {
         final handle = settings.arguments as String? ?? '';
         return PageRouteBuilder(
           settings: settings,
-          transitionDuration: const Duration(milliseconds: 300),
-          reverseTransitionDuration: const Duration(milliseconds: 250),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 350),
           pageBuilder: (_, __, ___) => ProductDetailScreen(handle: handle),
-          transitionsBuilder: (_, animation, __, child) => FadeTransition(
-            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          transitionsBuilder: (_, animation, secondaryAnimation, child) =>
+              SharedAxisTransition(
+            animation: animation,
+            secondaryAnimation: secondaryAnimation,
+            transitionType: SharedAxisTransitionType.horizontal,
             child: child,
           ),
         );
@@ -45,23 +49,25 @@ class AppRoutes {
         return MaterialPageRoute(
             builder: (_) => const OrderConfirmationScreen());
       case search:
-        return MaterialPageRoute(builder: (_) => const SearchScreen());
+        return _sharedAxisRoute(settings, const SearchScreen());
       case wishlist:
-        return MaterialPageRoute(builder: (_) => const WishlistScreen());
+        return _sharedAxisRoute(settings, const WishlistScreen());
       case addresses:
-        return MaterialPageRoute(builder: (_) => const AddressesScreen());
+        return _sharedAxisRoute(settings, const AddressesScreen());
       case shapeProducts:
         final args = settings.arguments as Map<String, String>? ?? {};
-        return MaterialPageRoute(
-          builder: (_) => ShapeProductsScreen(
+        return _sharedAxisRoute(
+          settings,
+          ShapeProductsScreen(
             shapeName: args['shapeName'] ?? '',
             collectionHandle: args['handle'] ?? '',
           ),
         );
       case designerRingsCollection:
         final args = settings.arguments as Map<String, String>? ?? {};
-        return MaterialPageRoute(
-          builder: (_) => DesignerRingsCollectionScreen(
+        return _sharedAxisRoute(
+          settings,
+          DesignerRingsCollectionScreen(
             collectionTitle: args['title'] ?? '',
             collectionHandle: args['handle'] ?? '',
             collectionImageUrl: args['imageUrl'] ?? '',
@@ -75,5 +81,22 @@ class AppRoutes {
           ),
         );
     }
+  }
+
+  static PageRouteBuilder<dynamic> _sharedAxisRoute(
+      RouteSettings settings, Widget page) {
+    return PageRouteBuilder(
+      settings: settings,
+      transitionDuration: const Duration(milliseconds: 400),
+      reverseTransitionDuration: const Duration(milliseconds: 350),
+      pageBuilder: (_, __, ___) => page,
+      transitionsBuilder: (_, animation, secondaryAnimation, child) =>
+          SharedAxisTransition(
+        animation: animation,
+        secondaryAnimation: secondaryAnimation,
+        transitionType: SharedAxisTransitionType.horizontal,
+        child: child,
+      ),
+    );
   }
 }

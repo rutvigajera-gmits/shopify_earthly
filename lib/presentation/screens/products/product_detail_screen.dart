@@ -1,4 +1,9 @@
+import 'package:demo_earthly/component/empty_error_state_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:nb_utils/nb_utils.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../../component/loader_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
@@ -122,11 +127,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       backgroundColor: Colors.white,
       elevation: 0,
       scrolledUnderElevation: 0,
-      leading: GestureDetector(
-        onTap: () => Navigator.of(context).pop(),
+      leading: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
         child: const Icon(Icons.arrow_back_ios_new,
             size: 18, color: AppColors.textPrimary),
-      ),
+      ).onTap(() => Navigator.of(context).pop()),
       title: Text('EARTHLY',
           style: AppTextStyles.button.copyWith(fontSize: 14, letterSpacing: 3)),
       centerTitle: true,
@@ -193,13 +201,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         if (provider.loadingProduct) {
           return Scaffold(
               appBar: _buildAppBar(),
-              body: const Center(child: CircularProgressIndicator()));
+              body: const LoaderWidget());
         }
         final product = provider.selectedProduct;
         if (product == null) {
           return Scaffold(
               appBar: _buildAppBar(),
-              body: _ProductLoadError(error: provider.productError));
+              body: NoDataWidget(
+                title: 'Product not found',
+                subTitle: 'The product you are looking for does not exist.',
+                imageWidget: ErrorStateWidget(),
+              ));
         }
 
         if (_selectedVariant == null ||
@@ -222,8 +234,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             selectedVariant: _selectedVariant,
             addingToCart: _addingToCart,
             onAddToCart: () => _addToCart(product),
-          ),
+          )
+              .animate(delay: 180.ms)
+              .fadeIn(duration: 350.ms, curve: Curves.easeOut)
+              .slideY(begin: 0.4, end: 0, duration: 350.ms, curve: Curves.easeOut),
           body: CustomScrollView(
+            key: ValueKey(product.id),
             slivers: [
               SliverToBoxAdapter(
                 child: ProductGallerySection(
@@ -231,12 +247,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   currentIndex: _imageIndex,
                   controller: _pageController,
                   onChanged: (i) => setState(() => _imageIndex = i),
-                  heroTag: 'product-img-${product.handle}',
-                ),
+                ).animate().fadeIn(duration: 320.ms, curve: Curves.easeOut),
               ),
               SliverToBoxAdapter(
                 child: ProductInfoSection(
-                    product: product, selectedVariant: _selectedVariant),
+                  product: product,
+                  selectedVariant: _selectedVariant,
+                )
+                    .animate(delay: 80.ms)
+                    .fadeIn(duration: 360.ms, curve: Curves.easeOut)
+                    .slideY(begin: 0.05, end: 0, duration: 360.ms, curve: Curves.easeOut),
               ),
               SliverToBoxAdapter(
                 child: ProductCustomizeSection(
@@ -244,24 +264,50 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   selectedOptions: _selectedOptions,
                   onOptionChanged: (name, val) =>
                       _onOptionChanged(name, val, product.variants),
-                ),
+                )
+                    .animate(delay: 150.ms)
+                    .fadeIn(duration: 360.ms, curve: Curves.easeOut)
+                    .slideY(begin: 0.05, end: 0, duration: 360.ms, curve: Curves.easeOut),
               ),
-              SliverToBoxAdapter(
-                child: ProductActionButtons(
-                    onBeginOrder: () => _addToCart(product),
-                    addingToCart: _addingToCart),
-              ),
+              // SliverToBoxAdapter(
+              //   child: ProductActionButtons(
+              //     onBeginOrder: () => _addToCart(product),
+              //     addingToCart: _addingToCart,
+              //   )
+              //       .animate(delay: 210.ms)
+              //       .fadeIn(duration: 360.ms, curve: Curves.easeOut)
+              //       .slideY(begin: 0.05, end: 0, duration: 360.ms, curve: Curves.easeOut),
+              // ),
               SliverToBoxAdapter(
                 child: ProductDeliverySection(
-                    pincodeController: _pincodeController),
+                  pincodeController: _pincodeController,
+                )
+                    .animate(delay: 270.ms)
+                    .fadeIn(duration: 360.ms, curve: Curves.easeOut)
+                    .slideY(begin: 0.05, end: 0, duration: 360.ms, curve: Curves.easeOut),
               ),
-              const SliverToBoxAdapter(
-                  child: ProductConsultationBanner()),
-              const SliverToBoxAdapter(child: ProductPickDiamondCard()),
-              const SliverToBoxAdapter(child: ProductRatingsGrid()),
+              SliverToBoxAdapter(
+                child: const ProductConsultationBanner()
+                    .animate(delay: 320.ms)
+                    .fadeIn(duration: 360.ms, curve: Curves.easeOut),
+              ),
+              SliverToBoxAdapter(
+                child: const ProductPickDiamondCard()
+                    .animate(delay: 370.ms)
+                    .fadeIn(duration: 360.ms, curve: Curves.easeOut),
+              ),
+              SliverToBoxAdapter(
+                child: const ProductRatingsGrid()
+                    .animate(delay: 420.ms)
+                    .fadeIn(duration: 360.ms, curve: Curves.easeOut),
+              ),
               SliverToBoxAdapter(
                 child: ProductAccordionsSection(
-                    product: product, sku: _buildSku(product)),
+                  product: product,
+                  sku: _buildSku(product),
+                )
+                    .animate(delay: 460.ms)
+                    .fadeIn(duration: 360.ms, curve: Curves.easeOut),
               ),
               if (_relatedProducts.isNotEmpty)
                 SliverToBoxAdapter(
@@ -269,7 +315,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     products: _relatedProducts,
                     onTap: (h) => Navigator.of(context)
                         .pushNamed(AppRoutes.product, arguments: h),
-                  ),
+                  )
+                      .animate(delay: 500.ms)
+                      .fadeIn(duration: 360.ms, curve: Curves.easeOut)
+                      .slideY(begin: 0.04, end: 0, duration: 360.ms, curve: Curves.easeOut),
                 ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
@@ -349,10 +398,23 @@ class _StickyBottomBar extends StatelessWidget {
 
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-        decoration: const BoxDecoration(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: AppColors.border)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 20,
+              spreadRadius: 0,
+              offset: const Offset(0, -4),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              spreadRadius: 0,
+              offset: const Offset(0, -1),
+            ),
+          ],
         ),
         child: Row(children: [
           Expanded(
@@ -385,64 +447,10 @@ class _StickyBottomBar extends StatelessWidget {
                   color: AppColors.teal, shape: BoxShape.circle),
               alignment: Alignment.center,
               child: addingToCart
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2))
+                  ? const LoaderWidget(size: 22, color: Colors.white)
                   : const Icon(Icons.shopping_cart_outlined,
                       color: Colors.white, size: 22),
             ),
-          ),
-        ]),
-      ),
-    );
-  }
-}
-
-// ─── Error ────────────────────────────────────────────────────────────────────
-
-class _ProductLoadError extends StatelessWidget {
-  final String? error;
-  const _ProductLoadError({this.error});
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF8F0),
-          border: Border.all(color: const Color(0xFFFFCC80)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Row(children: [
-            Icon(Icons.warning_amber_rounded,
-                color: Color(0xFFE65100), size: 18),
-            SizedBox(width: 8),
-            Text('Product could not load',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFFE65100),
-                    fontSize: 13)),
-          ]),
-          if (error != null) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              color: const Color(0xFFFFF0F0),
-              child: Text('Error: $error',
-                  style: const TextStyle(
-                      fontSize: 11, color: Colors.red, height: 1.4)),
-            ),
-          ],
-          const SizedBox(height: 12),
-          const Text(
-            'Check your internet connection and API token.',
-            style:
-                TextStyle(fontSize: 11, color: Color(0xFF5D4037), height: 1.6),
           ),
         ]),
       ),

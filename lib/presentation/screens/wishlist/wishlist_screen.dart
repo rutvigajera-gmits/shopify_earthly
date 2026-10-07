@@ -1,3 +1,4 @@
+import 'package:demo_earthly/component/loader_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
@@ -67,22 +68,12 @@ class _WishlistScreenState extends State<WishlistScreen> {
                 }
 
                 if (wishlist.loadingProducts) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.gold,
-                      strokeWidth: 2,
-                    ),
-                  );
+                  return const LoaderWidget();
                 }
 
                 final products = wishlist.products;
                 if (products.isEmpty) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.gold,
-                      strokeWidth: 2,
-                    ),
-                  );
+                  return const LoaderWidget();
                 }
 
                 return GridView.builder(

@@ -212,6 +212,7 @@ class Product {
     if (imagesData is Map && imagesData['edges'] is List) {
       images = (imagesData['edges'] as List)
           .map((e) => ProductImage.fromJson(e['node'] as Map<String, dynamic>))
+          .where((img) => img.url.isNotEmpty)
           .toList();
     }
 

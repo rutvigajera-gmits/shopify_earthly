@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../component/loader_widget.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -30,11 +31,7 @@ class ProductActionButtons extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: addingToCart
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2))
+                  ? const LoaderWidget(size: 22, color: Colors.white)
                   : Text('Begin my order',
                       style:
                           AppTextStyles.button.copyWith(color: Colors.white)),

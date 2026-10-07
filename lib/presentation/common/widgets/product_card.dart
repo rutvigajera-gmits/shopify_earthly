@@ -1,3 +1,4 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:nb_utils/nb_utils.dart';
@@ -7,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/product_model.dart';
 import '../../providers/wishlist_provider.dart';
+import '../../screens/products/product_detail_screen.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -24,39 +26,54 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTap,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.965 : 1.0,
-        duration: const Duration(milliseconds: 110),
-        curve: Curves.easeInOut,
-        child: Container(
-          width: widget.width,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceBase,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.07),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
+    return Container(
+      width: widget.width,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
-                  aspectRatio: 1.0,
-                  child: _ProductImage(product: widget.product)),
-              Flexible(child: _ProductInfo(product: widget.product)),
-            ],
-          ),
+        ],
+      ),
+      child: OpenContainer<bool>(
+        transitionDuration: const Duration(milliseconds: 680),
+        transitionType: ContainerTransitionType.fade,
+        openBuilder: (_, __) => ProductDetailScreen(handle: widget.product.handle),
+        closedShape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
+        closedColor: AppColors.surfaceBase,
+        closedElevation: 0,
+        openColor: AppColors.surfaceBase,
+        tappable: false,
+        closedBuilder: (_, openContainer) {
+          return GestureDetector(
+            onTap: () {
+              setState(() => _pressed = false);
+              openContainer();
+            },
+            onTapDown: (_) => setState(() => _pressed = true),
+            onTapUp: (_) => setState(() => _pressed = false),
+            onTapCancel: () => setState(() => _pressed = false),
+            child: AnimatedScale(
+              scale: _pressed ? 0.965 : 1.0,
+              duration: const Duration(milliseconds: 110),
+              curve: Curves.easeInOut,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AspectRatio(
+                      aspectRatio: 1.0,
+                      child: _ProductImage(product: widget.product)),
+                  Flexible(child: _ProductInfo(product: widget.product)),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -71,17 +88,14 @@ class _ProductImage extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Hero(
-          tag: 'product-img-${product.handle}',
-          child: product.primaryImage != null
-              ? CachedNetworkImage(
-                  imageUrl: product.primaryImage!.url,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => _shimmer(),
-                  errorWidget: (_, __, ___) => _placeholder(),
-                )
-              : _placeholder(),
-        ),
+        product.primaryImage != null && product.primaryImage!.url.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: product.primaryImage!.url,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => _shimmer(),
+                errorWidget: (_, __, ___) => _placeholder(),
+              )
+            : _placeholder(),
         Positioned(
           top: 8,
           right: 8,
