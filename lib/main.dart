@@ -1,3 +1,5 @@
+import 'package:demo_earthly/locale/base_language.dart';
+import 'package:demo_earthly/locale/language_en.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -6,6 +8,10 @@ import 'core/config/api_config.dart';
 import 'core/theme/app_colors.dart';
 import 'data/services/stripe_service.dart';
 import 'app.dart';
+
+
+//region Global Variables
+Languages languages = LanguageEn();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

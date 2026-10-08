@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import '../../../component/loader_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
@@ -13,6 +12,7 @@ import '../../../data/models/customer_model.dart';
 import '../../../data/services/shopify_service.dart';
 import '../../../data/services/stripe_service.dart';
 import '../../common/widgets/app_scaffold.dart';
+import '../../common/widgets/credit_card_input.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/order_provider.dart';
@@ -38,6 +38,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _stateController = TextEditingController();
   final _pincodeController = TextEditingController();
 
+  final _cardNumberController = TextEditingController();
+  final _expiryController = TextEditingController();
+  final _cvcController = TextEditingController();
   bool _processing = false;
   bool _cardComplete = false;
 
@@ -61,6 +64,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _cityController.dispose();
     _stateController.dispose();
     _pincodeController.dispose();
+    _cardNumberController.dispose();
+    _expiryController.dispose();
+    _cvcController.dispose();
     super.dispose();
   }
 
@@ -117,9 +123,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final navigator = Navigator.of(context);
 
     try {
-      // 1. Tokenise the card entered in the CardField widget.
-      final stripeToken = await StripeService.instance
-          .createCardToken(cardholderName: _nameController.text.trim());
+      // 1. Tokenise the card via Stripe REST API.
+      final expiryParts = _expiryController.text.split('/');
+      final expMonth =
+          int.tryParse(expiryParts.isNotEmpty ? expiryParts[0] : '') ?? 0;
+      final expYearShort =
+          int.tryParse(expiryParts.length > 1 ? expiryParts[1] : '') ?? 0;
+      final stripeToken =
+          await StripeService.instance.createCardTokenFromDetails(
+        number: _cardNumberController.text.replaceAll(' ', ''),
+        expMonth: expMonth,
+        expYear: expYearShort < 100 ? 2000 + expYearShort : expYearShort,
+        cvc: _cvcController.text.trim(),
+        name: _nameController.text.trim(),
+      );
 
       // 2. Build the Shopify mailing-address map.
       final nameParts = _nameController.text.trim().split(' ');
@@ -183,8 +200,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         await cartProvider.clearCart();
         navigator.pushReplacementNamed(AppRoutes.orderConfirmation);
       }
-    } on StripeException catch (e) {
-      if (mounted) _showError(e.error.localizedMessage ?? 'Card error. Please try again.');
     } catch (e) {
       if (mounted) _showError(FormatUtils.trimException(e));
     } finally {
@@ -422,46 +437,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   // ── Card section ──────────────────────────────────────────────────────────
 
   Widget _buildCardSection() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        border: Border.all(
-            color: _cardComplete ? AppColors.teal : AppColors.border,
-            width: _cardComplete ? 1.5 : 1),
-        borderRadius: BorderRadius.circular(4),
-        color: Colors.white,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.credit_card_outlined,
-                  color: AppColors.teal, size: 20),
-              const SizedBox(width: 8),
-              Text('Enter card details',
-                  style: AppTextStyles.labelMedium
-                      .copyWith(color: AppColors.textSecondary)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          CardField(
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 15,
-            ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              fillColor: Colors.white,
-              filled: true,
-            ),
-            onCardChanged: (card) =>
-                setState(() => _cardComplete = card?.complete ?? false),
-          ),
-        ],
-      ),
+    return CreditCardInput(
+      nameController: _nameController,
+      cardNumberController: _cardNumberController,
+      expiryController: _expiryController,
+      cvcController: _cvcController,
+      onCompleteChanged: (v) => setState(() => _cardComplete = v),
     );
   }
 
@@ -483,14 +464,14 @@ class _SavedAddressTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.teal, width: 1.5),
+        border: Border.all(color: AppColors.primary, width: 1.5),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.location_on_outlined,
-              color: AppColors.teal, size: 20),
+              color: AppColors.primary, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -515,7 +496,7 @@ class _SavedAddressTile extends StatelessWidget {
                 padding: EdgeInsets.zero, minimumSize: Size.zero),
             child: Text('Change',
                 style: AppTextStyles.labelSmall
-                    .copyWith(color: AppColors.teal)),
+                    .copyWith(color: AppColors.primary)),
           ),
         ],
       ),
@@ -838,3 +819,4 @@ class _PayButton extends StatelessWidget {
     );
   }
 }
+

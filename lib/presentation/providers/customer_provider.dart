@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/customer_model.dart';
 import '../../data/repositories/customer_repository.dart';
@@ -11,6 +13,7 @@ class CustomerProvider extends BaseProvider {
 
   Customer? _customer;
   String? _accessToken;
+  String? _profileImagePath;
   List<CustomerOrder> _orders = [];
   List<CustomerAddress> _addresses = [];
 
@@ -21,6 +24,7 @@ class CustomerProvider extends BaseProvider {
   bool get isLoggedIn => _customer != null && _accessToken != null;
   Customer? get customer => _customer;
   String? get accessToken => _accessToken;
+  String? get profileImagePath => _profileImagePath;
   List<CustomerOrder> get orders => _orders;
   List<CustomerAddress> get addresses => _addresses;
   bool get ordersLoading => _ordersLoading;
@@ -30,7 +34,14 @@ class CustomerProvider extends BaseProvider {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(AppStrings.customerTokenKey);
-      if (token == null || token.isEmpty) return;
+      final imagePath = prefs.getString(AppStrings.profileImageKey);
+      if (imagePath != null && File(imagePath).existsSync()) {
+        _profileImagePath = imagePath;
+      }
+      if (token == null || token.isEmpty) {
+        notifyListeners();
+        return;
+      }
       final customer = await _repo.fetchProfile(token);
       if (customer != null) {
         _customer = customer;
@@ -39,6 +50,17 @@ class CustomerProvider extends BaseProvider {
         await prefs.remove(AppStrings.customerTokenKey);
       }
     } catch (_) {}
+    notifyListeners();
+  }
+
+  Future<void> setProfileImagePath(String? path) async {
+    _profileImagePath = path;
+    final prefs = await SharedPreferences.getInstance();
+    if (path != null) {
+      await prefs.setString(AppStrings.profileImageKey, path);
+    } else {
+      await prefs.remove(AppStrings.profileImageKey);
+    }
     notifyListeners();
   }
 

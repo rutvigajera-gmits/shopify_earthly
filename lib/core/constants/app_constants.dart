@@ -42,3 +42,5 @@ class AppConstants {
     'bezel',
   ];
 }
+
+enum GalleryFileTypes { CANCEL, CAMERA, GALLERY }

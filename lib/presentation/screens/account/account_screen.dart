@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -209,12 +211,14 @@ class _LoggedInHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final customer = auth.customer!;
+    final imagePath = auth.profileImagePath;
+    final hasImage = imagePath != null && File(imagePath).existsSync();
     return Container(
       padding: const EdgeInsets.all(AppConstants.horizontalPadding * 1.5),
       color: AppColors.surface,
       child: Row(
         children: [
-          // Avatar with initials
+          // Avatar — profile photo or initials fallback
           Container(
             width: 64,
             height: 64,
@@ -222,15 +226,21 @@ class _LoggedInHeader extends StatelessWidget {
               color: AppColors.textPrimary,
               shape: BoxShape.circle,
             ),
-            alignment: Alignment.center,
-            child: Text(
-              customer.initials,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            clipBehavior: Clip.antiAlias,
+            child: hasImage
+                ? Image.file(File(imagePath),
+                    fit: BoxFit.cover, width: 64, height: 64)
+                : Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      customer.initials,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
           ),
           const SizedBox(width: 16),
           Expanded(

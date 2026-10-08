@@ -7,6 +7,7 @@ class AppStrings {
   static const String customerTokenKey = 'customer_token';
   static const String cartIdKey = 'cart_id';
   static const String localOrdersKey = 'local_orders';
+  static const String profileImageKey = 'profile_image_path';
 
   // ── Default fallback copy ─────────────────────────────────────────────────────
   static const String defaultShopName = 'Earthly Jewels';

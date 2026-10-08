@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_assets.dart';
@@ -122,8 +124,13 @@ class _ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final customer = context.watch<CustomerProvider>().customer;
+    final provider = context.watch<CustomerProvider>();
+    final customer = provider.customer;
     final isLoggedIn = customer != null;
+    final imagePath = provider.profileImagePath;
+    final hasImage = isLoggedIn &&
+        imagePath != null &&
+        File(imagePath).existsSync();
 
     return GestureDetector(
       onTap: onTap,
@@ -134,17 +141,23 @@ class _ProfileAvatar extends StatelessWidget {
           color: isLoggedIn ? AppColors.teal : AppColors.neutral100,
           shape: BoxShape.circle,
         ),
-        alignment: Alignment.center,
-        child: isLoggedIn
-            ? Text(
-                customer.initials,
-                style: AppTextStyles.labelSmall.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
-              )
-            : const Icon(Icons.person_outline, size: 20, color: AppColors.textMuted),
+        clipBehavior: Clip.antiAlias,
+        child: hasImage
+            ? Image.file(File(imagePath), fit: BoxFit.cover)
+            : isLoggedIn
+                ? Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      customer.initials,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  )
+                : const Icon(Icons.person_outline,
+                    size: 20, color: AppColors.textMuted),
       ),
     );
   }
