@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../core/utils/format_utils.dart';
 
 class ProductImage {
@@ -84,6 +85,7 @@ class ProductOption {
 class ProductVariant {
   final String id;
   final String title;
+  final String sku;
   final String price;
   final String? compareAtPrice;
   final bool availableForSale;
@@ -92,6 +94,7 @@ class ProductVariant {
   const ProductVariant({
     required this.id,
     required this.title,
+    this.sku = '',
     required this.price,
     this.compareAtPrice,
     required this.availableForSale,
@@ -112,6 +115,7 @@ class ProductVariant {
     return ProductVariant(
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
+      sku: json['sku'] as String? ?? '',
       price: priceV2 is Map ? (priceV2['amount'] as String? ?? '0') : '0',
       compareAtPrice: compareAtPriceV2 is Map
           ? (compareAtPriceV2['amount'] as String?)
@@ -140,6 +144,8 @@ class Product {
   final List<ProductOption> options;
   final List<String> tags;
   final bool availableForSale;
+  // Populated only on product detail page fetch; null means no try-on available.
+  final String? vtryonSelectionId;
 
   const Product({
     required this.id,
@@ -153,6 +159,7 @@ class Product {
     required this.options,
     required this.tags,
     required this.availableForSale,
+    this.vtryonSelectionId,
   });
 
   String get minPrice {
@@ -265,6 +272,22 @@ class Product {
       options: options,
       tags: tags,
       availableForSale: node['availableForSale'] as bool? ?? true,
+      // Priority: any metafield alias → product tag (vtryon:UUID) → null
+      vtryonSelectionId: () {
+        final fromMetafield =
+            (node['vtryonId'] as Map?)?['value'] as String? ??
+            (node['vtryonId2'] as Map?)?['value'] as String? ??
+            (node['vtryonId3'] as Map?)?['value'] as String?;
+        final fromTag = tags
+            .where((t) => t.toLowerCase().startsWith('vtryon:'))
+            .map((t) => t.substring('vtryon:'.length).trim())
+            .cast<String?>()
+            .firstOrNull;
+        final resolved = fromMetafield ?? fromTag;
+        debugPrint('[VTryOn] product=${node['handle']}  '
+            'metafield=$fromMetafield  tag=$fromTag  resolved=$resolved');
+        return resolved;
+      }(),
     );
   }
 }

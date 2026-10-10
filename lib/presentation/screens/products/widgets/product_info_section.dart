@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../simple_web_screen.dart';
+import '../../../../core/config/api_config.dart';
+import '../../../../data/services/shopify_service.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../data/models/product_model.dart';
+import '../../../providers/customer_provider.dart';
 import '../../../providers/review_provider.dart';
 
 class ProductInfoSection extends StatelessWidget {
@@ -106,30 +111,94 @@ class ProductInfoSection extends StatelessWidget {
           }),
 
           // Virtual Try-On
-          GestureDetector(
-            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Virtual Try-On coming soon!')),
-            ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppColors.teal,
-                borderRadius: BorderRadius.circular(8),
+          Builder(builder: (ctx) {
+            final sku = selectedVariant?.sku ?? '';
+            final customerId =
+                ctx.read<CustomerProvider>().customer?.id ?? '';
+            final slug =
+                sku.contains('-') ? sku.split('-').first : sku;
+            final numericId = customerId.contains('/')
+                ? customerId.split('/').last
+                : customerId;
+
+            return GestureDetector(
+              onTap: () async {
+                var selectionId = product.vtryonSelectionId ?? '';
+                debugPrint('[VTryOn] handle       : ${product.handle}');
+                debugPrint('[VTryOn] tags          : ${product.tags}');
+                debugPrint('[VTryOn] selectionId   : '
+                    '${selectionId.isEmpty ? "(empty — will scrape)" : selectionId}');
+                debugPrint('[VTryOn] sku           : $sku');
+                debugPrint('[VTryOn] slug          : $slug');
+                debugPrint('[VTryOn] numericId     : $numericId');
+
+                // Kick off live-page scraping now so it runs while the user
+                // responds to the camera permission dialog (free latency).
+                final scrapeFuture = selectionId.isEmpty
+                    ? ShopifyService.instance
+                        .scrapeVTryOnSelectionId(product.handle)
+                        .timeout(const Duration(seconds: 8),
+                            onTimeout: () => null)
+                    : Future<String?>.value(selectionId);
+
+                // Ensure OS-level camera permission before opening WebView
+                final status = await Permission.camera.request();
+                debugPrint('[VTryOn] camera status : $status');
+                if (status.isPermanentlyDenied) {
+                  if (ctx.mounted) openAppSettings();
+                  return;
+                }
+
+                // Collect scrape result (often already done by this point)
+                if (selectionId.isEmpty) {
+                  selectionId = await scrapeFuture ?? '';
+                  debugPrint('[VTryOn] scraped       : '
+                      '${selectionId.isEmpty ? "(empty)" : selectionId}');
+                }
+
+                final params = <String, String>{
+                  'shop': VTryOnConfig.shopDomain,
+                  if (selectionId.isNotEmpty) 'selectionId': selectionId,
+                  if (sku.isNotEmpty) 'variantSku': sku,
+                  if (slug.isNotEmpty) 'variantSlug': slug,
+                  if (numericId.isNotEmpty) 'user_id': numericId,
+                };
+                final tryOnUrl = Uri.parse(VTryOnConfig.baseUrl)
+                    .replace(queryParameters: params)
+                    .toString();
+                debugPrint('[VTryOn] opening url   : $tryOnUrl');
+
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).push(MaterialPageRoute(
+                  builder: (_) => SimpleWebScreen(
+                    title: 'Virtual Try-On',
+                    url: tryOnUrl,
+                  ),
+                ));
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppColors.teal,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.camera_alt_outlined,
+                        color: Colors.white, size: 22),
+                    const SizedBox(width: 12),
+                    Text('Virtual Try-On',
+                        style: AppTextStyles.labelLarge
+                            .copyWith(color: Colors.white, fontSize: 14)),
+                    const Spacer(),
+                    const Icon(Icons.chevron_right,
+                        color: Colors.white, size: 22),
+                  ],
+                ),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.camera_alt_outlined,
-                      color: Colors.white, size: 22),
-                  const SizedBox(width: 12),
-                  Text('Virtual Try-On',
-                      style: AppTextStyles.labelLarge
-                          .copyWith(color: Colors.white, fontSize: 14)),
-                  const Spacer(),
-                  const Icon(Icons.chevron_right, color: Colors.white, size: 22),
-                ],
-              ),
-            ),
-          ),
+            );
+          }),
           const SizedBox(height: 14),
 
           // Trust badges — horizontal scroll

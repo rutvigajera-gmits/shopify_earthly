@@ -36,6 +36,37 @@ class Customer {
       phone: json['phone'] as String?,
     );
   }
+
+  // Parses Shopify's /account.json response (snake_case keys, numeric id).
+  factory Customer.fromAccountJson(Map<String, dynamic> json) {
+    final numericId = (json['id'] as num?)?.toInt() ?? 0;
+    return Customer(
+      id: numericId > 0 ? 'gid://shopify/Customer/$numericId' : '',
+      firstName: json['first_name'] as String? ?? '',
+      lastName: json['last_name'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      phone: json['phone'] as String?,
+    );
+  }
+
+  // For persisting identity-only (KwikPass) sessions in SharedPreferences.
+  Map<String, dynamic> toIdentityJson() => {
+        'id': id,
+        'firstName': firstName,
+        'lastName': lastName,
+        'email': email,
+        if (phone != null) 'phone': phone,
+      };
+
+  factory Customer.fromIdentityJson(Map<String, dynamic> json) {
+    return Customer(
+      id: json['id'] as String? ?? '',
+      firstName: json['firstName'] as String? ?? '',
+      lastName: json['lastName'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      phone: json['phone'] as String?,
+    );
+  }
 }
 
 class CustomerAddress {

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
@@ -9,7 +10,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/shop_provider.dart';
 import '../../common/widgets/app_header.dart';
-import 'login_screen.dart';
+import 'kwik_pass_screen.dart';
 import 'orders_screen.dart';
 import 'edit_profile_screen.dart';
 
@@ -54,10 +55,11 @@ class AccountScreen extends StatelessWidget {
                     _MenuItem(
                       icon: Icons.receipt_long_outlined,
                       label: 'My Orders',
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (_) => const OrdersScreen()),
-                      ),
+                      onTap: auth.hasApiToken
+                          ? () => Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => const OrdersScreen()))
+                          : () => _openUrl(context,
+                                'https://earthlyjewels.co/account/orders'),
                     ),
                     _MenuItem(
                       icon: Icons.favorite_border,
@@ -68,8 +70,10 @@ class AccountScreen extends StatelessWidget {
                     _MenuItem(
                       icon: Icons.location_on_outlined,
                       label: 'Saved Addresses',
-                      onTap: () =>
-                          Navigator.of(context).pushNamed('/addresses'),
+                      onTap: auth.hasApiToken
+                          ? () => Navigator.of(context).pushNamed('/addresses')
+                          : () => _openUrl(context,
+                                'https://earthlyjewels.co/account/addresses'),
                     ),
                     _MenuItem(
                       icon: Icons.workspace_premium_outlined,
@@ -169,16 +173,17 @@ class AccountScreen extends StatelessWidget {
                         );
                         if (confirm == true) {
                           await customerProvider.logout();
+                          await CookieManager.instance().deleteAllCookies();
                         }
                       },
                     )
                   else
                     _MenuItem(
                       icon: Icons.login,
-                      label: 'Sign In / Create Account',
+                      label: 'Sign In',
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                            builder: (_) => const LoginScreen()),
+                            builder: (_) => const KwikPassScreen()),
                       ),
                     ),
 
@@ -310,7 +315,7 @@ class _GuestHeader extends StatelessWidget {
                 GestureDetector(
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                        builder: (_) => const LoginScreen()),
+                        builder: (_) => const KwikPassScreen()),
                   ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(

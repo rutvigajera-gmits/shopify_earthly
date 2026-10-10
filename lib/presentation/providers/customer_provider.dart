@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,7 +22,10 @@ class CustomerProvider extends BaseProvider {
   bool _ordersLoaded = false;
   bool _addressesLoading = false;
 
-  bool get isLoggedIn => _customer != null && _accessToken != null;
+  // True for both full-token and identity-only (KwikPass) sessions.
+  bool get isLoggedIn => _customer != null;
+  // True only when a Storefront API token is available (orders, addresses).
+  bool get hasApiToken => _accessToken != null && _accessToken!.isNotEmpty;
   Customer? get customer => _customer;
   String? get accessToken => _accessToken;
   String? get profileImagePath => _profileImagePath;
@@ -33,21 +37,34 @@ class CustomerProvider extends BaseProvider {
   Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(AppStrings.customerTokenKey);
       final imagePath = prefs.getString(AppStrings.profileImageKey);
       if (imagePath != null && File(imagePath).existsSync()) {
         _profileImagePath = imagePath;
       }
-      if (token == null || token.isEmpty) {
-        notifyListeners();
-        return;
-      }
-      final customer = await _repo.fetchProfile(token);
-      if (customer != null) {
-        _customer = customer;
-        _accessToken = token;
-      } else {
+
+      // 1. Full Storefront API token (email/password login).
+      final token = prefs.getString(AppStrings.customerTokenKey);
+      if (token != null && token.isNotEmpty) {
+        final customer = await _repo.fetchProfile(token);
+        if (customer != null) {
+          _customer = customer;
+          _accessToken = token;
+          notifyListeners();
+          return;
+        }
         await prefs.remove(AppStrings.customerTokenKey);
+      }
+
+      // 2. KwikPass identity-only session (phone OTP — no API token).
+      final identityJson = prefs.getString(AppStrings.kwikPassIdentityKey);
+      if (identityJson != null) {
+        try {
+          final map = jsonDecode(identityJson) as Map<String, dynamic>;
+          _customer = Customer.fromIdentityJson(map);
+          _accessToken = null;
+        } catch (_) {
+          await prefs.remove(AppStrings.kwikPassIdentityKey);
+        }
       }
     } catch (_) {}
     notifyListeners();
@@ -62,6 +79,40 @@ class CustomerProvider extends BaseProvider {
       await prefs.remove(AppStrings.profileImageKey);
     }
     notifyListeners();
+  }
+
+  // Called after GoKwik KwikPass OTP verification.
+  // Identity comes from Shopify's /account.json (same-origin fetch inside the
+  // WebView). No Storefront API token — orders/addresses open via website.
+  Future<void> loginWithIdentity({
+    required String email,
+    required String firstName,
+    required String lastName,
+    required String phone,
+    required String numericId,
+  }) async {
+    setLoading();
+    try {
+      final customer = Customer(
+        id: numericId.isNotEmpty ? 'gid://shopify/Customer/$numericId' : '',
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        phone: phone.isNotEmpty ? phone : null,
+      );
+      _customer = customer;
+      _accessToken = null;
+      _ordersLoaded = false;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(AppStrings.customerTokenKey);
+      await prefs.setString(
+        AppStrings.kwikPassIdentityKey,
+        jsonEncode(customer.toIdentityJson()),
+      );
+      setLoaded();
+    } catch (e) {
+      setError(FormatUtils.trimException(e));
+    }
   }
 
   Future<void> login(String email, String password) async {
@@ -118,6 +169,7 @@ class CustomerProvider extends BaseProvider {
     _ordersLoaded = false;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(AppStrings.customerTokenKey);
+    await prefs.remove(AppStrings.kwikPassIdentityKey);
     notifyListeners();
   }
 

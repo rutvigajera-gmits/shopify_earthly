@@ -2,6 +2,33 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow Earthly Jewels to take a profile photo</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow Earthly Jewels to choose a profile photo from your library</string>
+	<!-- UPI payment apps dispatched from checkout WebView -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>upi</string>
+		<string>phonepe</string>
+		<string>gpay</string>
+		<string>paytm</string>
+		<string>bhim</string>
+		<string>freecharge</string>
+		<string>tez</string>
+	</array>
+	<!-- Deep link scheme for KwikPass callback -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>earthlyjewels</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>co.earthlyjewels.app</string>
+		</dict>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

@@ -24,6 +24,18 @@ class ShopifyCheckout {
     );
   }
 
+  // Parses the cartCreate mutation response (Storefront API 2022-10+).
+  factory ShopifyCheckout.fromCartJson(Map<String, dynamic> json) {
+    final cart = json['cart'] as Map<String, dynamic>? ?? json;
+    final total = (cart['cost'] as Map?)?['totalAmount'] as Map? ?? {};
+    return ShopifyCheckout(
+      id: cart['id'] as String? ?? '',
+      webUrl: cart['checkoutUrl'] as String? ?? '',
+      totalPrice: double.tryParse(total['amount'] as String? ?? '0') ?? 0,
+      currencyCode: total['currencyCode'] as String? ?? 'INR',
+    );
+  }
+
   factory ShopifyCheckout.fromCompleteJson(Map<String, dynamic> json) {
     final checkout = json['checkout'] as Map<String, dynamic>? ?? json;
     final price = checkout['totalPriceV2'] as Map<String, dynamic>? ?? {};

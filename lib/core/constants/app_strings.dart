@@ -8,6 +8,7 @@ class AppStrings {
   static const String cartIdKey = 'cart_id';
   static const String localOrdersKey = 'local_orders';
   static const String profileImageKey = 'profile_image_path';
+  static const String kwikPassIdentityKey = 'kwikpass_identity';
 
   // ── Default fallback copy ─────────────────────────────────────────────────────
   static const String defaultShopName = 'Earthly Jewels';

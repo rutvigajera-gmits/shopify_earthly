@@ -220,11 +220,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
 
-      case 'instagram_reels':
-        return Padding(
-          padding: const EdgeInsets.only(top: vPad),
-          child: InstagramReelsSection(data: section.instagramReelsData),
-        );
+      // case 'instagram_reels':
+      //   return Padding(
+      //     padding: const EdgeInsets.only(top: vPad),
+      //     child: InstagramReelsSection(data: section.instagramReelsData),
+      //   );
 
       default:
         return null;

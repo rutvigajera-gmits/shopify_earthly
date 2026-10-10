@@ -4,7 +4,7 @@ import '../../presentation/screens/products/designer_rings_collection_screen.dar
 import '../../presentation/screens/products/product_detail_screen.dart';
 import '../../presentation/screens/products/shape_products_screen.dart';
 import '../../presentation/screens/cart/cart_screen.dart';
-import '../../presentation/screens/checkout/checkout_screen.dart';
+import '../../presentation/screens/checkout/shopify_web_checkout_screen.dart';
 import '../../presentation/screens/checkout/order_confirmation_screen.dart';
 import '../../presentation/screens/search/search_screen.dart';
 import '../../presentation/screens/wishlist/wishlist_screen.dart';
@@ -44,7 +44,8 @@ class AppRoutes {
       case cart:
         return MaterialPageRoute(builder: (_) => const CartScreen());
       case checkout:
-        return MaterialPageRoute(builder: (_) => const CheckoutScreen());
+        return MaterialPageRoute(
+            builder: (_) => const ShopifyWebCheckoutScreen());
       case orderConfirmation:
         return MaterialPageRoute(
             builder: (_) => const OrderConfirmationScreen());

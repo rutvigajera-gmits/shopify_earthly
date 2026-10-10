@@ -515,7 +515,7 @@ class ShopifyService {
           variants(first: 250) {
             edges {
               node {
-                id title availableForSale
+                id title availableForSale sku
                 priceV2 { amount currencyCode }
                 compareAtPriceV2 { amount currencyCode }
                 selectedOptions { name value }
@@ -523,12 +523,84 @@ class ShopifyService {
             }
           }
           options { name values }
+          vtryonId: metafield(namespace: "custom", key: "vtryon_selection_id") { value }
+          vtryonId2: metafield(namespace: "vtryon", key: "selection_id") { value }
+          vtryonId3: metafield(namespace: "vtryon", key: "selectionId") { value }
         }
       }
     ''');
     if (data['productByHandle'] == null) return null;
     return Product.fromStorefrontJson(
         data['productByHandle'] as Map<String, dynamic>);
+  }
+
+  // Extracts the VTryOn selectionId from the live store product page.
+  // Tries the rendered HTML and the product.js JSON endpoint.
+  Future<String?> scrapeVTryOnSelectionId(String handle) async {
+    const uuidPattern =
+        r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+    const baseHeaders = {
+      'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
+          '(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+      'Accept':
+          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    };
+
+    // 1. Product page HTML — try multiple patterns
+    try {
+      final uri =
+          Uri.parse('https://${ApiConfig.shopDomain}/products/$handle');
+      final response = await http.get(uri, headers: baseHeaders);
+      if (response.statusCode == 200) {
+        final body = response.body;
+        for (final re in <RegExp>[
+          RegExp('selectionId=($uuidPattern)', caseSensitive: false),
+          RegExp('"selectionId"\\s*:\\s*"($uuidPattern)"',
+              caseSensitive: false),
+          RegExp(
+              "selectionId\\s*[=:]\\s*[\"']($uuidPattern)[\"']",
+              caseSensitive: false),
+          RegExp('data-selection-id=["\']($uuidPattern)["\']',
+              caseSensitive: false),
+          RegExp('vtryon(?:[^"\']{0,300})($uuidPattern)',
+              caseSensitive: false),
+        ]) {
+          final m = re.firstMatch(body);
+          if (m != null) {
+            debugPrint('[VTryOn] scrape HTML match: ${m.group(1)}');
+            return m.group(1);
+          }
+        }
+        debugPrint('[VTryOn] scrape: no selectionId in HTML');
+      }
+    } catch (e) {
+      debugPrint('[VTryOn] scrape HTML error: $e');
+    }
+
+    // 2. product.js JSON — only if VTryOn data appears in response
+    try {
+      final uri = Uri.parse(
+          'https://${ApiConfig.shopDomain}/products/$handle.js');
+      final response = await http.get(uri,
+          headers: {...baseHeaders, 'Accept': 'application/json'});
+      if (response.statusCode == 200) {
+        final body = response.body;
+        if (body.toLowerCase().contains('vtryon') ||
+            body.toLowerCase().contains('selection_id') ||
+            body.toLowerCase().contains('selectionid')) {
+          final m = RegExp(uuidPattern, caseSensitive: false).firstMatch(body);
+          if (m != null) {
+            debugPrint('[VTryOn] scrape product.js match: ${m.group(0)}');
+            return m.group(0);
+          }
+        }
+        debugPrint('[VTryOn] scrape: no VTryOn data in product.js');
+      }
+    } catch (e) {
+      debugPrint('[VTryOn] scrape product.js error: $e');
+    }
+
+    return null;
   }
 
   // ─── Collections ──────────────────────────────────────────────────────────
@@ -737,42 +809,46 @@ class ShopifyService {
 
   // ─── Storefront Checkout (creates real Shopify orders) ───────────────────
 
+  // checkoutCreate was removed from the Storefront API in 2022-10.
+  // cartCreate returns a checkoutUrl that the WebView opens directly.
   Future<ShopifyCheckout> createCheckout({
     required List<CartLineItem> lineItems,
-    required String email,
-    required Map<String, String> shippingAddress,
+    String email = '',
+    Map<String, String> shippingAddress = const {},
     String? customerAccessToken,
   }) async {
     final input = <String, dynamic>{
-      'email': email,
-      'lineItems': lineItems
-          .map((i) => {'variantId': i.variantId, 'quantity': i.quantity})
+      'lines': lineItems
+          .map((i) => {'merchandiseId': i.variantId, 'quantity': i.quantity})
           .toList(),
-      'shippingAddress': shippingAddress,
     };
+
+    final buyerIdentity = <String, dynamic>{};
+    if (email.isNotEmpty) buyerIdentity['email'] = email;
     if (customerAccessToken != null && customerAccessToken.isNotEmpty) {
-      input['buyerIdentity'] = {'customerAccessToken': customerAccessToken};
+      buyerIdentity['customerAccessToken'] = customerAccessToken;
     }
+    if (buyerIdentity.isNotEmpty) input['buyerIdentity'] = buyerIdentity;
 
     final data = await _queryWithVars('''
-      mutation checkoutCreate(\$input: CheckoutCreateInput!) {
-        checkoutCreate(input: \$input) {
-          checkout {
-            id webUrl
-            totalPriceV2 { amount currencyCode }
+      mutation cartCreate(\$input: CartInput!) {
+        cartCreate(input: \$input) {
+          cart {
+            id checkoutUrl
+            cost { totalAmount { amount currencyCode } }
           }
-          checkoutUserErrors { code field message }
+          userErrors { code field message }
         }
       }
     ''', {'input': input});
 
-    final result = data['checkoutCreate'] as Map<String, dynamic>? ?? {};
-    final errors = result['checkoutUserErrors'] as List?;
+    final result = data['cartCreate'] as Map<String, dynamic>? ?? {};
+    final errors = result['userErrors'] as List?;
     if (errors != null && errors.isNotEmpty) {
       throw Exception(
           (errors.first as Map)['message'] as String? ?? 'Checkout creation failed');
     }
-    return ShopifyCheckout.fromCreateJson(result);
+    return ShopifyCheckout.fromCartJson(result);
   }
 
   /// Submits a Stripe vault token to complete the Shopify checkout.
