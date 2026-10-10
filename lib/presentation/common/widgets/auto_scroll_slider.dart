@@ -62,7 +62,12 @@ class _AutoScrollSliderState extends State<AutoScrollSlider> {
   void _advance() {
     if (!mounted || widget.itemCount <= 1) return;
     final current = _ctrl.page?.round() ?? widget.currentIndex;
-    if (widget.canAdvance != null && !widget.canAdvance!(current)) return;
+    if (widget.canAdvance != null && !widget.canAdvance!(current)) {
+      // Slide is a video (or otherwise blocked) — stop ticking until user swipes away.
+      _timer?.cancel();
+      _timer = null;
+      return;
+    }
     final next = (current + 1) % widget.itemCount;
     _ctrl.animateToPage(
       next,

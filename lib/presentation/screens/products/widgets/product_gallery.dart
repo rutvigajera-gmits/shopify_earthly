@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:nb_utils/nb_utils.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 import 'package:video_player/video_player.dart';
 import '../../../../component/loader_widget.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -22,28 +24,50 @@ class ProductGallerySection extends StatelessWidget {
     required this.onChanged,
   });
 
+  void _openFullscreenGallery(BuildContext context, int startIndex) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black,
+        transitionDuration: const Duration(milliseconds: 280),
+        reverseTransitionDuration: const Duration(milliseconds: 240),
+        pageBuilder: (_, __, ___) => _FullScreenGallery(
+          mediaItems: mediaItems,
+          initialIndex: startIndex,
+        ),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
+      ),
+    );
+  }
+
   Widget _buildItem(BuildContext context, int i) {
     final item = mediaItems[i];
 
     if (item.type == ProductMediaType.video) {
-      return _ProductVideoItem(
-        key: ValueKey('video-$i-${item.url}'),
-        videoUrl: item.url,
-        thumbnailUrl: item.thumbnailUrl,
-        pageIndex: i,
-        pageController: controller,
-        isInitiallyActive: i == currentIndex,
+      return GestureDetector(
+        onTap: () => _openFullscreenGallery(context, i),
+        child: _ProductVideoItem(
+          key: ValueKey('video-$i-${item.url}'),
+          videoUrl: item.url,
+          thumbnailUrl: item.thumbnailUrl,
+          isActive: i == currentIndex,
+        ),
       );
     }
 
-    // externalVideo (YouTube/Vimeo) — show thumbnail only, no native playback.
+    // externalVideo — show thumbnail, tap opens fullscreen gallery
     if (item.type == ProductMediaType.externalVideo) {
       if (item.thumbnailUrl?.isNotEmpty == true) {
-        return CachedNetworkImage(
-          imageUrl: item.thumbnailUrl!,
-          fit: BoxFit.cover,
-          placeholder: (_, __) => Container(color: AppColors.surfaceCream),
-          errorWidget: (_, __, ___) => Container(color: AppColors.cardBackground),
+        return GestureDetector(
+          onTap: () => _openFullscreenGallery(context, i),
+          child: CachedNetworkImage(
+            imageUrl: item.thumbnailUrl!,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => Container(color: AppColors.surfaceCream),
+            errorWidget: (_, __, ___) =>
+                Container(color: AppColors.cardBackground),
+          ),
         );
       }
       return Container(color: AppColors.cardBackground);
@@ -51,20 +75,25 @@ class ProductGallerySection extends StatelessWidget {
 
     if (item.url.isEmpty) return Container(color: AppColors.cardBackground);
 
-    return CachedNetworkImage(
-      imageUrl: item.url,
-      fit: BoxFit.cover,
-      placeholder: (_, __) => Container(color: AppColors.surfaceCream),
-      errorWidget: (_, __, ___) => Container(color: AppColors.cardBackground),
-    )
-        .animate(key: ValueKey('gallery-img-$i'))
-        .fadeIn(duration: 280.ms, curve: Curves.easeOut)
-        .scale(
-          begin: const Offset(1.03, 1.03),
-          end: const Offset(1.0, 1.0),
-          duration: 280.ms,
-          curve: Curves.easeOut,
-        );
+    // Standard image — tap opens fullscreen gallery with zoom
+    return GestureDetector(
+      onTap: () => _openFullscreenGallery(context, i),
+      child: CachedNetworkImage(
+        imageUrl: item.url,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => Container(color: AppColors.surfaceCream),
+        errorWidget: (_, __, ___) =>
+            Container(color: AppColors.cardBackground),
+      )
+          .animate(key: ValueKey('gallery-img-$i'))
+          .fadeIn(duration: 280.ms, curve: Curves.easeOut)
+          .scale(
+            begin: const Offset(1.03, 1.03),
+            end: const Offset(1.0, 1.0),
+            duration: 280.ms,
+            curve: Curves.easeOut,
+          ),
+    );
   }
 
   @override
@@ -90,18 +119,11 @@ class ProductGallerySection extends StatelessWidget {
               Positioned(
                 top: 12,
                 right: 12,
-                child: _GalleryButton(icon: Icons.fullscreen, onTap: () {}),
+                child: _GalleryButton(
+                  icon: Icons.fullscreen,
+                  onTap: () => _openFullscreenGallery(context, currentIndex),
+                ),
               ),
-              // Positioned(
-              //   bottom: 12,
-              //   right: 12,
-              //   child: _GalleryButton(
-              //     icon: Icons.auto_awesome,
-              //     onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              //       const SnackBar(content: Text('AR Try-On coming soon!')),
-              //     ),
-              //   ),
-              // ),
             ],
           ),
         ),
@@ -135,6 +157,125 @@ class ProductGallerySection extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+// ─── Full-Screen Gallery ──────────────────────────────────────────────────────
+
+class _FullScreenGallery extends StatefulWidget {
+  final List<ProductMediaItem> mediaItems;
+  final int initialIndex;
+
+  const _FullScreenGallery(
+      {required this.mediaItems, required this.initialIndex});
+
+  @override
+  State<_FullScreenGallery> createState() => _FullScreenGalleryState();
+}
+
+class _FullScreenGalleryState extends State<_FullScreenGallery> {
+  late int _current;
+  late final PageController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _current = widget.initialIndex;
+    _ctrl = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = widget.mediaItems;
+    return Scaffold(
+      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.black54,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        actions: [
+          if (items.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Center(
+                child: Text(
+                  '${_current + 1} / ${items.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+      body: PhotoViewGallery.builder(
+        pageController: _ctrl,
+        itemCount: items.length,
+        scrollPhysics: const BouncingScrollPhysics(),
+        onPageChanged: (i) => setState(() => _current = i),
+        backgroundDecoration: const BoxDecoration(color: Colors.black),
+        builder: (ctx, index) {
+          final item = items[index];
+
+          if (item.isVideo) {
+            final thumb = item.thumbnailUrl ?? '';
+            return PhotoViewGalleryPageOptions.customChild(
+              childSize: MediaQuery.of(ctx).size,
+              minScale: PhotoViewComputedScale.contained,
+              maxScale: PhotoViewComputedScale.covered,
+              child: Center(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    if (thumb.isNotEmpty)
+                      CachedNetworkImage(
+                        imageUrl: thumb,
+                        fit: BoxFit.contain,
+                        width: double.infinity,
+                      )
+                    else
+                      Container(color: Colors.black54),
+                    const Icon(Icons.play_circle_outline,
+                        color: Colors.white54, size: 72),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return PhotoViewGalleryPageOptions(
+            imageProvider: CachedNetworkImageProvider(item.url),
+            minScale: PhotoViewComputedScale.contained,
+            maxScale: PhotoViewComputedScale.covered * 2.0,
+            errorBuilder: (_, __, ___) => const Center(
+              child: Icon(Icons.broken_image_outlined,
+                  color: Colors.white38, size: 64),
+            ),
+          );
+        },
+        loadingBuilder: (_, event) => Center(
+          child: CircularProgressIndicator(
+            color: Colors.white,
+            value: event?.expectedTotalBytes == null
+                ? null
+                : (event!.cumulativeBytesLoaded / event.expectedTotalBytes!),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -215,17 +356,14 @@ class _ThumbnailItem extends StatelessWidget {
 class _ProductVideoItem extends StatefulWidget {
   final String videoUrl;
   final String? thumbnailUrl;
-  final int pageIndex;
-  final PageController pageController;
-  final bool isInitiallyActive;
+  // Driven by currentIndex from the parent — no pageController listener needed.
+  final bool isActive;
 
   const _ProductVideoItem({
     super.key,
     required this.videoUrl,
     this.thumbnailUrl,
-    required this.pageIndex,
-    required this.pageController,
-    required this.isInitiallyActive,
+    required this.isActive,
   });
 
   @override
@@ -237,15 +375,11 @@ class _ProductVideoItemState extends State<_ProductVideoItem> {
   bool _ready = false;
   bool _initializing = false;
   bool _muted = true;
-  bool _wasActive = false;
 
   @override
   void initState() {
     super.initState();
-    widget.pageController.addListener(_onScroll);
-
-    if (widget.isInitiallyActive) {
-      _wasActive = true;
+    if (widget.isActive) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _init();
       });
@@ -253,37 +387,20 @@ class _ProductVideoItemState extends State<_ProductVideoItem> {
   }
 
   @override
-  void dispose() {
-    widget.pageController.removeListener(_onScroll);
-    _ctrl?.dispose();
-    super.dispose();
-  }
-
-  void _onScroll() => _checkActive();
-
-  void _checkActive() {
-    if (!mounted) return;
-    if (!widget.pageController.hasClients) return;
-
-    final pageValue = widget.pageController.page;
-    if (pageValue == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _checkActive());
-      return;
-    }
-
-    final isActive = pageValue.round() == widget.pageIndex;
-
-    if (isActive && !_wasActive) {
-      _wasActive = true;
-      if (_ready) {
-        _ctrl?.play();
-      } else {
-        _init();
-      }
-    } else if (!isActive && _wasActive) {
-      _wasActive = false;
+  void didUpdateWidget(_ProductVideoItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive == oldWidget.isActive) return;
+    if (widget.isActive) {
+      _ready ? _ctrl?.play() : _init();
+    } else {
       _ctrl?.pause();
     }
+  }
+
+  @override
+  void dispose() {
+    _ctrl?.dispose();
+    super.dispose();
   }
 
   Future<void> _init() async {
@@ -297,7 +414,7 @@ class _ProductVideoItemState extends State<_ProductVideoItem> {
       if (!mounted) return;
       await ctrl.setLooping(true);
       await ctrl.setVolume(0);
-      await ctrl.play();
+      if (widget.isActive) await ctrl.play();
       if (mounted) {
         setState(() {
           _ready = true;
@@ -305,7 +422,7 @@ class _ProductVideoItemState extends State<_ProductVideoItem> {
         });
       }
     } catch (e) {
-      debugPrint('[Video] error on page ${widget.pageIndex}: $e');
+      debugPrint('[Video] init error: $e');
       if (mounted) setState(() => _initializing = false);
     }
   }
