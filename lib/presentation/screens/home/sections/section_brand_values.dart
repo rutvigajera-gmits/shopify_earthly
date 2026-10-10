@@ -11,14 +11,12 @@ class BrandValuesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (data.title.isNotEmpty) Text(data.title, style: AppTextStyles.headlineLarge),
-          16.height,
-          GridView.builder(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (data.title.isNotEmpty) Text(data.title, style: AppTextStyles.headlineLarge),
+        16.height,
+        GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -53,7 +51,6 @@ class BrandValuesSection extends StatelessWidget {
             },
           ),
         ],
-      ),
-    );
+    ).paddingSymmetric(horizontal: AppConstants.horizontalPadding);
   }
 }

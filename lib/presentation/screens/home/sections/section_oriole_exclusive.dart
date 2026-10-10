@@ -23,49 +23,41 @@ class OrioleExclusiveSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-          child: RichText(
-            text: TextSpan(
-              style: AppTextStyles.headlineMedium.copyWith(fontSize: 22, fontWeight: FontWeight.w600, height: 1.2),
-              children: [
-                TextSpan(
-                  text: data.title.isNotEmpty ? '${data.title} - ' : 'Oriole Diamonds - ',
-                  style: const TextStyle(color: AppColors.textPrimary),
-                ),
-                const TextSpan(
-                  text: 'Earthly Exclusive!',
-                  style: TextStyle(color: AppColors.teal),
-                ),
-              ],
-            ),
+        RichText(
+          text: TextSpan(
+            style: AppTextStyles.headlineMedium.copyWith(fontSize: 22, fontWeight: FontWeight.w600, height: 1.2),
+            children: [
+              TextSpan(
+                text: data.title.isNotEmpty ? '${data.title} - ' : 'Oriole Diamonds - ',
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
+              const TextSpan(
+                text: 'Earthly Exclusive!',
+                style: TextStyle(color: AppColors.teal),
+              ),
+            ],
           ),
-        ),
+        ).paddingSymmetric(horizontal: AppConstants.horizontalPadding),
         20.height,
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: AppConstants.cardSpacing,
-              mainAxisSpacing: AppConstants.cardSpacing,
-              mainAxisExtent: 320,
-            ),
-            itemCount: data.products.length,
-            itemBuilder: (_, i) {
-              final p = data.products[i];
-              return _OrioleProductCard(product: p, onTap: () => onProductTap(p.handle));
-            },
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: AppConstants.cardSpacing,
+            mainAxisSpacing: AppConstants.cardSpacing,
+            mainAxisExtent: 320,
           ),
-        ),
+          itemCount: data.products.length,
+          itemBuilder: (_, i) {
+            final p = data.products[i];
+            return _OrioleProductCard(product: p, onTap: () => onProductTap(p.handle));
+          },
+        ).paddingSymmetric(horizontal: AppConstants.horizontalPadding),
         if (data.ctaLabel.isNotEmpty) ...[
           24.height,
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-            child: HomePillBtn(label: data.ctaLabel, onTap: onViewAll),
-          ),
+          HomePillBtn(label: data.ctaLabel, onTap: onViewAll)
+              .paddingSymmetric(horizontal: AppConstants.horizontalPadding),
         ],
       ],
     );
@@ -130,12 +122,10 @@ class _OrioleProductCard extends StatelessWidget {
             ),
             Expanded(
               flex: 36,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                     Text(
                       product.title,
                       style: AppTextStyles.productName.copyWith(fontSize: 12, height: 1.35),
@@ -172,9 +162,8 @@ class _OrioleProductCard extends StatelessWidget {
                         ),
                       ),
                   ],
-                ),
+                ).paddingAll(8),
               ),
-            ),
           ],
         ),
       ),

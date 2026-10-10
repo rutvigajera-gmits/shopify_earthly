@@ -29,16 +29,13 @@ class DesignerRingsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppConstants.horizontalPadding),
-          child: SectionHeader(
-            title:
-                data.title.isNotEmpty ? data.title : 'Rings Collection',
-            actionLabel: null,
-            onActionTap: onViewAll,
-          ),
+        SectionHeader(
+          title:
+              data.title.isNotEmpty ? data.title : 'Rings Collection',
+          actionLabel: null,
+          onActionTap: onViewAll,
         )
+            .paddingSymmetric(horizontal: AppConstants.horizontalPadding)
             .animate()
             .fadeIn(duration: 380.ms, curve: Curves.easeOut)
             .slideY(begin: -0.08, end: 0, duration: 380.ms,
@@ -71,11 +68,8 @@ class DesignerRingsSection extends StatelessWidget {
         ),
         if (data.ctaLabel.isNotEmpty) ...[
           20.height,
-          Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.horizontalPadding),
-            child: HomePillBtn(label: data.ctaLabel, onTap: onViewAll),
-          )
+          HomePillBtn(label: data.ctaLabel, onTap: onViewAll)
+              .paddingSymmetric(horizontal: AppConstants.horizontalPadding)
               .animate(delay: Duration(milliseconds: 80 + tiles.length * 70))
               .fadeIn(duration: 350.ms, curve: Curves.easeOut),
         ],

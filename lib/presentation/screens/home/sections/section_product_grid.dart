@@ -25,29 +25,24 @@ class ProductGridSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (data.title.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-            child: SectionHeader(title: data.title, actionLabel: null, onActionTap: onViewAll),
-          ),
+          SectionHeader(title: data.title, actionLabel: null, onActionTap: onViewAll)
+              .paddingSymmetric(horizontal: AppConstants.horizontalPadding),
         20.height,
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: AppConstants.cardSpacing,
-              mainAxisSpacing: AppConstants.cardSpacing,
-              mainAxisExtent: 240,
-            ),
-            itemCount: data.products.length,
-            itemBuilder: (_, i) {
-              final p = data.products[i];
-              return ProductCard(product: p.toProduct(), onTap: () => onProductTap(p.handle));
-            },
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: AppConstants.cardSpacing,
+            mainAxisSpacing: AppConstants.cardSpacing,
+            mainAxisExtent: 240,
           ),
-        ),
+          itemCount: data.products.length,
+          itemBuilder: (_, i) {
+            final p = data.products[i];
+            return ProductCard(product: p.toProduct(), onTap: () => onProductTap(p.handle));
+          },
+        ).paddingSymmetric(horizontal: AppConstants.horizontalPadding),
         if (data.ctaLabel.isNotEmpty) ...[
           24.height,
           Center(

@@ -11,17 +11,14 @@ class FaqAccordionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (data.title.isNotEmpty) Text(data.title, style: AppTextStyles.headlineLarge),
-          16.height,
-          ...data.items.map((item) => _FaqTile(item: item)),
-        ],
-      ),
-    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (data.title.isNotEmpty) Text(data.title, style: AppTextStyles.headlineLarge),
+        16.height,
+        ...data.items.map((item) => _FaqTile(item: item)),
+      ],
+    ).paddingSymmetric(horizontal: AppConstants.horizontalPadding);
   }
 }
 
@@ -43,27 +40,21 @@ class _FaqTileState extends State<_FaqTile> {
         GestureDetector(
           onTap: () => setState(() => _expanded = !_expanded),
           behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(widget.item.question,
-                      style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w500)),
-                ),
-                Icon(_expanded ? Icons.remove : Icons.add, size: 18, color: AppColors.textSecondary),
-              ],
-            ),
-          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(widget.item.question,
+                    style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w500)),
+              ),
+              Icon(_expanded ? Icons.remove : Icons.add, size: 18, color: AppColors.textSecondary),
+            ],
+          ).paddingSymmetric(vertical: 14),
         ),
         if (_expanded)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: Text(
-              widget.item.answer,
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, height: 1.6),
-            ),
-          ),
+          Text(
+            widget.item.answer,
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, height: 1.6),
+          ).paddingOnly(bottom: 14),
         const Divider(height: 1, color: AppColors.neutral200),
       ],
     );

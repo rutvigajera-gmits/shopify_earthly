@@ -319,7 +319,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       .fadeIn(duration: 360.ms, curve: Curves.easeOut)
                       .slideY(begin: 0.04, end: 0, duration: 360.ms, curve: Curves.easeOut),
                 ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              SliverToBoxAdapter(child: 24.height),
             ],
           ),
         );
@@ -340,10 +340,11 @@ class _YouMayAlsoLikeSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Divider(height: 1, color: AppColors.border),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(AppConstants.horizontalPadding, 20,
-            AppConstants.horizontalPadding, 12),
-        child: Text('You may also like', style: AppTextStyles.headlineSmall),
+      Text('You may also like', style: AppTextStyles.headlineSmall).paddingOnly(
+        left: AppConstants.horizontalPadding,
+        top: 20,
+        right: AppConstants.horizontalPadding,
+        bottom: 12,
       ),
       SizedBox(
         height: 230,
@@ -352,7 +353,7 @@ class _YouMayAlsoLikeSection extends StatelessWidget {
           padding: const EdgeInsets.symmetric(
               horizontal: AppConstants.horizontalPadding),
           itemCount: products.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          separatorBuilder: (_, __) => 12.width,
           itemBuilder: (_, i) {
             final p = products[i];
             return ProductCard(
@@ -363,7 +364,7 @@ class _YouMayAlsoLikeSection extends StatelessWidget {
           },
         ),
       ),
-      const SizedBox(height: 20),
+      20.height,
     ]);
   }
 }
@@ -436,7 +437,7 @@ class _StickyBottomBar extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          12.width,
           GestureDetector(
             onTap: addingToCart ? null : onAddToCart,
             child: Container(

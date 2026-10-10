@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nb_utils/nb_utils.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -50,19 +51,20 @@ class ProductAccordionsSection extends StatelessWidget {
         ]),
       ),
       const Divider(height: 1, color: AppColors.border),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(AppConstants.horizontalPadding, 12,
-            AppConstants.horizontalPadding, 16),
-        child: Text.rich(TextSpan(children: [
-          TextSpan(
-              text: 'SKU : ',
-              style:
-                  AppTextStyles.labelLarge.copyWith(fontWeight: FontWeight.w600)),
-          TextSpan(
-              text: sku,
-              style:
-                  AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
-        ])),
+      Text.rich(TextSpan(children: [
+        TextSpan(
+            text: 'SKU : ',
+            style:
+                AppTextStyles.labelLarge.copyWith(fontWeight: FontWeight.w600)),
+        TextSpan(
+            text: sku,
+            style:
+                AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+      ])).paddingOnly(
+        left: AppConstants.horizontalPadding,
+        top: 12,
+        right: AppConstants.horizontalPadding,
+        bottom: 16,
       ),
     ]);
   }
@@ -86,25 +88,24 @@ class _AccordionItemState extends State<_AccordionItem> {
       GestureDetector(
         onTap: () => setState(() => _open = !_open),
         behavior: HitTestBehavior.opaque,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppConstants.horizontalPadding, vertical: 16),
-          child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(widget.title,
-                    style: AppTextStyles.labelLarge
-                        .copyWith(fontSize: 14, color: AppColors.textPrimary)),
-                Icon(_open ? Icons.remove : Icons.add,
-                    size: 18, color: AppColors.textPrimary),
-              ]),
+        child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(widget.title,
+                  style: AppTextStyles.labelLarge
+                      .copyWith(fontSize: 14, color: AppColors.textPrimary)),
+              Icon(_open ? Icons.remove : Icons.add,
+                  size: 18, color: AppColors.textPrimary),
+            ]).paddingSymmetric(
+          horizontal: AppConstants.horizontalPadding,
+          vertical: 16,
         ),
       ),
       if (_open)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(AppConstants.horizontalPadding, 0,
-              AppConstants.horizontalPadding, 16),
-          child: widget.child,
+        widget.child.paddingOnly(
+          left: AppConstants.horizontalPadding,
+          right: AppConstants.horizontalPadding,
+          bottom: 16,
         ),
     ]);
   }
@@ -117,22 +118,19 @@ class _SpecRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SizedBox(
-          width: 120,
-          child: Text(label,
-              style:
-                  AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted)),
-        ),
-        Expanded(
-          child: Text(value,
-              style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-        ),
-      ]),
-    );
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      SizedBox(
+        width: 120,
+        child: Text(label,
+            style:
+                AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted)),
+      ),
+      Expanded(
+        child: Text(value,
+            style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+      ),
+    ]).paddingSymmetric(vertical: 4);
   }
 }
 
@@ -143,17 +141,14 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(children: [
-        Icon(icon, size: 16, color: AppColors.textSecondary),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(label,
-              style: AppTextStyles.bodySmall
-                  .copyWith(color: AppColors.textSecondary)),
-        ),
-      ]),
-    );
+    return Row(children: [
+      Icon(icon, size: 16, color: AppColors.textSecondary),
+      10.width,
+      Expanded(
+        child: Text(label,
+            style: AppTextStyles.bodySmall
+                .copyWith(color: AppColors.textSecondary)),
+      ),
+    ]).paddingSymmetric(vertical: 5);
   }
 }

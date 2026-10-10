@@ -20,10 +20,9 @@ class ShopByCategorySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-          child: Text('Shop by Category', style: AppTextStyles.headlineLarge),
-        ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.15, end: 0, duration: 400.ms, curve: Curves.easeOut),
+        Text('Shop by Category', style: AppTextStyles.headlineLarge)
+            .paddingSymmetric(horizontal: AppConstants.horizontalPadding)
+            .animate().fadeIn(duration: 400.ms).slideX(begin: -0.15, end: 0, duration: 400.ms, curve: Curves.easeOut),
         16.height,
         SizedBox(
           height: 100,

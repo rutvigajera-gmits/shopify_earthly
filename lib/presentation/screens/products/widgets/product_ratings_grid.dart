@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:nb_utils/nb_utils.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -9,23 +10,23 @@ class ProductRatingsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(AppConstants.horizontalPadding, 0,
-          AppConstants.horizontalPadding, 16),
-      child: GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 2.4,
-        children: const [
-          _RatingItem(label: 'Daily Wear', rating: 8.0),
-          _RatingItem(label: 'Durability', rating: 9.0),
-          _RatingItem(label: 'Exclusivity', rating: 8.0),
-          _RatingItem(label: 'Reworkability', rating: 5.0),
-        ],
-      ),
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      childAspectRatio: 2.4,
+      children: const [
+        _RatingItem(label: 'Daily Wear', rating: 8.0),
+        _RatingItem(label: 'Durability', rating: 9.0),
+        _RatingItem(label: 'Exclusivity', rating: 8.0),
+        _RatingItem(label: 'Reworkability', rating: 5.0),
+      ],
+    ).paddingOnly(
+      left: AppConstants.horizontalPadding,
+      right: AppConstants.horizontalPadding,
+      bottom: 16,
     );
   }
 }
@@ -59,7 +60,7 @@ class _RatingItem extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        8.width,
         Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,

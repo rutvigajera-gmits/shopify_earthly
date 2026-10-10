@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
@@ -86,102 +87,99 @@ class _ProductsScreenState extends State<ProductsScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Filter', style: AppTextStyles.headlineSmall),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(ctx),
-                        child: const Icon(Icons.close, size: 20),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Text('Price Range', style: AppTextStyles.labelLarge),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '₹${tempMin.toStringAsFixed(0)}',
-                        style: AppTextStyles.bodySmall,
-                      ),
-                      Text(
-                        tempMax >= 500000
-                            ? '₹5,00,000+'
-                            : '₹${tempMax.toStringAsFixed(0)}',
-                        style: AppTextStyles.bodySmall,
-                      ),
-                    ],
-                  ),
-                  RangeSlider(
-                    values: RangeValues(tempMin, tempMax),
-                    min: 0,
-                    max: 500000,
-                    divisions: 100,
-                    activeColor: AppColors.textPrimary,
-                    inactiveColor: AppColors.border,
-                    onChanged: (v) => setSheetState(() {
-                      tempMin = v.start;
-                      tempMax = v.end;
-                    }),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _minPrice = 0;
-                              _maxPrice = 500000;
-                              _filtersActive = false;
-                            });
-                            Navigator.pop(ctx);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text('Clear', style: AppTextStyles.button
-                                .copyWith(color: AppColors.textPrimary, letterSpacing: 1.5)),
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Filter', style: AppTextStyles.headlineSmall),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: const Icon(Icons.close, size: 20),
+                    ),
+                  ],
+                ),
+                24.height,
+                Text('Price Range', style: AppTextStyles.labelLarge),
+                12.height,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '₹${tempMin.toStringAsFixed(0)}',
+                      style: AppTextStyles.bodySmall,
+                    ),
+                    Text(
+                      tempMax >= 500000
+                          ? '₹5,00,000+'
+                          : '₹${tempMax.toStringAsFixed(0)}',
+                      style: AppTextStyles.bodySmall,
+                    ),
+                  ],
+                ),
+                RangeSlider(
+                  values: RangeValues(tempMin, tempMax),
+                  min: 0,
+                  max: 500000,
+                  divisions: 100,
+                  activeColor: AppColors.textPrimary,
+                  inactiveColor: AppColors.border,
+                  onChanged: (v) => setSheetState(() {
+                    tempMin = v.start;
+                    tempMax = v.end;
+                  }),
+                ),
+                24.height,
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _minPrice = 0;
+                            _maxPrice = 500000;
+                            _filtersActive = false;
+                          });
+                          Navigator.pop(ctx);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppColors.border),
                           ),
+                          alignment: Alignment.center,
+                          child: Text('Clear', style: AppTextStyles.button
+                              .copyWith(color: AppColors.textPrimary, letterSpacing: 1.5)),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _minPrice = tempMin;
-                              _maxPrice = tempMax;
-                              _filtersActive =
-                                  tempMin > 0 || tempMax < 500000;
-                            });
-                            Navigator.pop(ctx);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            color: AppColors.textPrimary,
-                            alignment: Alignment.center,
-                            child: Text('Apply', style: AppTextStyles.button
-                                .copyWith(color: AppColors.textWhite, letterSpacing: 1.5)),
-                          ),
+                    ),
+                    12.width,
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _minPrice = tempMin;
+                            _maxPrice = tempMax;
+                            _filtersActive =
+                                tempMin > 0 || tempMax < 500000;
+                          });
+                          Navigator.pop(ctx);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          color: AppColors.textPrimary,
+                          alignment: Alignment.center,
+                          child: Text('Apply', style: AppTextStyles.button
+                              .copyWith(color: AppColors.textWhite, letterSpacing: 1.5)),
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            );
+                    ),
+                  ],
+                ),
+              ],
+            ).paddingOnly(left: 24, top: 20, right: 24, bottom: 40);
           },
         );
       },
@@ -321,7 +319,7 @@ class _SortFilterBar extends StatelessWidget {
                       ? AppColors.gold
                       : AppColors.textPrimary,
                 ),
-                const SizedBox(width: 6),
+                6.width,
                 Text(
                   filtersActive ? 'Filter •' : 'Filter',
                   style: AppTextStyles.labelLarge.copyWith(
@@ -336,7 +334,7 @@ class _SortFilterBar extends StatelessWidget {
           ),
           const Spacer(),
           const Icon(Icons.sort, size: 16, color: AppColors.textPrimary),
-          const SizedBox(width: 6),
+          6.width,
           DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: sortBy,
@@ -440,7 +438,7 @@ class _ProductGrid extends StatelessWidget {
               children: [
                 const Icon(Icons.diamond_outlined,
                     size: 48, color: AppColors.textLight),
-                const SizedBox(height: 12),
+                12.height,
                 Text(
                   'No products found',
                   style: AppTextStyles.bodyMedium

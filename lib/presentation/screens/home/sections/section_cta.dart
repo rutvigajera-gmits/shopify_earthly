@@ -62,12 +62,10 @@ class FullWidthCtaSection extends StatelessWidget {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-      child: Container(
-        padding: const EdgeInsets.all(28),
-        color: AppColors.surfaceWarm,
-        child: Column(
+    return Container(
+      padding: const EdgeInsets.all(28),
+      color: AppColors.surfaceWarm,
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -83,8 +81,7 @@ class FullWidthCtaSection extends StatelessWidget {
             ],
           ],
         ),
-      ),
-    );
+    ).paddingSymmetric(horizontal: AppConstants.horizontalPadding);
   }
 }
 
@@ -128,35 +125,32 @@ class ImageTextSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (data.image.isNotEmpty)
-            AspectRatio(
-              aspectRatio: 4 / 3,
-              child: CachedNetworkImage(
-                imageUrl: data.image,
-                fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => Container(color: AppColors.cardBackground),
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (data.image.isNotEmpty)
+          AspectRatio(
+            aspectRatio: 4 / 3,
+            child: CachedNetworkImage(
+              imageUrl: data.image,
+              fit: BoxFit.cover,
+              errorWidget: (_, __, ___) => Container(color: AppColors.cardBackground),
             ),
-          if (data.title.isNotEmpty) ...[
-            16.height,
-            Text(data.title, style: AppTextStyles.headlineLarge),
-          ],
-          if (data.body.isNotEmpty) ...[
-            10.height,
-            Text(data.body,
-                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary, height: 1.6)),
-          ],
-          if (data.ctaLabel.isNotEmpty) ...[
-            20.height,
-            HomeDarkBtn(label: data.ctaLabel),
-          ],
+          ),
+        if (data.title.isNotEmpty) ...[
+          16.height,
+          Text(data.title, style: AppTextStyles.headlineLarge),
         ],
-      ),
-    );
+        if (data.body.isNotEmpty) ...[
+          10.height,
+          Text(data.body,
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary, height: 1.6)),
+        ],
+        if (data.ctaLabel.isNotEmpty) ...[
+          20.height,
+          HomeDarkBtn(label: data.ctaLabel),
+        ],
+      ],
+    ).paddingSymmetric(horizontal: AppConstants.horizontalPadding);
   }
 }

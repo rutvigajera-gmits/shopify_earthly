@@ -37,10 +37,8 @@ class _OccasionsSectionState extends State<OccasionsSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (widget.data.title.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-            child: Text(widget.data.title, style: AppTextStyles.headlineLarge),
-          ),
+          Text(widget.data.title, style: AppTextStyles.headlineLarge)
+              .paddingSymmetric(horizontal: AppConstants.horizontalPadding),
         14.height,
 
         // Pill-shaped filter chips
@@ -80,44 +78,36 @@ class _OccasionsSectionState extends State<OccasionsSection> {
         16.height,
 
         if (selected.products.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: AppConstants.cardSpacing,
-                mainAxisSpacing: AppConstants.cardSpacing,
-                mainAxisExtent: 240,
-              ),
-              itemCount: selected.products.take(4).length,
-              itemBuilder: (_, i) {
-                final p = selected.products[i];
-                return ProductCard(product: p.toProduct(), onTap: () => widget.onProductTap(p.handle));
-              },
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: AppConstants.cardSpacing,
+              mainAxisSpacing: AppConstants.cardSpacing,
+              mainAxisExtent: 240,
             ),
-          )
+            itemCount: selected.products.take(4).length,
+            itemBuilder: (_, i) {
+              final p = selected.products[i];
+              return ProductCard(product: p.toProduct(), onTap: () => widget.onProductTap(p.handle));
+            },
+          ).paddingSymmetric(horizontal: AppConstants.horizontalPadding)
         else if (selected.imageUrl.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-            child: AspectRatio(
-              aspectRatio: 4 / 3,
-              child: CachedNetworkImage(
-                imageUrl: selected.imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(color: AppColors.cardBackground),
-                errorWidget: (_, __, ___) => Container(color: AppColors.cardBackground),
-              ),
+          AspectRatio(
+            aspectRatio: 4 / 3,
+            child: CachedNetworkImage(
+              imageUrl: selected.imageUrl,
+              fit: BoxFit.cover,
+              placeholder: (_, __) => Container(color: AppColors.cardBackground),
+              errorWidget: (_, __, ___) => Container(color: AppColors.cardBackground),
             ),
-          ),
+          ).paddingSymmetric(horizontal: AppConstants.horizontalPadding),
 
         if (widget.data.ctaLabel.isNotEmpty) ...[
           24.height,
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-            child: HomePillBtn(label: widget.data.ctaLabel, onTap: widget.onViewAll),
-          ),
+          HomePillBtn(label: widget.data.ctaLabel, onTap: widget.onViewAll)
+              .paddingSymmetric(horizontal: AppConstants.horizontalPadding),
         ],
       ],
     );

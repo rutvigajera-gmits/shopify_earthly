@@ -156,55 +156,49 @@ class _ShapeProductsScreenState extends State<ShapeProductsScreen> {
 
   Widget _emptyView() {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.diamond_outlined, size: 48, color: AppColors.textLight),
-            16.height,
-            Text(
-              'No ${widget.shapeName} Diamond products found',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.diamond_outlined, size: 48, color: AppColors.textLight),
+          16.height,
+          Text(
+            'No ${widget.shapeName} Diamond products found',
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ).paddingAll(32),
     );
   }
 
   Widget _errorView() {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.wifi_off_outlined, size: 48, color: AppColors.textMuted),
-            16.height,
-            Text('Could not load products', style: AppTextStyles.headlineSmall),
-            8.height,
-            Text(
-              _error ?? '',
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-            24.height,
-            GestureDetector(
-              onTap: _load,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-                color: AppColors.primary,
-                child: Text(
-                  'Retry',
-                  style: AppTextStyles.button.copyWith(color: AppColors.textWhite),
-                ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.wifi_off_outlined, size: 48, color: AppColors.textMuted),
+          16.height,
+          Text('Could not load products', style: AppTextStyles.headlineSmall),
+          8.height,
+          Text(
+            _error ?? '',
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          24.height,
+          GestureDetector(
+            onTap: _load,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+              color: AppColors.primary,
+              child: Text(
+                'Retry',
+                style: AppTextStyles.button.copyWith(color: AppColors.textWhite),
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        ],
+      ).paddingAll(32),
     );
   }
 }

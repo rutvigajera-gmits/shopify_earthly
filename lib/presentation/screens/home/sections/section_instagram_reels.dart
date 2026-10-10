@@ -17,32 +17,28 @@ class InstagramReelsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppConstants.horizontalPadding),
-          child: Row(
-            children: [
-              _gradientIcon(),
-              12.width,
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(data.title,
-                      style: AppTextStyles.headlineMedium
-                          .copyWith(fontSize: 20)),
-                  4.height,
-                  Text(
-                    data.instagramHandle,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                      fontStyle: FontStyle.italic,
-                    ),
+        Row(
+          children: [
+            _gradientIcon(),
+            12.width,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(data.title,
+                    style: AppTextStyles.headlineMedium
+                        .copyWith(fontSize: 20)),
+                4.height,
+                Text(
+                  data.instagramHandle,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    fontStyle: FontStyle.italic,
                   ),
-                ],
-              ),
-            ],
-          ),
-        ),
+                ),
+              ],
+            ),
+          ],
+        ).paddingSymmetric(horizontal: AppConstants.horizontalPadding),
         if (data.reels.isNotEmpty) ...[
           20.height,
           SizedBox(

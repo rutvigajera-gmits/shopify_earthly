@@ -39,10 +39,8 @@ class _ReviewsCarouselSectionState extends State<ReviewsCarouselSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-              child: Text(title, style: AppTextStyles.headlineLarge),
-            ),
+            Text(title, style: AppTextStyles.headlineLarge)
+                .paddingSymmetric(horizontal: AppConstants.horizontalPadding),
             16.height,
             if (loading)
               SizedBox(

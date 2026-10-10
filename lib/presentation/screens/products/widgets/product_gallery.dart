@@ -207,19 +207,16 @@ class _FullScreenGalleryState extends State<_FullScreenGallery> {
         ),
         actions: [
           if (items.length > 1)
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Center(
-                child: Text(
-                  '${_current + 1} / ${items.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+            Center(
+              child: Text(
+                '${_current + 1} / ${items.length}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
+            ).paddingOnly(right: 16),
         ],
       ),
       body: PhotoViewGallery.builder(

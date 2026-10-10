@@ -42,14 +42,12 @@ class ShopByShapeSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-          child: SectionHeader(
-            title: data.title.isNotEmpty ? data.title : 'Shop by Shape',
-            actionLabel: 'View All',
-            onActionTap: onViewAll,
-          ),
-        ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.15, end: 0, duration: 400.ms, curve: Curves.easeOut),
+        SectionHeader(
+          title: data.title.isNotEmpty ? data.title : 'Shop by Shape',
+          actionLabel: 'View All',
+          onActionTap: onViewAll,
+        ).paddingSymmetric(horizontal: AppConstants.horizontalPadding)
+            .animate().fadeIn(duration: 400.ms).slideX(begin: -0.15, end: 0, duration: 400.ms, curve: Curves.easeOut),
         16.height,
         SizedBox(
           height: 96,

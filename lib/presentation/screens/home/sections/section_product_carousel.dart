@@ -23,10 +23,8 @@ class ProductCarouselSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (data.title.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
-            child: SectionHeader(title: data.title, actionLabel: null, onActionTap: onViewAll),
-          ),
+          SectionHeader(title: data.title, actionLabel: null, onActionTap: onViewAll)
+              .paddingSymmetric(horizontal: AppConstants.horizontalPadding),
         16.height,
         SizedBox(
           height: 290,
