@@ -127,80 +127,108 @@ class _DesignerRingsCollectionScreenState
               onCartTap: () =>
                   Navigator.of(context).pushNamed(AppRoutes.cart),
             ),
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  // ── Collection banner ───────────────────────────────────
+                  SliverToBoxAdapter(
+                    child: _CollectionBanner(
+                      title: widget.collectionTitle,
+                      imageUrl: widget.collectionImageUrl,
+                    ),
+                  ),
 
-            // ── Collection banner ─────────────────────────────────────────
-            _CollectionBanner(
-              title: widget.collectionTitle,
-              imageUrl: widget.collectionImageUrl,
-            ),
+                  // ── Explore Diamond Shapes ──────────────────────────────
+                  if (widget.showShapeFilter) ...[
+                    SliverToBoxAdapter(
+                      child: _ShapesRow(
+                        selectedShape: _selectedShape,
+                        onTap: _onShapeTap,
+                      ),
+                    ),
+                    const SliverToBoxAdapter(
+                      child: Divider(height: 1, color: AppColors.neutral200),
+                    ),
+                  ],
 
-            // ── Explore Diamond Shapes — shown only for ring collections ──
-            if (widget.showShapeFilter) ...[
-              _ShapesRow(
-                selectedShape: _selectedShape,
-                onTap: _onShapeTap,
+                  // ── Sort / count bar ────────────────────────────────────
+                  SliverToBoxAdapter(
+                    child: _SortBar(
+                      sortBy: _sortBy,
+                      count: _loading ? null : filtered.length,
+                      onChanged: (v) => setState(() => _sortBy = v),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: Divider(height: 1, color: AppColors.neutral200),
+                  ),
+
+                  // ── Products grid ───────────────────────────────────────
+                  ..._buildSliverBody(filtered),
+                ],
               ),
-              const Divider(height: 1, color: AppColors.neutral200),
-            ],
-
-            // ── Sort / count bar ──────────────────────────────────────────
-            _SortBar(
-              sortBy: _sortBy,
-              count: _loading ? null : filtered.length,
-              onChanged: (v) => setState(() => _sortBy = v),
             ),
-
-            const Divider(height: 1, color: AppColors.neutral200),
-
-            // ── Products grid ─────────────────────────────────────────────
-            Expanded(child: _buildBody(filtered)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBody(List<Product> products) {
-    if (_loading) return _skeleton();
-    if (_error != null) return _errorView();
-    if (products.isEmpty) return _emptyView();
-
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(
+  List<Widget> _buildSliverBody(List<Product> products) {
+    if (_loading) {
+      return [
+        SliverPadding(
+          padding: const EdgeInsets.all(AppConstants.horizontalPadding),
+          sliver: SliverGrid(
+            delegate: SliverChildBuilderDelegate(
+              (_, __) => const ProductCardSkeleton(),
+              childCount: 6,
+            ),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 20,
+              childAspectRatio: 0.65,
+            ),
+          ),
+        ),
+      ];
+    }
+    if (_error != null) {
+      return [SliverFillRemaining(child: _errorView())];
+    }
+    if (products.isEmpty) {
+      return [SliverFillRemaining(child: _emptyView())];
+    }
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(
           AppConstants.horizontalPadding,
           AppConstants.horizontalPadding,
           AppConstants.horizontalPadding,
-          AppConstants.horizontalPadding + 24),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 20,
-        childAspectRatio: 0.65,
-      ),
-      itemCount: products.length,
-      itemBuilder: (_, i) => FadeSlideIn(
-        delay: Duration(milliseconds: (i.clamp(0, 8) * 55)),
-        child: ProductCard(
-          product: products[i],
-          onTap: () => Navigator.of(context)
-              .pushNamed(AppRoutes.product, arguments: products[i].handle),
+          AppConstants.horizontalPadding + 24,
+        ),
+        sliver: SliverGrid(
+          delegate: SliverChildBuilderDelegate(
+            (_, i) => FadeSlideIn(
+              delay: Duration(milliseconds: (i.clamp(0, 8) * 55)),
+              child: ProductCard(
+                product: products[i],
+                onTap: () => Navigator.of(context)
+                    .pushNamed(AppRoutes.product, arguments: products[i].handle),
+              ),
+            ),
+            childCount: products.length,
+          ),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 20,
+            childAspectRatio: 0.65,
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _skeleton() {
-    return GridView.builder(
-      padding: const EdgeInsets.all(AppConstants.horizontalPadding),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 20,
-        childAspectRatio: 0.65,
-      ),
-      itemCount: 6,
-      itemBuilder: (_, __) => const ProductCardSkeleton(),
-    );
+    ];
   }
 
   Widget _emptyView() {

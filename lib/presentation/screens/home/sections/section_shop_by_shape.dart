@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nb_utils/nb_utils.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -48,7 +49,7 @@ class ShopByShapeSection extends StatelessWidget {
             actionLabel: 'View All',
             onActionTap: onViewAll,
           ),
-        ),
+        ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.15, end: 0, duration: 400.ms, curve: Curves.easeOut),
         16.height,
         SizedBox(
           height: 96,
@@ -60,7 +61,11 @@ class ShopByShapeSection extends StatelessWidget {
             itemBuilder: (_, i) {
               final (name, svg, fallbackHandle) = _kAllShapes[i];
               final handle = apiHandles[name.toLowerCase()] ?? fallbackHandle;
-              return _ShapeTile(label: name, svgPath: svg, onTap: () => onTap(name, handle));
+              return _ShapeTile(label: name, svgPath: svg, onTap: () => onTap(name, handle))
+                  .animate(delay: Duration(milliseconds: 80 + i * 50))
+                  .fadeIn(duration: 300.ms)
+                  .slideY(begin: 0.3, end: 0, duration: 300.ms, curve: Curves.easeOut)
+                  .scale(begin: const Offset(0.92, 0.92), end: const Offset(1, 1), duration: 300.ms);
             },
           ),
         ),

@@ -4,6 +4,7 @@ import 'package:demo_earthly/core/theme/app_colors.dart';
 import 'package:demo_earthly/core/theme/app_text_styles.dart';
 import 'package:demo_earthly/data/models/home_api_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:nb_utils/nb_utils.dart';
 
 class ShopByCategorySection extends StatelessWidget {
@@ -22,7 +23,7 @@ class ShopByCategorySection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
           child: Text('Shop by Category', style: AppTextStyles.headlineLarge),
-        ),
+        ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.15, end: 0, duration: 400.ms, curve: Curves.easeOut),
         16.height,
         SizedBox(
           height: 100,
@@ -34,7 +35,11 @@ class ShopByCategorySection extends StatelessWidget {
             itemBuilder: (_, i) => _CategoryTile(
               tile: data.tiles[i],
               onTap: () => onTap(data.tiles[i]),
-            ),
+            )
+                .animate(delay: Duration(milliseconds: 80 + i * 60))
+                .fadeIn(duration: 300.ms)
+                .slideY(begin: 0.3, end: 0, duration: 300.ms, curve: Curves.easeOut)
+                .scale(begin: const Offset(0.92, 0.92), end: const Offset(1, 1), duration: 300.ms),
           ),
         ),
       ],

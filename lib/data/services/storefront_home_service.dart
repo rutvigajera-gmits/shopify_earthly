@@ -185,29 +185,19 @@ class StorefrontHomeService {
       );
     }
 
-    // Fall back to collection cover images
-    final slides = <Map<String, dynamic>>[];
-    for (final idx in [0, 1, 2, 3, 12]) {
-      final col = cols['c$idx'] as Map<String, dynamic>?;
-      final imageUrl = (col?['image'] as Map?)?['url'] as String? ?? '';
-      if (imageUrl.isEmpty) continue;
-      slides.add({
-        'image': imageUrl,
-        'title': '',
-        'subtitle': '',
-        'cta_label': 'Shop Now',
-        'cta_url': '/collections/${col?['handle'] ?? ''}',
-        'text_color': '#FFFFFF',
-        'overlay': 0.35,
-      });
-    }
-    if (slides.isEmpty) return null;
+    // Fall back to static local banner assets
     return HomeSection(
       id: 'hero_banner',
       type: 'hero_banner',
       visible: true,
       order: order,
-      data: {'slides': slides},
+      data: {
+        'slides': [
+          {'image': 'assets/images/banner1.jpg', 'title': '', 'subtitle': '', 'cta_label': 'Shop Now', 'cta_url': '/collections/all', 'text_color': '#FFFFFF', 'overlay': 0.35},
+          {'image': 'assets/images/banner2.jpg', 'title': '', 'subtitle': '', 'cta_label': 'Shop Now', 'cta_url': '/collections/all', 'text_color': '#FFFFFF', 'overlay': 0.35},
+          {'image': 'assets/images/banner3.jpg', 'title': '', 'subtitle': '', 'cta_label': 'Shop Now', 'cta_url': '/collections/all', 'text_color': '#FFFFFF', 'overlay': 0.35},
+        ],
+      },
     );
   }
 

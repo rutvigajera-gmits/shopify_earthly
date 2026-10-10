@@ -11,7 +11,8 @@ import '../../../../data/models/home_api_model.dart';
 
 class HeroBannerSection extends StatefulWidget {
   final HeroBannerData data;
-  const HeroBannerSection({super.key, required this.data});
+  final VoidCallback? onCtaTap;
+  const HeroBannerSection({super.key, required this.data, this.onCtaTap});
 
   @override
   State<HeroBannerSection> createState() => _HeroBannerSectionState();
@@ -42,6 +43,7 @@ class _HeroBannerSectionState extends State<HeroBannerSection> {
               key: ValueKey(i),
               slide: slides[i],
               isActive: i == _index,
+              onCtaTap: widget.onCtaTap,
             ),
           ),
         ),
@@ -70,10 +72,12 @@ class _HeroBannerSectionState extends State<HeroBannerSection> {
 class _HeroBannerSlide extends StatefulWidget {
   final HeroBannerSlide slide;
   final bool isActive;
+  final VoidCallback? onCtaTap;
   const _HeroBannerSlide({
     super.key,
     required this.slide,
     required this.isActive,
+    this.onCtaTap,
   });
 
   @override
@@ -198,16 +202,23 @@ class _HeroBannerSlideState extends State<_HeroBannerSlide>
                 scale: _kbScale.value,
                 child: child,
               ),
-              child: CachedNetworkImage(
-                imageUrl: widget.slide.image,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-                placeholder: (_, __) =>
-                    Container(color: AppColors.surfaceDark),
-                errorWidget: (_, __, ___) =>
-                    Container(color: AppColors.surfaceDark),
-              ),
+              child: widget.slide.image.startsWith('assets/')
+                  ? Image.asset(
+                      widget.slide.image,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    )
+                  : CachedNetworkImage(
+                      imageUrl: widget.slide.image,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      placeholder: (_, __) =>
+                          Container(color: AppColors.surfaceDark),
+                      errorWidget: (_, __, ___) =>
+                          Container(color: AppColors.surfaceDark),
+                    ),
             )
           else
             Container(color: AppColors.surfaceDark),
@@ -274,7 +285,7 @@ class _HeroBannerSlideState extends State<_HeroBannerSlide>
                         position: _ctaOffset,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
+                            backgroundColor: Colors.white.withValues(alpha: 0.6),
                             foregroundColor: AppColors.textPrimary,
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(
@@ -285,10 +296,16 @@ class _HeroBannerSlideState extends State<_HeroBannerSlide>
                                 .copyWith(fontSize: 14, letterSpacing: 0.5),
                           ),
                           onPressed: widget.slide.ctaUrl.isNotEmpty
-                              ? () => launchUrl(
-                                    Uri.parse(widget.slide.ctaUrl),
-                                    mode: LaunchMode.externalApplication,
-                                  )
+                              ? () {
+                                  if (widget.onCtaTap != null) {
+                                    widget.onCtaTap!();
+                                  } else {
+                                    launchUrl(
+                                      Uri.parse(widget.slide.ctaUrl),
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  }
+                                }
                               : null,
                           child: Text(widget.slide.ctaLabel),
                         ),

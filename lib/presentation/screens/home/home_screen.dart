@@ -128,7 +128,10 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'hero_banner':
         final data = section.heroBannerData;
         if (data.slides.isEmpty) return null;
-        return HeroBannerSection(data: data);
+        return HeroBannerSection(
+          data: data,
+          onCtaTap: () => widget.onNavTap?.call(1),
+        );
 
       case 'shop_by_category':
         final data = section.collectionRowData;

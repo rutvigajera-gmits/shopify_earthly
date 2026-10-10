@@ -1,7 +1,12 @@
 import 'dart:io';
 
+import 'package:country_picker/country_picker.dart';
+import 'package:demo_earthly/core/utils/common.dart';
+import 'package:demo_earthly/core/utils/images.dart';
+import 'package:demo_earthly/core/utils/string_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 import '../../../component/loader_widget.dart';
 import '../../../core/constants/app_constants.dart';
@@ -28,6 +33,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   bool _saving = false;
 
+  late Country selectedCountry;
+  Country? selectedCountryCode;
+  final ValueNotifier<bool> _valueNotifier = ValueNotifier<bool>(false);
+  ValueNotifier<bool> get valueNotifier => _valueNotifier;
+  late final TextEditingController mobileCont;
+  late final FocusNode mobileFocus;
+  late final FocusNode passwordFocus;
+
   CustomerProvider get _customerProvider => context.read<CustomerProvider>();
 
   @override
@@ -37,6 +50,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _firstName = TextEditingController(text: c.firstName);
     _lastName  = TextEditingController(text: c.lastName);
     _phone     = TextEditingController(text: c.phone ?? '');
+    mobileCont = TextEditingController(text: c.phone ?? '');
+    mobileFocus = FocusNode();
+    passwordFocus = FocusNode();
+    selectedCountry = CountryParser.tryParseCountryCode('IN') ??
+        CountryService().getAll().first;
   }
 
   @override
@@ -44,6 +62,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _firstName.dispose();
     _lastName.dispose();
     _phone.dispose();
+    mobileCont.dispose();
+    mobileFocus.dispose();
+    passwordFocus.dispose();
+    _valueNotifier.dispose();
     super.dispose();
   }
 
@@ -198,42 +220,89 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       profileImage: profileImage,
                       onEditPhoto: _showImageSourceSheet,
                     ),
-                    const SizedBox(height: 24),
+                    24.height,
                     _sectionLabel('PERSONAL INFORMATION'),
-                    const SizedBox(height: 8),
-                    _FormCard(children: [
-                      _EditField(
-                        label: 'First Name',
-                        controller: _firstName,
-                        icon: Icons.person_outline_rounded,
-                        required: true,
+                    12.height,
+                    AppTextField(
+                      controller: _firstName,
+                      textFieldType: TextFieldType.NAME,
+                      decoration: inputDecoration(
+                        context,
+                        labelText: 'First Name',
+                        prefixIcon: Icon(Icons.person_outline_rounded),
                       ),
-                      const _CardDivider(),
-                      _EditField(
-                        label: 'Last Name',
-                        controller: _lastName,
-                        icon: Icons.person_outline_rounded,
-                      ),
-                    ]),
-                    const SizedBox(height: 24),
+                    ).paddingSymmetric(horizontal: AppConstants.horizontalPadding),
+                    14.height,
+                    AppTextField(
+                      controller: _lastName,
+                      decoration: inputDecoration(
+                        context,
+                        labelText: 'Last Name',
+                        prefixIcon: Icon(Icons.person_outline_rounded),
+                      ), 
+                      textFieldType: TextFieldType.NAME,
+                    ).paddingSymmetric(horizontal: AppConstants.horizontalPadding),
+                    24.height,
                     _sectionLabel('CONTACT'),
-                    const SizedBox(height: 8),
-                    _FormCard(children: [
-                      _EditField(
-                        label: 'Phone Number',
-                        controller: _phone,
-                        icon: Icons.phone_outlined,
-                        keyboard: TextInputType.phone,
-                        hint: '+91 98765 43210',
+                    12.height,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Country code ...
+                        Container(
+                          height: 48.0,
+                          decoration: BoxDecoration(
+                            color: context.cardColor,
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Center(
+                            child: ValueListenableBuilder(
+                              valueListenable: _valueNotifier,
+                              builder: (context, value, child) => Row(
+                                children: [
+                                  Text(
+                                    "+${selectedCountry.phoneCode}",
+                                    style: primaryTextStyle(size: 12),
+                                  ),
+                                  Icon(
+                                    Icons.arrow_drop_down,
+                                    color: textSecondaryColorGlobal,
+                                  )
+                                ],
+                              ).paddingOnly(left: 8),
+                            ),
+                          ),
+                        ).onTap(() => changeCountry()),
+                        10.width,
+                        // Mobile number text field...
+                        AppTextField(
+                          textFieldType: isAndroid ? TextFieldType.PHONE : TextFieldType.NAME,
+                          controller: mobileCont,
+                          focus: mobileFocus,
+                          errorThisFieldRequired: 'This field is required',
+                          nextFocus: passwordFocus,
+                          decoration: inputDecoration(context, labelText: "Contact Number").copyWith(
+                            hintText: 'Example: ${selectedCountry.example}',
+                            hintStyle: secondaryTextStyle(),
+                          ),
+                          maxLength: 15,
+                          suffix: ic_calling.iconImage(size: 10).paddingAll(14),
+                        ).expand(),
+                      ],
+                    ),
+                    14.height,
+                    AppTextField(
+                      controller: TextEditingController(text: customer.email),
+                      readOnly: true,
+                      decoration: inputDecoration(
+                        context,
+                        labelText: 'Email Address',
+                        prefixIcon: Icon(Icons.mail_outline_rounded),
                       ),
-                      const _CardDivider(),
-                      _ReadOnlyField(
-                        label: 'Email Address',
-                        value: customer.email,
-                        icon: Icons.mail_outline_rounded,
-                      ),
-                    ]),
-                    const SizedBox(height: 32),
+                      textFieldType: TextFieldType.EMAIL,
+                    ).paddingSymmetric(horizontal: AppConstants.horizontalPadding),
+
+                    32.height,
                   ],
                 ),
               ),
@@ -256,6 +325,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
       );
+
+  Future<void> changeCountry() async {
+    showCountryPicker(
+      context: context,
+      countryListTheme: CountryListThemeData(
+        textStyle: secondaryTextStyle(color: textSecondaryColorGlobal),
+        searchTextStyle: primaryTextStyle(),
+        inputDecoration: InputDecoration(
+          labelText: 'Search',
+          prefixIcon: const Icon(Icons.search),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: const Color(0xFF8C98A8).withValues(alpha: 0.2),
+            ),
+          ),
+        ),
+      ),
+      showPhoneCode: true,
+      onSelect: (Country country) {
+        selectedCountryCode = country;
+        valueNotifier.value = !valueNotifier.value;
+        setState(() {});
+      },
+    );
+  }
 }
 
 // ─── Profile Header ───────────────────────────────────────────────────────────
@@ -273,99 +367,131 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.teal, Color(0xFF002B30)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return ClipPath(
+      clipper: _WaveClipper(),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(20, 36, 20, 68),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.primary, Color(0xFF002B30)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: onEditPhoto,
-            child: Stack(
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.12),
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.30),
-                        width: 1.5),
-                  ),
-                  child: profileImage != null
-                      ? ClipOval(
-                          child: Image.file(
-                            profileImage!,
-                            fit: BoxFit.cover,
-                            width: 80,
-                            height: 80,
-                          ),
-                        )
-                      : Center(
-                          child: Text(
-                            customer.initials,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1,
+        child: Column(
+          children: [
+            // Avatar
+            GestureDetector(
+              onTap: onEditPhoto,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 92,
+                    height: 92,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.15),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.40),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.18),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: profileImage != null
+                        ? ClipOval(
+                            child: Image.file(
+                              profileImage!,
+                              fit: BoxFit.cover,
+                              width: 92,
+                              height: 92,
+                            ),
+                          )
+                        : Center(
+                            child: Text(
+                              customer.initials,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 30,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1,
+                              ),
                             ),
                           ),
-                        ),
-                ),
-                // Camera badge
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    width: 26,
-                    height: 26,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.camera_alt,
-                        size: 14, color: AppColors.teal),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            customer.displayName,
-            style: AppTextStyles.headlineSmall.copyWith(color: Colors.white),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            customer.email,
-            style: AppTextStyles.bodySmall
-                .copyWith(color: Colors.white.withValues(alpha: 0.65)),
-          ),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: onEditPhoto,
-            child: Text(
-              'Change photo',
-              style: AppTextStyles.labelSmall.copyWith(
-                color: Colors.white.withValues(alpha: 0.75),
-                decoration: TextDecoration.underline,
-                decorationColor: Colors.white.withValues(alpha: 0.5),
+                  // Edit badge
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.12),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.edit,
+                          size: 14, color: AppColors.teal),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 14),
+            Text(
+              customer.displayName,
+              style: AppTextStyles.headlineMedium.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              customer.email,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: Colors.white.withValues(alpha: 0.65),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+// ─── Wave clipper ─────────────────────────────────────────────────────────────
+
+class _WaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path()
+      ..lineTo(0, size.height - 36)
+      ..quadraticBezierTo(
+        size.width * 0.5, size.height + 8,
+        size.width, size.height - 36,
+      )
+      ..lineTo(size.width, 0)
+      ..close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(_WaveClipper old) => false;
 }
 
 // ─── Source picker tile ───────────────────────────────────────────────────────
@@ -408,182 +534,6 @@ class _SourceTile extends StatelessWidget {
   }
 }
 
-// ─── Form Card ────────────────────────────────────────────────────────────────
-
-class _FormCard extends StatelessWidget {
-  final List<Widget> children;
-  const _FormCard({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(
-          horizontal: AppConstants.horizontalPadding),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(children: children),
-    );
-  }
-}
-
-class _CardDivider extends StatelessWidget {
-  const _CardDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Divider(
-        height: 1,
-        thickness: 1,
-        color: AppColors.neutral200,
-        indent: 52);
-  }
-}
-
-// ─── Editable Field ───────────────────────────────────────────────────────────
-
-class _EditField extends StatelessWidget {
-  final String label;
-  final TextEditingController controller;
-  final IconData icon;
-  final bool required;
-  final TextInputType keyboard;
-  final String? hint;
-
-  const _EditField({
-    required this.label,
-    required this.controller,
-    required this.icon,
-    this.required = false,
-    this.keyboard = TextInputType.text,
-    this.hint,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Icon(icon, size: 20, color: AppColors.textMuted),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  required ? '$label *' : label,
-                  style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.textMuted, letterSpacing: 0.5),
-                ),
-                const SizedBox(height: 4),
-                TextFormField(
-                  controller: controller,
-                  keyboardType: keyboard,
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.textPrimary),
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    hintStyle: AppTextStyles.bodySmall
-                        .copyWith(color: AppColors.neutral500),
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    errorBorder: InputBorder.none,
-                    focusedErrorBorder: InputBorder.none,
-                    errorStyle: AppTextStyles.labelSmall
-                        .copyWith(color: AppColors.error),
-                  ),
-                  validator: required
-                      ? (v) => (v == null || v.trim().isEmpty)
-                          ? '$label is required'
-                          : null
-                      : null,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Read-only Field ──────────────────────────────────────────────────────────
-
-class _ReadOnlyField extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-
-  const _ReadOnlyField({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Icon(icon, size: 20, color: AppColors.neutral300),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      label,
-                      style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.neutral300, letterSpacing: 0.5),
-                    ),
-                    const SizedBox(width: 6),
-                    const Icon(Icons.lock_outline,
-                        size: 11, color: AppColors.neutral300),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.neutral300),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Email address cannot be changed',
-                  style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.neutral300, fontSize: 10),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ─── Save Button ──────────────────────────────────────────────────────────────
 
 class _SaveButton extends StatelessWidget {
@@ -609,7 +559,8 @@ class _SaveButton extends StatelessWidget {
             disabledBackgroundColor: AppColors.neutral300,
             elevation: 0,
             padding: const EdgeInsets.symmetric(vertical: 18),
-            shape: const RoundedRectangleBorder(),
+            shape: const RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.all( Radius.circular(10))),
+
           ),
           child: saving
               ? const LoaderWidget(size: 22, color: Colors.white)
@@ -622,3 +573,5 @@ class _SaveButton extends StatelessWidget {
     );
   }
 }
+
+

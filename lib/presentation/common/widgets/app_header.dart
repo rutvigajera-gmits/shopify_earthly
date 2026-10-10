@@ -1,8 +1,8 @@
 import 'dart:io';
 
+import 'package:demo_earthly/core/utils/images.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../providers/cart_provider.dart';
@@ -168,7 +168,7 @@ class _DynamicLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(AppAssets.logo, height: 48, fit: BoxFit.contain);
+    return Image.asset(imgAppLogo, height: 48, fit: BoxFit.contain);
   }
 }
 
