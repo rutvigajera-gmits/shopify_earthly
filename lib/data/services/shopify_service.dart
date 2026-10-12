@@ -494,7 +494,7 @@ class ShopifyService {
     final data = await _query('''
       {
         productByHandle(handle: "$handle") {
-          id handle title description vendor availableForSale tags
+          id handle title description vendor availableForSale tags productType
           images(first: 20) { edges { node { url altText } } }
           media(first: 20) {
             edges {

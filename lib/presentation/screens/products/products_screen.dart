@@ -40,8 +40,9 @@ class ProductsScreen extends StatefulWidget {
   final VoidCallback? onSearchTap;
   final VoidCallback? onCartTap;
   final VoidCallback? onProfileTap;
+  final VoidCallback? onBackTap;
 
-  const ProductsScreen({super.key, this.onSearchTap, this.onCartTap, this.onProfileTap});
+  const ProductsScreen({super.key, this.onSearchTap, this.onCartTap, this.onProfileTap, this.onBackTap});
 
   @override
   State<ProductsScreen> createState() => _ProductsScreenState();
@@ -192,6 +193,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
       backgroundColor: AppColors.background,
       appBar: AppHeader(
         title: 'Shop',
+        showBack: true,
+        onBackTap: widget.onBackTap,
         onSearchTap: widget.onSearchTap,
         onCartTap: widget.onCartTap,
         onProfileTap: widget.onProfileTap,

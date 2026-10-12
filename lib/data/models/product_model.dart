@@ -144,6 +144,7 @@ class Product {
   final List<ProductOption> options;
   final List<String> tags;
   final bool availableForSale;
+  final String? productType;
   // Populated only on product detail page fetch; null means no try-on available.
   final String? vtryonSelectionId;
 
@@ -159,6 +160,7 @@ class Product {
     required this.options,
     required this.tags,
     required this.availableForSale,
+    this.productType,
     this.vtryonSelectionId,
   });
 
@@ -272,6 +274,7 @@ class Product {
       options: options,
       tags: tags,
       availableForSale: node['availableForSale'] as bool? ?? true,
+      productType: node['productType'] as String?,
       // Priority: any metafield alias → product tag (vtryon:UUID) → null
       vtryonSelectionId: () {
         final fromMetafield =

@@ -10,6 +10,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/shop_provider.dart';
 import '../../common/widgets/app_header.dart';
+import 'account_webview_screen.dart';
 import 'kwik_pass_screen.dart';
 import 'orders_screen.dart';
 import 'edit_profile_screen.dart';
@@ -27,7 +28,8 @@ void _openUrl(BuildContext context, String url) {
 }
 
 class AccountScreen extends StatelessWidget {
-  const AccountScreen({super.key});
+  final VoidCallback? onBackTap;
+  const AccountScreen({super.key, this.onBackTap});
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +37,8 @@ class AccountScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppHeader(
         title: context.watch<ShopProvider>().brand?.storeName ?? 'Account',
+        showBack: true,
+        onBackTap: onBackTap,
       ),
       body: SafeArea(
         top: false,
@@ -58,8 +62,11 @@ class AccountScreen extends StatelessWidget {
                       onTap: auth.hasApiToken
                           ? () => Navigator.of(context).push(MaterialPageRoute(
                                 builder: (_) => const OrdersScreen()))
-                          : () => _openUrl(context,
-                                'https://earthlyjewels.co/account/orders'),
+                          : () => Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => const AccountWebViewScreen(
+                                  title: 'My Orders',
+                                  url: 'https://earthlyjewels.co/account/orders',
+                                ))),
                     ),
                     _MenuItem(
                       icon: Icons.favorite_border,
@@ -72,29 +79,32 @@ class AccountScreen extends StatelessWidget {
                       label: 'Saved Addresses',
                       onTap: auth.hasApiToken
                           ? () => Navigator.of(context).pushNamed('/addresses')
-                          : () => _openUrl(context,
-                                'https://earthlyjewels.co/account/addresses'),
+                          : () => Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => const AccountWebViewScreen(
+                                  title: 'Saved Addresses',
+                                  url: 'https://earthlyjewels.co/account/addresses',
+                                ))),
                     ),
-                    _MenuItem(
-                      icon: Icons.workspace_premium_outlined,
-                      label: 'Earthly Elite Membership',
-                      onTap: () {},
-                    ),
+                    // _MenuItem(
+                    //   icon: Icons.workspace_premium_outlined,
+                    //   label: 'Earthly Elite Membership',
+                    //   onTap: () {},
+                    // ),
                     const Divider(height: 1),
                   ],
 
-                  _MenuItem(
-                    icon: Icons.calendar_today_outlined,
-                    label: 'Book Store Visit',
-                    onTap: () => _openUrl(
-                        context, 'https://earthlyjewels.co/pages/store-locator'),
-                  ),
-                  _MenuItem(
-                    icon: Icons.headset_mic_outlined,
-                    label: 'Virtual Consultation',
-                    onTap: () => _openUrl(context,
-                        'https://earthlyjewels.co/pages/virtual-consultation'),
-                  ),
+                  // _MenuItem(
+                  //   icon: Icons.calendar_today_outlined,
+                  //   label: 'Book Store Visit',
+                  //   onTap: () => _openUrl(
+                  //       context, 'https://earthlyjewels.co/pages/store-locator'),
+                  // ),
+                  // _MenuItem(
+                  //   icon: Icons.headset_mic_outlined,
+                  //   label: 'Virtual Consultation',
+                  //   onTap: () => _openUrl(context,
+                  //       'https://earthlyjewels.co/pages/virtual-consultation'),
+                  // ),
                   _MenuItem(
                     icon: Icons.straighten_outlined,
                     label: 'Ring Size Guide',
@@ -105,13 +115,13 @@ class AccountScreen extends StatelessWidget {
                     icon: Icons.info_outline,
                     label: 'About Us',
                     onTap: () =>
-                        _openUrl(context, 'https://earthlyjewels.co/pages/about'),
+                        _openUrl(context, 'https://earthlyjewels.co/pages/about-us'),
                   ),
                   _MenuItem(
                     icon: Icons.article_outlined,
                     label: 'Blog',
                     onTap: () =>
-                        _openUrl(context, 'https://earthlyjewels.co/blogs'),
+                        _openUrl(context, 'https://earthlyjewels.co/blogs/blog'),
                   ),
                   _MenuItem(
                     icon: Icons.help_outline,
@@ -130,6 +140,12 @@ class AccountScreen extends StatelessWidget {
                     label: 'Privacy Policy',
                     onTap: () => _openUrl(context,
                         'https://earthlyjewels.co/policies/privacy-policy'),
+                  ),
+                  _MenuItem(
+                    icon: Icons.receipt_outlined,
+                    label: 'Buy Back / Cancellation Policy',
+                    onTap: () => _openUrl(context,
+                        'https://earthlyjewels.co/policies/refund-policy'),
                   ),
                   _MenuItem(
                     icon: Icons.description_outlined,

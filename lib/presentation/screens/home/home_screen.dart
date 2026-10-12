@@ -3,6 +3,7 @@ import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../providers/home_provider.dart';
@@ -198,13 +199,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
       case 'shop_by_shape':
         final data = section.collectionRowData;
+        final apiHandles = <String, String>{
+          for (final t in data.tiles) t.title.toLowerCase(): t.handle,
+        };
         return Padding(
           padding: const EdgeInsets.only(top: vPad),
           child: ShopByShapeSection(
             data: data,
-            onViewAll: () => widget.onNavTap?.call(1),
+            onViewAll: () => Navigator.of(context).pushNamed(
+              AppRoutes.allShapes,
+              arguments: apiHandles,
+            ),
             onTap: (shapeName, handle) => Navigator.of(context).pushNamed(
-              '/shape-products',
+              AppRoutes.shapeProducts,
               arguments: {'shapeName': shapeName, 'handle': handle},
             ),
           ),

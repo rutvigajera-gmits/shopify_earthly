@@ -1,5 +1,6 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import '../../presentation/screens/products/all_shapes_screen.dart';
 import '../../presentation/screens/products/designer_rings_collection_screen.dart';
 import '../../presentation/screens/products/product_detail_screen.dart';
 import '../../presentation/screens/products/shape_products_screen.dart';
@@ -21,6 +22,7 @@ class AppRoutes {
   static const String search = '/search';
   static const String wishlist = '/wishlist';
   static const String addresses = '/addresses';
+  static const String allShapes = '/all-shapes';
   static const String shapeProducts = '/shape-products';
   static const String designerRingsCollection = '/designer-rings-collection';
 
@@ -55,6 +57,9 @@ class AppRoutes {
         return _sharedAxisRoute(settings, const WishlistScreen());
       case addresses:
         return _sharedAxisRoute(settings, const AddressesScreen());
+      case allShapes:
+        final apiHandles = (settings.arguments as Map<String, String>?) ?? {};
+        return _sharedAxisRoute(settings, AllShapesScreen(apiHandles: apiHandles));
       case shapeProducts:
         final args = settings.arguments as Map<String, String>? ?? {};
         return _sharedAxisRoute(

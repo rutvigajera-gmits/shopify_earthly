@@ -196,9 +196,12 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
                 domStorageEnabled: true,
                 useWideViewPort: true,
                 loadWithOverviewMode: true,
-                // Fresh session every time — prevents a stale website cookie
-                // from skipping the OTP flow and showing only a spinner.
-                incognito: true,
+                // Do NOT use incognito: true here. Incognito prevents Shopify's
+                // post-OTP session cookies (_shopify_y, _shopify_s) from being
+                // written to the persistent WebView cookie store, which means
+                // the session is lost the moment this screen is closed.
+                // Fresh sessions are already guaranteed by the deleteAllCookies()
+                // call in initState above, which runs before this WebView mounts.
                 // Let GoKwik's scripts run as if on the real website.
                 userAgent:
                     'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '

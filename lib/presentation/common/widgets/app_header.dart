@@ -10,6 +10,8 @@ import '../../providers/customer_provider.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final bool showBack;
+  final bool showLeading;
+  final VoidCallback? onBackTap;
   final String? title;
   final VoidCallback? onSearchTap;
   final VoidCallback? onCartTap;
@@ -20,6 +22,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   const AppHeader({
     super.key,
     this.showBack = false,
+    this.showLeading = true,
+    this.onBackTap,
     this.title,
     this.onSearchTap,
     this.onCartTap,
@@ -52,19 +56,21 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               children: [
                 SizedBox(
                   width: 52,
-                  child: showBack
-                      ? IconButton(
-                          icon: const Icon(Icons.arrow_back_ios, size: 18),
-                          onPressed: () => Navigator.of(context).pop(),
-                          color: AppColors.textPrimary,
-                        )
-                      : _ProfileAvatar(onTap: onProfileTap),
+                  child: !showLeading
+                      ? null
+                      : showBack
+                          ? IconButton(
+                              icon: const Icon(Icons.arrow_back_ios, size: 18),
+                              onPressed: onBackTap ?? () => Navigator.of(context).pop(),
+                              color: AppColors.textPrimary,
+                            )
+                          : _ProfileAvatar(onTap: onProfileTap),
                 ),
                 Expanded(
                   child: Center(
                     child: title != null
                         ? Text(title!, style: AppTextStyles.headlineSmall)
-                        : const _DynamicLogo(),
+                        : Image.asset(imgAppLogo, height: 48, fit: BoxFit.contain),
                   ),
                 ),
                 SizedBox(
@@ -160,15 +166,6 @@ class _ProfileAvatar extends StatelessWidget {
                     size: 20, color: AppColors.textMuted),
       ),
     );
-  }
-}
-
-class _DynamicLogo extends StatelessWidget {
-  const _DynamicLogo();
-
-  @override
-  Widget build(BuildContext context) {
-    return Image.asset(imgAppLogo, height: 48, fit: BoxFit.contain);
   }
 }
 

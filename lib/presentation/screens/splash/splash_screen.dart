@@ -19,7 +19,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    Future.delayed(const Duration(seconds: 8), _goHome);
+    Future.delayed(const Duration(seconds: 9), _goHome);
 
     _controller = VideoPlayerController.asset('assets/videos/splash1.mp4');
 

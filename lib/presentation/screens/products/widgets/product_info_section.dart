@@ -151,12 +151,17 @@ class ProductInfoSection extends StatelessWidget {
                     '${selectionId.isEmpty ? "(empty)" : selectionId}');
               }
 
+              final category = _vtryonCategory(product);
+              debugPrint('[VTryOn] category      : '
+                  '${category ?? "(unresolved)"}');
+
               final params = <String, String>{
                 'shop': VTryOnConfig.shopDomain,
                 if (selectionId.isNotEmpty) 'selectionId': selectionId,
                 if (sku.isNotEmpty) 'variantSku': sku,
                 if (slug.isNotEmpty) 'variantSlug': slug,
                 if (numericId.isNotEmpty) 'user_id': numericId,
+                if (category != null) 'type': category,
               };
               final tryOnUrl = Uri.parse(VTryOnConfig.baseUrl)
                   .replace(queryParameters: params)
@@ -205,6 +210,35 @@ class ProductInfoSection extends StatelessWidget {
       top: 16,
       right: AppConstants.horizontalPadding,
     );
+  }
+
+  // Maps Shopify productType / tags / handle to a VTryOn category string.
+  // Priority: productType → tags → handle substring.
+  String? _vtryonCategory(Product p) {
+    const categories = {
+      'ring': ['ring', 'rings', 'engagement', 'solitaire', 'band'],
+      'necklace': ['necklace', 'necklaces', 'chain', 'choker', 'mangalsutra', 'pendant'],
+      'earring': ['earring', 'earrings', 'ear stud', 'ear studs', 'studs', 'jhumka', 'hoop'],
+      'bracelet': ['bracelet', 'bracelets', 'bangle', 'bangles', 'cuff'],
+    };
+
+    String? match(String text) {
+      final lower = text.toLowerCase();
+      for (final entry in categories.entries) {
+        if (entry.value.any((kw) => lower.contains(kw))) return entry.key;
+      }
+      return null;
+    }
+
+    if (p.productType != null && p.productType!.isNotEmpty) {
+      final r = match(p.productType!);
+      if (r != null) return r;
+    }
+    for (final tag in p.tags) {
+      final r = match(tag);
+      if (r != null) return r;
+    }
+    return match(p.handle);
   }
 
   void _showBreakup(BuildContext context, String total) {

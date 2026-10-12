@@ -36,7 +36,12 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: _currentIndex == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _navigate(0);
+      },
+      child: Scaffold(
       body: Stack(
         children: [
           IndexedStack(
@@ -54,10 +59,11 @@ class _AppShellState extends State<AppShell> {
                 onSearchTap: _openSearch,
                 onCartTap: _openCart,
                 onProfileTap: () => _navigate(4),
+                onBackTap: () => _navigate(0),
               ),
               const _SearchTab(),
               const _CartTab(),
-              const AccountScreen(),
+              AccountScreen(onBackTap: () => _navigate(0)),
             ],
           ),
           // Ring Matchmaker FAB — floats above all tabs
@@ -79,6 +85,7 @@ class _AppShellState extends State<AppShell> {
             _navigate(i);
           }
         },
+      ),
       ),
     );
   }
