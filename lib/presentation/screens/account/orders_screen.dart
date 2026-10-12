@@ -39,25 +39,25 @@ class _OrdersScreenState extends State<OrdersScreen> {
             Expanded(
               child: Consumer<CustomerProvider>(
                 builder: (_, auth, __) {
-                if (auth.ordersLoading) {
-                  return _OrdersShimmer();
-                }
-                if (auth.orders.isEmpty) {
-                  return _EmptyOrders();
-                }
-                return ListView.separated(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  itemCount: auth.orders.length,
-                  separatorBuilder: (_, __) =>
-                      const Divider(height: 1, indent: 16, endIndent: 16),
-                  itemBuilder: (_, i) => _OrderCard(order: auth.orders[i]),
-                );
-              },
+                  if (auth.ordersLoading) {
+                    return _OrdersShimmer();
+                  }
+                  if (auth.orders.isEmpty) {
+                    return _EmptyOrders();
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    itemCount: auth.orders.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, indent: 16, endIndent: 16),
+                    itemBuilder: (_, i) => _OrderCard(order: auth.orders[i]),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -70,8 +70,7 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final firstItem =
-        order.lineItems.isNotEmpty ? order.lineItems.first : null;
+    final firstItem = order.lineItems.isNotEmpty ? order.lineItems.first : null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -93,15 +92,12 @@ class _OrderCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(order.name,
-                        style: AppTextStyles.labelLarge),
-                    Text(order.formattedTotal,
-                        style: AppTextStyles.labelLarge),
+                    Text(order.name, style: AppTextStyles.labelLarge),
+                    Text(order.formattedTotal, style: AppTextStyles.labelLarge),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(order.formattedDate,
-                    style: AppTextStyles.bodySmall),
+                Text(order.formattedDate, style: AppTextStyles.bodySmall),
                 const SizedBox(height: 8),
 
                 // Items summary
@@ -144,9 +140,8 @@ class _Thumbnail extends StatelessWidget {
           ? CachedNetworkImage(
               imageUrl: imageUrl!,
               fit: BoxFit.cover,
-              errorWidget: (_, __, ___) =>
-                  const Icon(Icons.image_outlined,
-                      color: AppColors.textLight, size: 28),
+              errorWidget: (_, __, ___) => const Icon(Icons.image_outlined,
+                  color: AppColors.textLight, size: 28),
             )
           : const Icon(Icons.shopping_bag_outlined,
               color: AppColors.textLight, size: 28),
@@ -227,18 +222,15 @@ class _OrdersShimmer extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                  width: 72, height: 72, color: Colors.white),
+              Container(width: 72, height: 72, color: Colors.white),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(height: 14, width: 120,
-                        color: Colors.white),
+                    Container(height: 14, width: 120, color: Colors.white),
                     const SizedBox(height: 8),
-                    Container(height: 12, width: 80,
-                        color: Colors.white),
+                    Container(height: 12, width: 80, color: Colors.white),
                     const SizedBox(height: 8),
                     Container(height: 12, color: Colors.white),
                   ],

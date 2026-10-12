@@ -21,9 +21,11 @@ class HomeRepository {
 
   Future<ShopBanner?> fetchFeatureBanner() => _shopService.fetchFeatureBanner();
 
-  Future<List<BrandValue>> fetchBrandValues() => _shopService.fetchBrandValues();
+  Future<List<BrandValue>> fetchBrandValues() =>
+      _shopService.fetchBrandValues();
 
-  Future<List<String>> fetchAnnouncements() => _shopService.fetchAnnouncements();
+  Future<List<String>> fetchAnnouncements() =>
+      _shopService.fetchAnnouncements();
 
   Future<List<MenuItem>> fetchMainMenu() => _shopService.fetchMainMenu();
 
@@ -32,8 +34,8 @@ class HomeRepository {
   Future<Map<String, String>> fetchSectionTitles() =>
       _shopService.fetchSectionTitles();
 
-  Future<List<Collection>> fetchCategoryCollections() =>
-      _shopService.fetchOccasionCollections(AppConstants.categoryCollectionHandles);
+  Future<List<Collection>> fetchCategoryCollections() => _shopService
+      .fetchOccasionCollections(AppConstants.categoryCollectionHandles);
 
   Future<List<Collection>> fetchOccasionCollections() =>
       _shopService.fetchOccasionCollections(AppConstants.occasionHandles);

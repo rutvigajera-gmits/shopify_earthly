@@ -144,8 +144,7 @@ class _AccountWebViewScreenState extends State<AccountWebViewScreen> {
                 domStorageEnabled: true,
                 useWideViewPort: true,
                 loadWithOverviewMode: true,
-                userAgent:
-                    'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
+                userAgent: 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
                     '(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
               ),
               onWebViewCreated: (controller) => _controller = controller,
@@ -172,7 +171,8 @@ class _AccountWebViewScreenState extends State<AccountWebViewScreen> {
               shouldOverrideUrlLoading: (_, action) async {
                 final uri = action.request.url;
                 if (uri == null) return NavigationActionPolicy.CANCEL;
-                if (_isAllowedNavigation(uri)) return NavigationActionPolicy.ALLOW;
+                if (_isAllowedNavigation(uri))
+                  return NavigationActionPolicy.ALLOW;
                 launchUrl(uri, mode: LaunchMode.externalApplication);
                 return NavigationActionPolicy.CANCEL;
               },

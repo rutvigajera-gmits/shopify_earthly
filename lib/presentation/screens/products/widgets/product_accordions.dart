@@ -32,7 +32,8 @@ class ProductAccordionsSection extends StatelessWidget {
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
-              _InfoRow(Icons.credit_card, 'All major credit/debit cards accepted'),
+              _InfoRow(
+                  Icons.credit_card, 'All major credit/debit cards accepted'),
               _InfoRow(Icons.local_shipping_outlined,
                   'Free insured shipping across India'),
               _InfoRow(Icons.replay, '15-day easy returns policy'),
@@ -58,8 +59,8 @@ class ProductAccordionsSection extends StatelessWidget {
                 AppTextStyles.labelLarge.copyWith(fontWeight: FontWeight.w600)),
         TextSpan(
             text: sku,
-            style:
-                AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+            style: AppTextStyles.bodySmall
+                .copyWith(color: AppColors.textSecondary)),
       ])).paddingOnly(
         left: AppConstants.horizontalPadding,
         top: 12,
@@ -88,15 +89,14 @@ class _AccordionItemState extends State<_AccordionItem> {
       GestureDetector(
         onTap: () => setState(() => _open = !_open),
         behavior: HitTestBehavior.opaque,
-        child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(widget.title,
-                  style: AppTextStyles.labelLarge
-                      .copyWith(fontSize: 14, color: AppColors.textPrimary)),
-              Icon(_open ? Icons.remove : Icons.add,
-                  size: 18, color: AppColors.textPrimary),
-            ]).paddingSymmetric(
+        child:
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text(widget.title,
+              style: AppTextStyles.labelLarge
+                  .copyWith(fontSize: 14, color: AppColors.textPrimary)),
+          Icon(_open ? Icons.remove : Icons.add,
+              size: 18, color: AppColors.textPrimary),
+        ]).paddingSymmetric(
           horizontal: AppConstants.horizontalPadding,
           vertical: 16,
         ),

@@ -60,7 +60,8 @@ class _AddressesScreenState extends State<AddressesScreen> {
     );
     if (confirm != true || !mounted) return;
 
-    final err = await context.read<CustomerProvider>().removeAddress(address.id);
+    final err =
+        await context.read<CustomerProvider>().removeAddress(address.id);
     if (err != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(err), backgroundColor: Colors.red.shade700),
@@ -98,50 +99,51 @@ class _AddressesScreenState extends State<AddressesScreen> {
             Expanded(
               child: Consumer<CustomerProvider>(
                 builder: (_, provider, __) {
-                if (provider.addressesLoading) {
-                  return const LoaderWidget();
-                }
+                  if (provider.addressesLoading) {
+                    return const LoaderWidget();
+                  }
 
-                if (provider.addresses.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 56,
-                          color: AppColors.textLight,
-                        ),
-                        const SizedBox(height: 16),
-                        Text('No saved addresses',
-                            style: AppTextStyles.headlineSmall),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Tap + to add a delivery address',
-                          style: AppTextStyles.bodySmall,
-                        ),
-                      ],
+                  if (provider.addresses.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 56,
+                            color: AppColors.textLight,
+                          ),
+                          const SizedBox(height: 16),
+                          Text('No saved addresses',
+                              style: AppTextStyles.headlineSmall),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Tap + to add a delivery address',
+                            style: AppTextStyles.bodySmall,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
+                    padding:
+                        const EdgeInsets.all(AppConstants.horizontalPadding),
+                    itemCount: provider.addresses.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (_, i) => _AddressCard(
+                      address: provider.addresses[i],
+                      onEdit: () => _openForm(address: provider.addresses[i]),
+                      onDelete: () => _delete(provider.addresses[i]),
+                      onSetDefault: () => _setDefault(provider.addresses[i]),
                     ),
                   );
-                }
-
-                return ListView.separated(
-                  padding: const EdgeInsets.all(AppConstants.horizontalPadding),
-                  itemCount: provider.addresses.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, i) => _AddressCard(
-                    address: provider.addresses[i],
-                    onEdit: () => _openForm(address: provider.addresses[i]),
-                    onDelete: () => _delete(provider.addresses[i]),
-                    onSetDefault: () => _setDefault(provider.addresses[i]),
-                  ),
-                );
-              },
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -168,8 +170,7 @@ class _AddressCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border.all(
-          color:
-              address.isDefault ? AppColors.gold : AppColors.border,
+          color: address.isDefault ? AppColors.gold : AppColors.border,
           width: address.isDefault ? 1.5 : 1,
         ),
       ),
@@ -321,8 +322,15 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   @override
   void dispose() {
     for (final c in [
-      _firstName, _lastName, _address1, _address2,
-      _city, _province, _country, _zip, _phone,
+      _firstName,
+      _lastName,
+      _address1,
+      _address2,
+      _city,
+      _province,
+      _country,
+      _zip,
+      _phone,
     ]) {
       c.dispose();
     }
@@ -547,8 +555,7 @@ class _Field extends StatelessWidget {
             ),
             focusedBorder: const OutlineInputBorder(
               borderRadius: BorderRadius.zero,
-              borderSide:
-                  BorderSide(color: AppColors.textPrimary, width: 1.5),
+              borderSide: BorderSide(color: AppColors.textPrimary, width: 1.5),
             ),
             errorBorder: const OutlineInputBorder(
               borderRadius: BorderRadius.zero,

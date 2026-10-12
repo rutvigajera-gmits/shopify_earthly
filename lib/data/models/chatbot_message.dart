@@ -69,10 +69,9 @@ class ChatbotServiceResponse {
               ?.map((e) => e.toString())
               .toList() ??
           [],
-      suggestions: (json['suggestions'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
+      suggestions:
+          (json['suggestions'] as List?)?.map((e) => e.toString()).toList() ??
+              [],
     );
   }
 }

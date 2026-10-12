@@ -41,7 +41,8 @@ class WishlistProvider extends BaseProvider {
     _loadingProducts = true;
     notifyListeners();
     try {
-      final futures = _handles.map((h) => ProductRepository.instance.fetchByHandle(h));
+      final futures =
+          _handles.map((h) => ProductRepository.instance.fetchByHandle(h));
       final results = await Future.wait(futures);
       _products = results.whereType<Product>().toList();
     } catch (_) {

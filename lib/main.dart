@@ -9,12 +9,12 @@ import 'core/theme/app_colors.dart';
 import 'data/services/stripe_service.dart';
 import 'app.dart';
 
-
 //region Global Variables
 Languages languages = LanguageEn();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initialize();
 
   Stripe.publishableKey = ApiConfig.stripePublishableKey;
   await StripeService.applySettings();

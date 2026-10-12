@@ -181,7 +181,9 @@ class CustomerProvider extends BaseProvider {
       // Fetch from Shopify (requires login) and local storage in parallel.
       final results = await Future.wait([
         _accessToken != null
-            ? _repo.fetchOrders(_accessToken!).catchError((_) => <CustomerOrder>[])
+            ? _repo
+                .fetchOrders(_accessToken!)
+                .catchError((_) => <CustomerOrder>[])
             : Future.value(<CustomerOrder>[]),
         LocalOrderService.instance.loadOrders(),
       ]);
@@ -210,7 +212,8 @@ class CustomerProvider extends BaseProvider {
     _ordersLoaded = false;
   }
 
-  Future<void> updateProfile({String? firstName, String? lastName, String? phone}) async {
+  Future<void> updateProfile(
+      {String? firstName, String? lastName, String? phone}) async {
     if (_accessToken == null) return;
     setLoading();
     try {
@@ -244,7 +247,8 @@ class CustomerProvider extends BaseProvider {
   Future<String?> addAddress(Map<String, String> address) async {
     if (_accessToken == null) return 'Not logged in';
     try {
-      final created = await _repo.createAddress(token: _accessToken!, address: address);
+      final created =
+          await _repo.createAddress(token: _accessToken!, address: address);
       _addresses.insert(0, created);
       notifyListeners();
       return null;
@@ -253,7 +257,8 @@ class CustomerProvider extends BaseProvider {
     }
   }
 
-  Future<String?> editAddress(String addressId, Map<String, String> address) async {
+  Future<String?> editAddress(
+      String addressId, Map<String, String> address) async {
     if (_accessToken == null) return 'Not logged in';
     try {
       final updated = await _repo.updateAddress(
@@ -263,7 +268,8 @@ class CustomerProvider extends BaseProvider {
       );
       final idx = _addresses.indexWhere((a) => a.id == addressId);
       if (idx != -1) {
-        _addresses[idx] = updated.copyWith(isDefault: _addresses[idx].isDefault);
+        _addresses[idx] =
+            updated.copyWith(isDefault: _addresses[idx].isDefault);
       }
       notifyListeners();
       return null;
@@ -288,7 +294,9 @@ class CustomerProvider extends BaseProvider {
     if (_accessToken == null) return 'Not logged in';
     try {
       await _repo.setDefaultAddress(token: _accessToken!, addressId: addressId);
-      _addresses = _addresses.map((a) => a.copyWith(isDefault: a.id == addressId)).toList();
+      _addresses = _addresses
+          .map((a) => a.copyWith(isDefault: a.id == addressId))
+          .toList();
       notifyListeners();
       return null;
     } catch (e) {

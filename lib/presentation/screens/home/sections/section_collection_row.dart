@@ -11,7 +11,8 @@ class CollectionRowSection extends StatelessWidget {
   final CollectionRowData data;
   final VoidCallback onViewAll;
 
-  const CollectionRowSection({super.key, required this.data, required this.onViewAll});
+  const CollectionRowSection(
+      {super.key, required this.data, required this.onViewAll});
 
   @override
   Widget build(BuildContext context) {
@@ -29,10 +30,13 @@ class CollectionRowSection extends StatelessWidget {
           height: 180,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.horizontalPadding),
             itemCount: data.tiles.length,
-            separatorBuilder: (_, __) => const SizedBox(width: AppConstants.cardSpacing),
-            itemBuilder: (_, i) => _CollectionCard(tile: data.tiles[i], onTap: onViewAll),
+            separatorBuilder: (_, __) =>
+                const SizedBox(width: AppConstants.cardSpacing),
+            itemBuilder: (_, i) =>
+                _CollectionCard(tile: data.tiles[i], onTap: onViewAll),
           ),
         ),
       ],
@@ -60,14 +64,17 @@ class _CollectionCard extends StatelessWidget {
                 imageUrl: tile.imageUrl,
                 fit: BoxFit.cover,
                 width: 130,
-                placeholder: (_, __) => Container(color: AppColors.cardBackground),
-                errorWidget: (_, __, ___) => Container(color: AppColors.cardBackground),
+                placeholder: (_, __) =>
+                    Container(color: AppColors.cardBackground),
+                errorWidget: (_, __, ___) =>
+                    Container(color: AppColors.cardBackground),
               ),
             ),
             8.height,
             Text(
               tile.title,
-              style: AppTextStyles.labelMedium.copyWith(color: AppColors.textPrimary),
+              style: AppTextStyles.labelMedium
+                  .copyWith(color: AppColors.textPrimary),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),

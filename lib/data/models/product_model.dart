@@ -42,7 +42,10 @@ class ProductMediaItem {
         String sourceUrl = '';
         for (final s in sources) {
           final mime = s['mimeType'] as String? ?? '';
-          if (mime.contains('mp4')) { sourceUrl = s['url'] as String? ?? ''; break; }
+          if (mime.contains('mp4')) {
+            sourceUrl = s['url'] as String? ?? '';
+            break;
+          }
         }
         if (sourceUrl.isEmpty && sources.isNotEmpty) {
           sourceUrl = sources.first['url'] as String? ?? '';
@@ -50,19 +53,24 @@ class ProductMediaItem {
         final thumb = FormatUtils.shopifyImageJpeg(
             (node['previewImage'] as Map?)?['url'] as String? ?? '');
         if (sourceUrl.isEmpty) return null;
-        return ProductMediaItem(type: ProductMediaType.video, url: sourceUrl, thumbnailUrl: thumb);
+        return ProductMediaItem(
+            type: ProductMediaType.video, url: sourceUrl, thumbnailUrl: thumb);
       case 'EXTERNAL_VIDEO':
         final embedUrl = node['embeddedUrl'] as String? ?? '';
         final thumb = FormatUtils.shopifyImageJpeg(
             (node['previewImage'] as Map?)?['url'] as String? ?? '');
         if (embedUrl.isEmpty) return null;
-        return ProductMediaItem(type: ProductMediaType.externalVideo, url: embedUrl, thumbnailUrl: thumb);
+        return ProductMediaItem(
+            type: ProductMediaType.externalVideo,
+            url: embedUrl,
+            thumbnailUrl: thumb);
       default:
         final imageUrl = FormatUtils.shopifyImageJpeg(
             (node['image'] as Map?)?['url'] as String? ?? '');
         final altText = (node['image'] as Map?)?['altText'] as String?;
         if (imageUrl.isEmpty) return null;
-        return ProductMediaItem(type: ProductMediaType.image, url: imageUrl, altText: altText);
+        return ProductMediaItem(
+            type: ProductMediaType.image, url: imageUrl, altText: altText);
     }
   }
 }
@@ -178,7 +186,9 @@ class Product {
   ProductImage? get primaryImage => images.isNotEmpty ? images.first : null;
 
   bool get isMembersOnly => tags.any(
-        (t) => t.toLowerCase().contains('members') || t.toLowerCase().contains('elite'),
+        (t) =>
+            t.toLowerCase().contains('members') ||
+            t.toLowerCase().contains('elite'),
       );
 
   // Always derives option names from variant selectedOptions (guaranteed complete),
@@ -198,9 +208,9 @@ class Product {
     return names.map((name) {
       // Prefer API-provided values (Shopify admin order)
       final apiOpt = options.cast<ProductOption?>().firstWhere(
-        (o) => o!.name.toLowerCase() == name.toLowerCase(),
-        orElse: () => null,
-      );
+            (o) => o!.name.toLowerCase() == name.toLowerCase(),
+            orElse: () => null,
+          );
       if (apiOpt != null && apiOpt.values.isNotEmpty) return apiOpt;
 
       // Derive values from variants in the order they appear
@@ -231,23 +241,27 @@ class Product {
     if (mediaData is Map && mediaData['edges'] is List) {
       final items = <ProductMediaItem>[];
       for (final edge in mediaData['edges'] as List) {
-        final item = ProductMediaItem.fromNode(edge['node'] as Map<String, dynamic>);
+        final item =
+            ProductMediaItem.fromNode(edge['node'] as Map<String, dynamic>);
         if (item != null) items.add(item);
       }
       if (items.isNotEmpty) mediaItems = items;
     }
     // Fallback: derive media items from images list
-    mediaItems ??= images.map((img) => ProductMediaItem(
-          type: ProductMediaType.image,
-          url: img.url,
-          altText: img.altText,
-        )).toList();
+    mediaItems ??= images
+        .map((img) => ProductMediaItem(
+              type: ProductMediaType.image,
+              url: img.url,
+              altText: img.altText,
+            ))
+        .toList();
 
     List<ProductVariant> variants = [];
     final variantsData = node['variants'];
     if (variantsData is Map && variantsData['edges'] is List) {
       variants = (variantsData['edges'] as List)
-          .map((e) => ProductVariant.fromJson(e['node'] as Map<String, dynamic>))
+          .map(
+              (e) => ProductVariant.fromJson(e['node'] as Map<String, dynamic>))
           .toList();
     }
 
@@ -260,7 +274,8 @@ class Product {
           .toList();
     }
 
-    final tags = (node['tags'] as List?)?.map((t) => t.toString()).toList() ?? [];
+    final tags =
+        (node['tags'] as List?)?.map((t) => t.toString()).toList() ?? [];
 
     return Product(
       id: node['id'] as String? ?? '',
@@ -277,8 +292,7 @@ class Product {
       productType: node['productType'] as String?,
       // Priority: any metafield alias → product tag (vtryon:UUID) → null
       vtryonSelectionId: () {
-        final fromMetafield =
-            (node['vtryonId'] as Map?)?['value'] as String? ??
+        final fromMetafield = (node['vtryonId'] as Map?)?['value'] as String? ??
             (node['vtryonId2'] as Map?)?['value'] as String? ??
             (node['vtryonId3'] as Map?)?['value'] as String?;
         final fromTag = tags

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
@@ -27,6 +28,103 @@ void _openUrl(BuildContext context, String url) {
   });
 }
 
+Future<bool?> _showSignOutSheet(BuildContext context) {
+  return showModalBottomSheet<bool>(
+    context: context,
+    backgroundColor: AppColors.surfaceBase,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (sheetCtx) => Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.neutral300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          28.height,
+          Container(
+            width: 72,
+            height: 72,
+            decoration: const BoxDecoration(
+              color: AppColors.neutral100,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.logout_rounded,
+              color: AppColors.textMuted,
+              size: 30,
+            ),
+          ),
+          20.height,
+          Text(
+            'Sign out of your account?',
+            style: AppTextStyles.headlineMedium,
+            textAlign: TextAlign.center,
+          ),
+          10.height,
+          Text(
+            'You can always sign back in to access your wishlist, orders, and saved addresses.',
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
+            textAlign: TextAlign.center,
+          ),
+          28.height,
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(sheetCtx).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.teal,
+                foregroundColor: AppColors.textWhite,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'Yes, Sign Out',
+                style: AppTextStyles.button.copyWith(
+                  color: AppColors.textWhite,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+          ),
+          12.height,
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: OutlinedButton(
+              onPressed: () => Navigator.of(sheetCtx).pop(false),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.neutral300),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'Cancel',
+                style: AppTextStyles.button.copyWith(
+                  color: AppColors.textPrimary,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+          ),
+          10.height,
+        ],
+      ),
+    ),
+  );
+}
+
 class AccountScreen extends StatelessWidget {
   final VoidCallback? onBackTap;
   const AccountScreen({super.key, this.onBackTap});
@@ -48,177 +146,161 @@ class AccountScreen extends StatelessWidget {
             Expanded(
               child: Consumer<CustomerProvider>(
                 builder: (_, auth, __) => ListView(
-                children: [
-                  auth.isLoggedIn
-                      ? _LoggedInHeader(auth: auth)
-                      : _GuestHeader(),
+                  children: [
+                    auth.isLoggedIn
+                        ? _LoggedInHeader(auth: auth)
+                        : _GuestHeader(),
 
-                  const Divider(height: 1),
-
-                  if (auth.isLoggedIn) ...[
-                    _MenuItem(
-                      icon: Icons.receipt_long_outlined,
-                      label: 'My Orders',
-                      onTap: auth.hasApiToken
-                          ? () => Navigator.of(context).push(MaterialPageRoute(
-                                builder: (_) => const OrdersScreen()))
-                          : () => Navigator.of(context).push(MaterialPageRoute(
-                                builder: (_) => const AccountWebViewScreen(
-                                  title: 'My Orders',
-                                  url: 'https://earthlyjewels.co/account/orders',
-                                ))),
-                    ),
-                    _MenuItem(
-                      icon: Icons.favorite_border,
-                      label: 'Wishlist',
-                      onTap: () =>
-                          Navigator.of(context).pushNamed('/wishlist'),
-                    ),
-                    _MenuItem(
-                      icon: Icons.location_on_outlined,
-                      label: 'Saved Addresses',
-                      onTap: auth.hasApiToken
-                          ? () => Navigator.of(context).pushNamed('/addresses')
-                          : () => Navigator.of(context).push(MaterialPageRoute(
-                                builder: (_) => const AccountWebViewScreen(
-                                  title: 'Saved Addresses',
-                                  url: 'https://earthlyjewels.co/account/addresses',
-                                ))),
-                    ),
-                    // _MenuItem(
-                    //   icon: Icons.workspace_premium_outlined,
-                    //   label: 'Earthly Elite Membership',
-                    //   onTap: () {},
-                    // ),
                     const Divider(height: 1),
-                  ],
 
-                  // _MenuItem(
-                  //   icon: Icons.calendar_today_outlined,
-                  //   label: 'Book Store Visit',
-                  //   onTap: () => _openUrl(
-                  //       context, 'https://earthlyjewels.co/pages/store-locator'),
-                  // ),
-                  // _MenuItem(
-                  //   icon: Icons.headset_mic_outlined,
-                  //   label: 'Virtual Consultation',
-                  //   onTap: () => _openUrl(context,
-                  //       'https://earthlyjewels.co/pages/virtual-consultation'),
-                  // ),
-                  _MenuItem(
-                    icon: Icons.straighten_outlined,
-                    label: 'Ring Size Guide',
-                    onTap: () => _openUrl(context,
-                        'https://earthlyjewels.co/pages/ring-size-chart'),
-                  ),
-                  _MenuItem(
-                    icon: Icons.info_outline,
-                    label: 'About Us',
-                    onTap: () =>
-                        _openUrl(context, 'https://earthlyjewels.co/pages/about-us'),
-                  ),
-                  _MenuItem(
-                    icon: Icons.article_outlined,
-                    label: 'Blog',
-                    onTap: () =>
-                        _openUrl(context, 'https://earthlyjewels.co/blogs/blog'),
-                  ),
-                  _MenuItem(
-                    icon: Icons.help_outline,
-                    label: 'FAQ',
-                    onTap: () =>
-                        _openUrl(context, 'https://earthlyjewels.co/pages/faq'),
-                  ),
-                  _MenuItem(
-                    icon: Icons.phone_outlined,
-                    label: 'Contact Us',
-                    onTap: () => _openUrl(
-                        context, 'https://earthlyjewels.co/pages/contact'),
-                  ),
-                  _MenuItem(
-                    icon: Icons.policy_outlined,
-                    label: 'Privacy Policy',
-                    onTap: () => _openUrl(context,
-                        'https://earthlyjewels.co/policies/privacy-policy'),
-                  ),
-                  _MenuItem(
-                    icon: Icons.receipt_outlined,
-                    label: 'Buy Back / Cancellation Policy',
-                    onTap: () => _openUrl(context,
-                        'https://earthlyjewels.co/policies/refund-policy'),
-                  ),
-                  _MenuItem(
-                    icon: Icons.description_outlined,
-                    label: 'Terms & Conditions',
-                    onTap: () => _openUrl(context,
-                        'https://earthlyjewels.co/policies/terms-of-service'),
-                  ),
-
-                  const SizedBox(height: 8),
-                  const Divider(height: 1),
-                  const SizedBox(height: 8),
-
-                  if (auth.isLoggedIn)
-                    _MenuItem(
-                      icon: Icons.logout,
-                      label: 'Sign Out',
-                      onTap: () async {
-                        final customerProvider =
-                            context.read<CustomerProvider>();
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            title: Text('Sign out?',
-                                style: AppTextStyles.headlineSmall),
-                            actions: [
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(false),
-                                child: Text('Cancel',
-                                    style: AppTextStyles.bodyMedium),
-                              ),
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(true),
-                                child: Text('Sign Out',
-                                    style: AppTextStyles.bodyMedium
-                                        .copyWith(color: Colors.red)),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirm == true) {
-                          await customerProvider.logout();
-                          await CookieManager.instance().deleteAllCookies();
-                        }
-                      },
-                    )
-                  else
-                    _MenuItem(
-                      icon: Icons.login,
-                      label: 'Sign In',
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (_) => const KwikPassScreen()),
+                    if (auth.isLoggedIn) ...[
+                      _MenuItem(
+                        icon: Icons.receipt_long_outlined,
+                        label: 'My Orders',
+                        onTap: auth.hasApiToken
+                            ? () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (_) => const OrdersScreen()))
+                            : () =>
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (_) => const AccountWebViewScreen(
+                                          title: 'My Orders',
+                                          url:
+                                              'https://earthlyjewels.co/account/orders',
+                                        ))),
                       ),
+                      _MenuItem(
+                        icon: Icons.favorite_border,
+                        label: 'Wishlist',
+                        onTap: () =>
+                            Navigator.of(context).pushNamed('/wishlist'),
+                      ),
+                      _MenuItem(
+                        icon: Icons.location_on_outlined,
+                        label: 'Saved Addresses',
+                        onTap: auth.hasApiToken
+                            ? () =>
+                                Navigator.of(context).pushNamed('/addresses')
+                            : () =>
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (_) => const AccountWebViewScreen(
+                                          title: 'Saved Addresses',
+                                          url:
+                                              'https://earthlyjewels.co/account/addresses',
+                                        ))),
+                      ),
+                      // _MenuItem(
+                      //   icon: Icons.workspace_premium_outlined,
+                      //   label: 'Earthly Elite Membership',
+                      //   onTap: () {},
+                      // ),
+                      const Divider(height: 1),
+                    ],
+
+                    // _MenuItem(
+                    //   icon: Icons.calendar_today_outlined,
+                    //   label: 'Book Store Visit',
+                    //   onTap: () => _openUrl(
+                    //       context, 'https://earthlyjewels.co/pages/store-locator'),
+                    // ),
+                    // _MenuItem(
+                    //   icon: Icons.headset_mic_outlined,
+                    //   label: 'Virtual Consultation',
+                    //   onTap: () => _openUrl(context,
+                    //       'https://earthlyjewels.co/pages/virtual-consultation'),
+                    // ),
+                    _MenuItem(
+                      icon: Icons.straighten_outlined,
+                      label: 'Ring Size Guide',
+                      onTap: () => _openUrl(context,
+                          'https://earthlyjewels.co/pages/ring-size-chart'),
+                    ),
+                    _MenuItem(
+                      icon: Icons.info_outline,
+                      label: 'About Us',
+                      onTap: () => _openUrl(
+                          context, 'https://earthlyjewels.co/pages/about-us'),
+                    ),
+                    _MenuItem(
+                      icon: Icons.article_outlined,
+                      label: 'Blog',
+                      onTap: () => _openUrl(
+                          context, 'https://earthlyjewels.co/blogs/blog'),
+                    ),
+                    _MenuItem(
+                      icon: Icons.help_outline,
+                      label: 'FAQ',
+                      onTap: () => _openUrl(
+                          context, 'https://earthlyjewels.co/pages/faq'),
+                    ),
+                    _MenuItem(
+                      icon: Icons.phone_outlined,
+                      label: 'Contact Us',
+                      onTap: () => _openUrl(
+                          context, 'https://earthlyjewels.co/pages/contact'),
+                    ),
+                    _MenuItem(
+                      icon: Icons.policy_outlined,
+                      label: 'Privacy Policy',
+                      onTap: () => _openUrl(context,
+                          'https://earthlyjewels.co/policies/privacy-policy'),
+                    ),
+                    _MenuItem(
+                      icon: Icons.receipt_outlined,
+                      label: 'Buy Back / Cancellation Policy',
+                      onTap: () => _openUrl(context,
+                          'https://earthlyjewels.co/policies/refund-policy'),
+                    ),
+                    _MenuItem(
+                      icon: Icons.description_outlined,
+                      label: 'Terms & Conditions',
+                      onTap: () => _openUrl(context,
+                          'https://earthlyjewels.co/policies/terms-of-service'),
                     ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 8),
+                    const Divider(height: 1),
+                    const SizedBox(height: 8),
 
-                  // Store info — dynamic from ShopProvider metafields
-                  Consumer<ShopProvider>(
-                    builder: (_, shop, __) =>
-                        _StoreInfo(shop: shop),
-                  ),
+                    if (auth.isLoggedIn)
+                      _MenuItem(
+                        icon: Icons.logout,
+                        label: 'Sign Out',
+                        onTap: () async {
+                          final customerProvider =
+                              context.read<CustomerProvider>();
+                          final confirm = await _showSignOutSheet(context);
+                          if (confirm == true) {
+                            await customerProvider.logout();
+                            await CookieManager.instance().deleteAllCookies();
+                          }
+                        },
+                      )
+                    else
+                      _MenuItem(
+                        icon: Icons.login,
+                        label: 'Sign In',
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => const KwikPassScreen()),
+                        ),
+                      ),
 
-                  const SizedBox(height: 32),
-                ],
+                    const SizedBox(height: 24),
+
+                    // Store info — dynamic from ShopProvider metafields
+                    Consumer<ShopProvider>(
+                      builder: (_, shop, __) => _StoreInfo(shop: shop),
+                    ),
+
+                    const SizedBox(height: 32),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -268,23 +350,19 @@ class _LoggedInHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(customer.displayName,
-                    style: AppTextStyles.headlineSmall),
+                Text(customer.displayName, style: AppTextStyles.headlineSmall),
                 const SizedBox(height: 2),
                 Text(customer.email, style: AppTextStyles.bodySmall),
-                if (customer.phone != null &&
-                    customer.phone!.isNotEmpty) ...[
+                if (customer.phone != null && customer.phone!.isNotEmpty) ...[
                   const SizedBox(height: 2),
-                  Text(customer.phone!,
-                      style: AppTextStyles.bodySmall),
+                  Text(customer.phone!, style: AppTextStyles.bodySmall),
                 ],
               ],
             ),
           ),
           GestureDetector(
             onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (_) => const EditProfileScreen()),
+              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
             ),
             child: const Padding(
               padding: EdgeInsets.all(4),
@@ -330,17 +408,16 @@ class _GuestHeader extends StatelessWidget {
                 const SizedBox(height: 10),
                 GestureDetector(
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (_) => const KwikPassScreen()),
+                    MaterialPageRoute(builder: (_) => const KwikPassScreen()),
                   ),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     color: AppColors.textPrimary,
                     child: Text(
                       'SIGN IN',
-                      style: AppTextStyles.button.copyWith(
-                          color: Colors.white, fontSize: 11),
+                      style: AppTextStyles.button
+                          .copyWith(color: Colors.white, fontSize: 11),
                     ),
                   ),
                 ),
@@ -379,8 +456,7 @@ class _MenuItem extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: AppColors.textPrimary),
             const SizedBox(width: 16),
-            Expanded(
-                child: Text(label, style: AppTextStyles.bodyMedium)),
+            Expanded(child: Text(label, style: AppTextStyles.bodyMedium)),
             const Icon(Icons.chevron_right,
                 size: 18, color: AppColors.textLight),
           ],

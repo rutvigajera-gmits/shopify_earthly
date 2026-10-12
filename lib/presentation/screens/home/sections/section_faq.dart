@@ -14,7 +14,8 @@ class FaqAccordionSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (data.title.isNotEmpty) Text(data.title, style: AppTextStyles.headlineLarge),
+        if (data.title.isNotEmpty)
+          Text(data.title, style: AppTextStyles.headlineLarge),
         16.height,
         ...data.items.map((item) => _FaqTile(item: item)),
       ],
@@ -44,16 +45,19 @@ class _FaqTileState extends State<_FaqTile> {
             children: [
               Expanded(
                 child: Text(widget.item.question,
-                    style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w500)),
+                    style: AppTextStyles.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w500)),
               ),
-              Icon(_expanded ? Icons.remove : Icons.add, size: 18, color: AppColors.textSecondary),
+              Icon(_expanded ? Icons.remove : Icons.add,
+                  size: 18, color: AppColors.textSecondary),
             ],
           ).paddingSymmetric(vertical: 14),
         ),
         if (_expanded)
           Text(
             widget.item.answer,
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, height: 1.6),
+            style: AppTextStyles.bodySmall
+                .copyWith(color: AppColors.textSecondary, height: 1.6),
           ).paddingOnly(bottom: 14),
         const Divider(height: 1, color: AppColors.neutral200),
       ],

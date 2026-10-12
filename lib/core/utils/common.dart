@@ -24,7 +24,6 @@ Future<List<File>> getMultipleImageSource({bool isCamera = true}) async {
   return pickedImage.map((e) => File(e.path)).toList();
 }
 
-
 Widget mobileNumberInfoWidget(BuildContext context) {
   return RichTextWidget(
     list: [
@@ -112,7 +111,8 @@ void launchUrlCustomTab(String? url) {
         preferredControlTintColor: Colors.white,
         barCollapsingEnabled: true,
         entersReaderIfAvailable: true,
-        dismissButtonStyle: custom_tabs.SafariViewControllerDismissButtonStyle.close,
+        dismissButtonStyle:
+            custom_tabs.SafariViewControllerDismissButtonStyle.close,
       ),
     );
   }
@@ -126,7 +126,8 @@ Future<List<File>> pickFiles({
 }) async {
   final List<File> _filePath = [];
   try {
-    final FilePickerResult? filePickerResult = await FilePicker.platform.pickFiles(
+    final FilePickerResult? filePickerResult =
+        await FilePicker.platform.pickFiles(
       type: type,
       allowMultiple: allowMultiple,
       withData: Platform.isAndroid ? false : true,

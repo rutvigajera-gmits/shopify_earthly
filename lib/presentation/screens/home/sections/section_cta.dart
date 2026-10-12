@@ -22,7 +22,8 @@ class FullWidthCtaSection extends StatelessWidget {
               imageUrl: data.imageUrl,
               fit: BoxFit.cover,
               placeholder: (_, __) => Container(color: AppColors.surfaceDark),
-              errorWidget: (_, __, ___) => Container(color: AppColors.surfaceDark),
+              errorWidget: (_, __, ___) =>
+                  Container(color: AppColors.surfaceDark),
             ),
           ),
           Positioned.fill(
@@ -31,25 +32,32 @@ class FullWidthCtaSection extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.7)
+                  ],
                   stops: const [0.35, 1.0],
                 ),
               ),
             ),
           ),
           Positioned(
-            left: 24, right: 24, bottom: 36,
+            left: 24,
+            right: 24,
+            bottom: 36,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (data.title.isNotEmpty)
                   Text(data.title,
-                      style: AppTextStyles.displayMedium.copyWith(color: Colors.white)),
+                      style: AppTextStyles.displayMedium
+                          .copyWith(color: Colors.white)),
                 if (data.subtitle.isNotEmpty) ...[
                   8.height,
                   Text(data.subtitle,
-                      style: AppTextStyles.bodyMedium.copyWith(color: Colors.white70)),
+                      style: AppTextStyles.bodyMedium
+                          .copyWith(color: Colors.white70)),
                 ],
                 if (data.ctaLabel.isNotEmpty) ...[
                   20.height,
@@ -66,21 +74,23 @@ class FullWidthCtaSection extends StatelessWidget {
       padding: const EdgeInsets.all(28),
       color: AppColors.surfaceWarm,
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (data.title.isNotEmpty) Text(data.title, style: AppTextStyles.headlineLarge),
-            if (data.subtitle.isNotEmpty) ...[
-              8.height,
-              Text(data.subtitle,
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
-            ],
-            if (data.ctaLabel.isNotEmpty) ...[
-              20.height,
-              HomeDarkBtn(label: data.ctaLabel),
-            ],
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (data.title.isNotEmpty)
+            Text(data.title, style: AppTextStyles.headlineLarge),
+          if (data.subtitle.isNotEmpty) ...[
+            8.height,
+            Text(data.subtitle,
+                style: AppTextStyles.bodyMedium
+                    .copyWith(color: AppColors.textSecondary)),
           ],
-        ),
+          if (data.ctaLabel.isNotEmpty) ...[
+            20.height,
+            HomeDarkBtn(label: data.ctaLabel),
+          ],
+        ],
+      ),
     ).paddingSymmetric(horizontal: AppConstants.horizontalPadding);
   }
 }
@@ -99,7 +109,9 @@ class VirtualCallSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            data.title.isNotEmpty ? data.title : 'Book a Virtual Call With Your Advisor',
+            data.title.isNotEmpty
+                ? data.title
+                : 'Book a Virtual Call With Your Advisor',
             style: AppTextStyles.headlineLarge,
             textAlign: TextAlign.center,
           ),
@@ -107,12 +119,16 @@ class VirtualCallSection extends StatelessWidget {
             12.height,
             Text(
               data.subtitle,
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary, height: 1.6),
+              style: AppTextStyles.bodyMedium
+                  .copyWith(color: AppColors.textSecondary, height: 1.6),
               textAlign: TextAlign.center,
             ),
           ],
           24.height,
-          HomeDarkBtn(label: data.ctaLabel.isNotEmpty ? data.ctaLabel : 'Schedule Your Call'),
+          HomeDarkBtn(
+              label: data.ctaLabel.isNotEmpty
+                  ? data.ctaLabel
+                  : 'Schedule Your Call'),
         ],
       ),
     );
@@ -134,7 +150,8 @@ class ImageTextSection extends StatelessWidget {
             child: CachedNetworkImage(
               imageUrl: data.image,
               fit: BoxFit.cover,
-              errorWidget: (_, __, ___) => Container(color: AppColors.cardBackground),
+              errorWidget: (_, __, ___) =>
+                  Container(color: AppColors.cardBackground),
             ),
           ),
         if (data.title.isNotEmpty) ...[
@@ -144,7 +161,8 @@ class ImageTextSection extends StatelessWidget {
         if (data.body.isNotEmpty) ...[
           10.height,
           Text(data.body,
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary, height: 1.6)),
+              style: AppTextStyles.bodyMedium
+                  .copyWith(color: AppColors.textSecondary, height: 1.6)),
         ],
         if (data.ctaLabel.isNotEmpty) ...[
           20.height,

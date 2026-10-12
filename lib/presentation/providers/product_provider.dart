@@ -51,7 +51,8 @@ class ProductProvider extends BaseProvider {
 
   Future<void> loadCollectionProducts(String handle) async {
     if (_loadingCollection) return;
-    if (_loadedCollectionHandle == handle && _collectionProducts.isNotEmpty) return;
+    if (_loadedCollectionHandle == handle && _collectionProducts.isNotEmpty)
+      return;
     _loadingCollection = true;
     notifyListeners();
     try {
@@ -110,7 +111,8 @@ class ProductProvider extends BaseProvider {
       _searchResults = _featuredProducts
           .where((p) =>
               p.title.toLowerCase().contains(query.toLowerCase()) ||
-              (p.description?.toLowerCase().contains(query.toLowerCase()) ?? false))
+              (p.description?.toLowerCase().contains(query.toLowerCase()) ??
+                  false))
           .toList();
     } finally {
       _loadingSearch = false;

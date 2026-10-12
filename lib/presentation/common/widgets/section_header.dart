@@ -39,7 +39,8 @@ class SectionHeader extends StatelessWidget {
         if (subtitle != null) ...[
           const SizedBox(height: 6),
           Text(subtitle!,
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+              style: AppTextStyles.bodyMedium
+                  .copyWith(color: AppColors.textSecondary)),
         ],
       ],
     );

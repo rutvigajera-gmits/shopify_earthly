@@ -22,8 +22,8 @@ class SuggestionChipsBar extends StatelessWidget {
             .map((s) => GestureDetector(
                   onTap: () => onTap(s),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 7),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                     decoration: BoxDecoration(
                       border: Border.all(color: AppColors.border),
                       borderRadius: BorderRadius.circular(20),

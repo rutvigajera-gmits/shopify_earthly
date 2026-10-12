@@ -12,16 +12,16 @@ import '../../common/widgets/fade_slide_in.dart';
 import '../../common/widgets/product_card.dart';
 
 const _kShapes = [
-  ('Round',    'assets/icons/Round.svg'),
-  ('Oval',     'assets/icons/Oval.svg'),
-  ('Pear',     'assets/icons/Pear.svg'),
+  ('Round', 'assets/icons/Round.svg'),
+  ('Oval', 'assets/icons/Oval.svg'),
+  ('Pear', 'assets/icons/Pear.svg'),
   ('Marquise', 'assets/icons/Marquise.svg'),
-  ('Cushion',  'assets/icons/Cushion.svg'),
+  ('Cushion', 'assets/icons/Cushion.svg'),
   ('Princess', 'assets/icons/Princess.svg'),
-  ('Emerald',  'assets/icons/Emerald.svg'),
-  ('Heart',    'assets/icons/Heart.svg'),
-  ('Asscher',  'assets/icons/Asscher.svg'),
-  ('Radiant',  'assets/icons/Radiant.svg'),
+  ('Emerald', 'assets/icons/Emerald.svg'),
+  ('Heart', 'assets/icons/Heart.svg'),
+  ('Asscher', 'assets/icons/Asscher.svg'),
+  ('Radiant', 'assets/icons/Radiant.svg'),
 ];
 
 const _kSortOptions = ['Featured', 'Price: Low to High', 'Price: High to Low'];
@@ -124,8 +124,7 @@ class _DesignerRingsCollectionScreenState
             _AppBar(
               collectionTitle: widget.collectionTitle,
               onBack: () => Navigator.of(context).pop(),
-              onCartTap: () =>
-                  Navigator.of(context).pushNamed(AppRoutes.cart),
+              onCartTap: () => Navigator.of(context).pushNamed(AppRoutes.cart),
             ),
             Expanded(
               child: CustomScrollView(
@@ -214,8 +213,8 @@ class _DesignerRingsCollectionScreenState
               delay: Duration(milliseconds: (i.clamp(0, 8) * 55)),
               child: ProductCard(
                 product: products[i],
-                onTap: () => Navigator.of(context)
-                    .pushNamed(AppRoutes.product, arguments: products[i].handle),
+                onTap: () => Navigator.of(context).pushNamed(AppRoutes.product,
+                    arguments: products[i].handle),
               ),
             ),
             childCount: products.length,
@@ -254,8 +253,8 @@ class _DesignerRingsCollectionScreenState
               GestureDetector(
                 onTap: () => setState(() => _selectedShape = null),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   decoration: BoxDecoration(
                     border: Border.all(color: AppColors.teal),
                     borderRadius: BorderRadius.circular(8),
@@ -292,8 +291,8 @@ class _DesignerRingsCollectionScreenState
             GestureDetector(
               onTap: _load,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 28, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
                 color: AppColors.primary,
                 child: Text('Retry',
                     style: AppTextStyles.button
@@ -385,8 +384,7 @@ class _CollectionBanner extends StatelessWidget {
             CachedNetworkImage(
               imageUrl: imageUrl,
               fit: BoxFit.cover,
-              placeholder: (_, __) =>
-                  Container(color: AppColors.surfaceCream),
+              placeholder: (_, __) => Container(color: AppColors.surfaceCream),
               errorWidget: (_, __, ___) =>
                   Container(color: AppColors.surfaceCream),
             )
@@ -457,9 +455,8 @@ class _ShapesRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppConstants.horizontalPadding, 14,
-                AppConstants.horizontalPadding, 10),
+            padding: const EdgeInsets.fromLTRB(AppConstants.horizontalPadding,
+                14, AppConstants.horizontalPadding, 10),
             child: Text(
               'Explore Diamond Shapes',
               style: AppTextStyles.headlineSmall.copyWith(fontSize: 14),
@@ -518,9 +515,8 @@ class _ShapesRow extends StatelessWidget {
                                 : AppColors.textSecondary,
                             fontSize: 10,
                             letterSpacing: 0.3,
-                            fontWeight: selected
-                                ? FontWeight.w600
-                                : FontWeight.w400,
+                            fontWeight:
+                                selected ? FontWeight.w600 : FontWeight.w400,
                           ),
                           textAlign: TextAlign.center,
                           maxLines: 1,
@@ -564,8 +560,8 @@ class _SortBar extends StatelessWidget {
           if (count != null)
             Text(
               '$count product${count == 1 ? '' : 's'}',
-              style: AppTextStyles.bodySmall
-                  .copyWith(color: AppColors.textMuted),
+              style:
+                  AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
             ),
           const Spacer(),
           const Icon(Icons.sort, size: 16, color: AppColors.textPrimary),

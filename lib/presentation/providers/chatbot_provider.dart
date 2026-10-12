@@ -63,8 +63,7 @@ class ChatbotProvider extends ChangeNotifier {
       if (intent == _ChatIntent.productSearch) {
         final query = _extractSearchQuery(trimmed);
         try {
-          contextProducts =
-              await ShopifyService.instance.searchProducts(query);
+          contextProducts = await ShopifyService.instance.searchProducts(query);
         } catch (_) {
           contextProducts = null;
         }
@@ -74,9 +73,8 @@ class ChatbotProvider extends ChangeNotifier {
         userMessage: trimmed,
         conversationHistory: _history,
         contextProducts: contextProducts,
-        customerOrders: customerProvider.isLoggedIn
-            ? customerProvider.orders
-            : null,
+        customerOrders:
+            customerProvider.isLoggedIn ? customerProvider.orders : null,
         isLoggedIn: customerProvider.isLoggedIn,
       );
 
@@ -84,8 +82,8 @@ class ChatbotProvider extends ChangeNotifier {
       List<Product>? resolvedProducts;
       if (serviceResponse.productHandles.isNotEmpty) {
         resolvedProducts = contextProducts
-                ?.where((p) =>
-                    serviceResponse.productHandles.contains(p.handle))
+                ?.where(
+                    (p) => serviceResponse.productHandles.contains(p.handle))
                 .toList() ??
             [];
         if (resolvedProducts.isEmpty) resolvedProducts = null;
@@ -127,24 +125,24 @@ class ChatbotProvider extends ChangeNotifier {
   _ChatIntent _detectIntent(String message) {
     final lower = message.toLowerCase();
 
-    if (RegExp(
-            r'add to cart|add to bag|add it|buy now|purchase|order this')
+    if (RegExp(r'add to cart|add to bag|add it|buy now|purchase|order this')
         .hasMatch(lower)) {
       return _ChatIntent.cartAction;
     }
 
-    if (RegExp(r'\border\b|track|delivery|shipped|dispatch|where is my|order status|order number')
+    if (RegExp(
+            r'\border\b|track|delivery|shipped|dispatch|where is my|order status|order number')
         .hasMatch(lower)) {
       return _ChatIntent.orderInquiry;
     }
 
-    if (RegExp(r'return|refund|polic|shipping|ship|deliver|care|warranty|certif|igi|about|store|contact|locat|hour')
+    if (RegExp(
+            r'return|refund|polic|shipping|ship|deliver|care|warranty|certif|igi|about|store|contact|locat|hour')
         .hasMatch(lower)) {
       return _ChatIntent.faq;
     }
 
-    if (RegExp(
-            r'ring|necklace|bracelet|earring|pendant|diamond|gold|silver|'
+    if (RegExp(r'ring|necklace|bracelet|earring|pendant|diamond|gold|silver|'
             r'solitaire|halo|show|find|search|collection|suggest|recommend|'
             r'best.?seller|new|under|below|price|budget|gift|buy|shop|browse|'
             r'jewel|product|pear|oval|round|princess|cushion|emerald|marquise|'
@@ -162,8 +160,7 @@ class ChatbotProvider extends ChangeNotifier {
     return message
         .toLowerCase()
         .replaceAll(
-            RegExp(
-                r'show me|show|find me|find|i want|looking for|do you have|'
+            RegExp(r'show me|show|find me|find|i want|looking for|do you have|'
                 r'can you show|what about|search for|search|get me|'
                 r'display|list|recommend|suggest'),
             '')

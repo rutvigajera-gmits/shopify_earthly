@@ -23,7 +23,8 @@ class AllShapesScreen extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 18, color: AppColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios,
+              size: 18, color: AppColors.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text('Shop by Shape', style: AppTextStyles.headlineSmall),
@@ -51,7 +52,8 @@ class AllShapesScreen extends StatelessWidget {
           )
               .animate(delay: Duration(milliseconds: 60 + i * 40))
               .fadeIn(duration: 280.ms)
-              .slideY(begin: 0.25, end: 0, duration: 280.ms, curve: Curves.easeOut);
+              .slideY(
+                  begin: 0.25, end: 0, duration: 280.ms, curve: Curves.easeOut);
         },
       ),
     );
@@ -86,7 +88,8 @@ class _ShapeGridTile extends StatelessWidget {
             padding: const EdgeInsets.all(18),
             child: SvgPicture.asset(
               svgPath,
-              colorFilter: const ColorFilter.mode(AppColors.teal, BlendMode.srcIn),
+              colorFilter:
+                  const ColorFilter.mode(AppColors.teal, BlendMode.srcIn),
             ),
           ),
           5.height,

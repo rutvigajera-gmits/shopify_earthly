@@ -24,7 +24,8 @@ abstract class _AppStore with Store {
   bool isLoading = false;
 
   @observable
-  String selectedLanguageCode = getStringAsync(SELECTED_LANGUAGE_CODE, defaultValue: DEFAULT_LANGUAGE);
+  String selectedLanguageCode =
+      getStringAsync(SELECTED_LANGUAGE_CODE, defaultValue: DEFAULT_LANGUAGE);
 
   @observable
   LanguageDataModel selectedLanguage = languageList().first;

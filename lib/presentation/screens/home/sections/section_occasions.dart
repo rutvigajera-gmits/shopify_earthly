@@ -44,7 +44,8 @@ class _OccasionsSectionState extends State<OccasionsSection> {
         // Pill-shaped filter chips
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.horizontalPadding),
           child: Row(
             children: tabs.asMap().entries.map((e) {
               final isActive = e.key == _selectedTab;
@@ -53,19 +54,23 @@ class _OccasionsSectionState extends State<OccasionsSection> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
                   decoration: BoxDecoration(
                     color: isActive ? AppColors.primary : Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: isActive ? AppColors.primary : AppColors.neutral200,
+                      color:
+                          isActive ? AppColors.primary : AppColors.neutral200,
                       width: 1.2,
                     ),
                   ),
                   child: Text(
                     e.value.title,
                     style: AppTextStyles.labelSmall.copyWith(
-                      color: isActive ? AppColors.textWhite : AppColors.textPrimary,
+                      color: isActive
+                          ? AppColors.textWhite
+                          : AppColors.textPrimary,
                       fontSize: 12,
                       letterSpacing: 0.3,
                     ),
@@ -90,7 +95,9 @@ class _OccasionsSectionState extends State<OccasionsSection> {
             itemCount: selected.products.take(4).length,
             itemBuilder: (_, i) {
               final p = selected.products[i];
-              return ProductCard(product: p.toProduct(), onTap: () => widget.onProductTap(p.handle));
+              return ProductCard(
+                  product: p.toProduct(),
+                  onTap: () => widget.onProductTap(p.handle));
             },
           ).paddingSymmetric(horizontal: AppConstants.horizontalPadding)
         else if (selected.imageUrl.isNotEmpty)
@@ -99,8 +106,10 @@ class _OccasionsSectionState extends State<OccasionsSection> {
             child: CachedNetworkImage(
               imageUrl: selected.imageUrl,
               fit: BoxFit.cover,
-              placeholder: (_, __) => Container(color: AppColors.cardBackground),
-              errorWidget: (_, __, ___) => Container(color: AppColors.cardBackground),
+              placeholder: (_, __) =>
+                  Container(color: AppColors.cardBackground),
+              errorWidget: (_, __, ___) =>
+                  Container(color: AppColors.cardBackground),
             ),
           ).paddingSymmetric(horizontal: AppConstants.horizontalPadding),
 

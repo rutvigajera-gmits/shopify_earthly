@@ -193,9 +193,33 @@ class StorefrontHomeService {
       order: order,
       data: {
         'slides': [
-          {'image': 'assets/images/banner1.jpg', 'title': '', 'subtitle': '', 'cta_label': 'Shop Now', 'cta_url': '/collections/all', 'text_color': '#FFFFFF', 'overlay': 0.35},
-          {'image': 'assets/images/banner2.jpg', 'title': '', 'subtitle': '', 'cta_label': 'Shop Now', 'cta_url': '/collections/all', 'text_color': '#FFFFFF', 'overlay': 0.35},
-          {'image': 'assets/images/banner3.jpg', 'title': '', 'subtitle': '', 'cta_label': 'Shop Now', 'cta_url': '/collections/all', 'text_color': '#FFFFFF', 'overlay': 0.35},
+          {
+            'image': 'assets/images/banner1.jpg',
+            'title': '',
+            'subtitle': '',
+            'cta_label': 'Shop Now',
+            'cta_url': '/collections/all',
+            'text_color': '#FFFFFF',
+            'overlay': 0.35
+          },
+          {
+            'image': 'assets/images/banner2.jpg',
+            'title': '',
+            'subtitle': '',
+            'cta_label': 'Shop Now',
+            'cta_url': '/collections/all',
+            'text_color': '#FFFFFF',
+            'overlay': 0.35
+          },
+          {
+            'image': 'assets/images/banner3.jpg',
+            'title': '',
+            'subtitle': '',
+            'cta_label': 'Shop Now',
+            'cta_url': '/collections/all',
+            'text_color': '#FFFFFF',
+            'overlay': 0.35
+          },
         ],
       },
     );
@@ -272,8 +296,7 @@ class StorefrontHomeService {
         if (productEdges.isNotEmpty) {
           final node =
               (productEdges.first['node'] as Map<String, dynamic>?) ?? {};
-          final imgEdges =
-              ((node['images'] as Map?)?['edges'] as List?) ?? [];
+          final imgEdges = ((node['images'] as Map?)?['edges'] as List?) ?? [];
           if (imgEdges.isNotEmpty) {
             imageUrl =
                 (imgEdges.first['node'] as Map?)?['url'] as String? ?? '';
@@ -303,17 +326,15 @@ class StorefrontHomeService {
     );
   }
 
-
   HomeSection? _buildOccasions(Map<String, dynamic> occCols, int order) {
     final tabs = <Map<String, dynamic>>[];
     for (var i = 0; i < _occasionHandles.length; i++) {
       final col = occCols['o$i'] as Map<String, dynamic>?;
       if (col == null) continue;
       final imageUrl = (col['image'] as Map?)?['url'] as String? ?? '';
-      final products =
-          ((col['products'] as Map?)?['edges'] as List? ?? [])
-              .map((e) => _productNodeToMap(e['node'] as Map<String, dynamic>))
-              .toList();
+      final products = ((col['products'] as Map?)?['edges'] as List? ?? [])
+          .map((e) => _productNodeToMap(e['node'] as Map<String, dynamic>))
+          .toList();
       if (col['title'] == null) continue;
       tabs.add({
         'title': col['title'] as String? ?? '',
@@ -371,10 +392,12 @@ class StorefrontHomeService {
     List<HomeProduct> orioleProducts,
     int order,
   ) {
-    debugPrint('[Oriole] _buildOrioleExclusive called, products: ${orioleProducts.length}');
+    debugPrint(
+        '[Oriole] _buildOrioleExclusive called, products: ${orioleProducts.length}');
     if (orioleProducts.isEmpty) return null;
     final col = cols['c13'] as Map<String, dynamic>?;
-    final sectionTitle = col?['title'] as String? ?? 'Earthly Exclusive Diamonds';
+    final sectionTitle =
+        col?['title'] as String? ?? 'Earthly Exclusive Diamonds';
     final collHandle = col?['handle'] as String? ?? 'oriole';
     return HomeSection(
       id: 'oriole_exclusive',
@@ -469,8 +492,7 @@ class StorefrontHomeService {
               case 'background_image':
               case 'photo':
                 final ref = f['reference'] as Map<String, dynamic>?;
-                imageUrl =
-                    (ref?['image'] as Map?)?['url'] as String? ?? '';
+                imageUrl = (ref?['image'] as Map?)?['url'] as String? ?? '';
               case 'video':
               case 'banner_video':
               case 'background_video':
@@ -722,7 +744,8 @@ class StorefrontHomeService {
     for (var i = 0; i < _orioleHandles.length; i++) {
       final col = data['o$i'] as Map<String, dynamic>?;
       final edges = (col?['products']?['edges'] as List?) ?? [];
-      debugPrint('[Oriole] handle="${_orioleHandles[i]}" edges=${edges.length}');
+      debugPrint(
+          '[Oriole] handle="${_orioleHandles[i]}" edges=${edges.length}');
       if (edges.isNotEmpty) {
         return edges
             .map((e) => HomeProduct.fromJson(
@@ -762,7 +785,8 @@ class StorefrontHomeService {
     for (final line in lines) {
       if (line.contains('@') && line.contains('.')) {
         email = line;
-      } else if (RegExp(r'^\+?\d[\d\s\-()]{6,}$').hasMatch(line.replaceAll(' ', ''))) {
+      } else if (RegExp(r'^\+?\d[\d\s\-()]{6,}$')
+          .hasMatch(line.replaceAll(' ', ''))) {
         if (phone.isEmpty) {
           phone = line;
         } else {
@@ -782,17 +806,16 @@ class StorefrontHomeService {
   }
 
   Map<String, dynamic> _productNodeToMap(Map<String, dynamic> node) {
-    final images =
-        ((node['images'] as Map?)?['edges'] as List? ?? [])
-            .map((e) {
-              final n = e['node'] as Map<String, dynamic>? ?? {};
-              return {
-                'url': n['url'] as String? ?? '',
-                'alt': n['altText'] as String? ?? '',
-              };
-            })
-            .where((img) => (img['url'] as String).isNotEmpty)
-            .toList();
+    final images = ((node['images'] as Map?)?['edges'] as List? ?? [])
+        .map((e) {
+          final n = e['node'] as Map<String, dynamic>? ?? {};
+          return {
+            'url': n['url'] as String? ?? '',
+            'alt': n['altText'] as String? ?? '',
+          };
+        })
+        .where((img) => (img['url'] as String).isNotEmpty)
+        .toList();
 
     final variants = ((node['variants'] as Map?)?['edges'] as List? ?? []);
     final firstVariant = variants.isNotEmpty
@@ -810,9 +833,7 @@ class StorefrontHomeService {
       'vendor': node['vendor'] as String? ?? '',
       'available': node['availableForSale'] as bool? ?? true,
       'price_amount': double.tryParse(priceStr) ?? 0.0,
-      if (compareStr != null &&
-          compareStr.isNotEmpty &&
-          compareStr != '0.00')
+      if (compareStr != null && compareStr.isNotEmpty && compareStr != '0.00')
         'compare_at_price_amount': double.tryParse(compareStr) ?? 0.0,
       'currency': 'INR',
       'images': images,
@@ -830,9 +851,8 @@ class StorefrontHomeService {
       if (p.compareAtPrice != null && p.compareAtPrice!.isNotEmpty)
         'compare_at_price_amount': double.tryParse(p.compareAtPrice!) ?? 0.0,
       'currency': p.currency,
-      'images': p.images
-          .map((img) => {'url': img.url, 'alt': img.alt})
-          .toList(),
+      'images':
+          p.images.map((img) => {'url': img.url, 'alt': img.alt}).toList(),
       if (p.badge != null) 'badge': p.badge!,
     };
   }

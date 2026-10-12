@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/customer_provider.dart';
@@ -19,6 +20,8 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
+  bool _tabFading = false;
+  int _tabFadeKey = 0;
 
   @override
   void initState() {
@@ -30,7 +33,15 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
-  void _navigate(int index) => setState(() => _currentIndex = index);
+  void _navigate(int index) {
+    if (_currentIndex == index) return;
+    setState(() {
+      _currentIndex = index;
+      _tabFading = true;
+      _tabFadeKey++;
+    });
+  }
+
   void _openSearch() => Navigator.of(context).pushNamed(AppRoutes.search);
   void _openCart() => Navigator.of(context).pushNamed(AppRoutes.cart);
 
@@ -42,50 +53,67 @@ class _AppShellState extends State<AppShell> {
         if (!didPop) _navigate(0);
       },
       child: Scaffold(
-      body: Stack(
-        children: [
-          IndexedStack(
-            index: _currentIndex,
-            children: [
-              HomeScreen(
-                onSearchTap: _openSearch,
-                onCartTap: _openCart,
-                onWishlistTap: () =>
-                    Navigator.of(context).pushNamed(AppRoutes.wishlist),
-                onProfileTap: () => _navigate(4),
-                onNavTap: _navigate,
+        body: Stack(
+          children: [
+            IndexedStack(
+              index: _currentIndex,
+              children: [
+                HomeScreen(
+                  onSearchTap: _openSearch,
+                  onCartTap: _openCart,
+                  onWishlistTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.wishlist),
+                  onProfileTap: () => _navigate(4),
+                  onNavTap: _navigate,
+                ),
+                ProductsScreen(
+                  onSearchTap: _openSearch,
+                  onCartTap: _openCart,
+                  onProfileTap: () => _navigate(4),
+                  onBackTap: () => _navigate(0),
+                ),
+                const _SearchTab(),
+                const _CartTab(),
+                AccountScreen(onBackTap: () => _navigate(0)),
+              ],
+            ),
+            // Ring Matchmaker FAB — floats above all tabs
+            const Positioned(
+              right: 16,
+              bottom: 16,
+              child: ChatbotFab(),
+            ),
+
+            // Tab-switch fade overlay: hides the previous tab, then fades out
+            // revealing the new tab. IndexedStack state is fully preserved.
+            if (_tabFading)
+              Positioned.fill(
+                child: TweenAnimationBuilder<double>(
+                  key: ValueKey(_tabFadeKey),
+                  tween: Tween(begin: 1.0, end: 0.0),
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  onEnd: () => setState(() => _tabFading = false),
+                  builder: (_, v, __) => Opacity(
+                    opacity: v,
+                    child: const ColoredBox(color: AppColors.background),
+                  ),
+                ),
               ),
-              ProductsScreen(
-                onSearchTap: _openSearch,
-                onCartTap: _openCart,
-                onProfileTap: () => _navigate(4),
-                onBackTap: () => _navigate(0),
-              ),
-              const _SearchTab(),
-              const _CartTab(),
-              AccountScreen(onBackTap: () => _navigate(0)),
-            ],
-          ),
-          // Ring Matchmaker FAB — floats above all tabs
-          const Positioned(
-            right: 16,
-            bottom: 16,
-            child: ChatbotFab(),
-          ),
-        ],
-      ),
-      bottomNavigationBar: EarthlyBottomNav(
-        currentIndex: _currentIndex,
-        onTap: (i) {
-          if (i == 2) {
-            _openSearch();
-          } else if (i == 3) {
-            _openCart();
-          } else {
-            _navigate(i);
-          }
-        },
-      ),
+          ],
+        ),
+        bottomNavigationBar: EarthlyBottomNav(
+          currentIndex: _currentIndex,
+          onTap: (i) {
+            if (i == 2) {
+              _openSearch();
+            } else if (i == 3) {
+              _openCart();
+            } else {
+              _navigate(i);
+            }
+          },
+        ),
       ),
     );
   }

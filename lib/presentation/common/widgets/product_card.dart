@@ -41,7 +41,8 @@ class _ProductCardState extends State<ProductCard> {
       child: OpenContainer<bool>(
         transitionDuration: const Duration(milliseconds: 680),
         transitionType: ContainerTransitionType.fade,
-        openBuilder: (_, __) => ProductDetailScreen(handle: widget.product.handle),
+        openBuilder: (_, __) =>
+            ProductDetailScreen(handle: widget.product.handle),
         closedShape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
@@ -138,8 +139,7 @@ class _ProductInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subtitle =
-        product.vendor?.isNotEmpty == true ? product.vendor! : '';
+    final subtitle = product.vendor?.isNotEmpty == true ? product.vendor! : '';
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
       child: Padding(
@@ -149,9 +149,10 @@ class _ProductInfo extends StatelessWidget {
           children: [
             Marquee(
               directionMarguee: DirectionMarguee.oneDirection,
-              child: Text(product.title,
-                  style: AppTextStyles.productName,),
-
+              child: Text(
+                product.title,
+                style: AppTextStyles.productName,
+              ),
             ),
             if (subtitle.isNotEmpty) ...[
               const SizedBox(height: 3),

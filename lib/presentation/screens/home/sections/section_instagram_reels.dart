@@ -25,8 +25,7 @@ class InstagramReelsSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(data.title,
-                    style: AppTextStyles.headlineMedium
-                        .copyWith(fontSize: 20)),
+                    style: AppTextStyles.headlineMedium.copyWith(fontSize: 20)),
                 4.height,
                 Text(
                   data.instagramHandle,
@@ -64,8 +63,7 @@ class InstagramReelsSection extends StatelessWidget {
               }
             },
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [
@@ -110,8 +108,8 @@ class InstagramReelsSection extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: const Icon(Icons.play_circle_outline,
-          color: Colors.white, size: 22),
+      child:
+          const Icon(Icons.play_circle_outline, color: Colors.white, size: 22),
     );
   }
 }

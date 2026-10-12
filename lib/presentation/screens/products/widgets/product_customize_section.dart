@@ -22,7 +22,8 @@ class ProductCustomizeSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final opts = [
       ...product.realOptions,
-      if (!product.realOptions.any((o) => o.name.toLowerCase().contains('metal')))
+      if (!product.realOptions
+          .any((o) => o.name.toLowerCase().contains('metal')))
         const ProductOption(
             name: 'Metal Type',
             values: ['Yellow Gold', 'Rose Gold', 'White Gold']),
@@ -193,8 +194,7 @@ class _ChipPicker extends StatelessWidget {
           onTap: () => onChanged(v),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             decoration: BoxDecoration(
               color: active ? AppColors.textPrimary : Colors.white,
               border: Border.all(
@@ -314,7 +314,9 @@ class _MetalTypePicker extends StatelessWidget {
 
   bool _useDarkCheck(String v) {
     final l = v.toLowerCase();
-    return l.contains('yellow') || l.contains('white') || l.contains('platinum');
+    return l.contains('yellow') ||
+        l.contains('white') ||
+        l.contains('platinum');
   }
 
   @override

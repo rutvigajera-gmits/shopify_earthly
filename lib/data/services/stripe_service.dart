@@ -58,7 +58,8 @@ class StripeService {
     }
     final token =
         (jsonDecode(response.body) as Map<String, dynamic>)['id'] as String?;
-    if (token == null || token.isEmpty) throw Exception('Failed to tokenise card.');
+    if (token == null || token.isEmpty)
+      throw Exception('Failed to tokenise card.');
     return token;
   }
 

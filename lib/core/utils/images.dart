@@ -1,6 +1,5 @@
 const appLogo = 'assets/ic_app_logo.png';
 
-
 //region NewDashboard
 const grid = "assets/newDashboard/grid.png";
 const people = "assets/newDashboard/people.png";
@@ -12,22 +11,21 @@ const imgAppLogo = 'assets/images/logo.png';
 
 //endregion
 
-
 // ── Videos ───────────────────────────────────────────────────────────────
-const String splashVideo  = 'assets/videos/splash.mp4';
+const String splashVideo = 'assets/videos/splash.mp4';
 const String splashVideo1 = 'assets/videos/splash1.mp4';
 
-  // ── Shape icons (SVG) ─────────────────────────────────────────────────────
-const String iconRound    = 'assets/icons/Round.svg';
-const String iconOval     = 'assets/icons/Oval.svg';
-const String iconPear     = 'assets/icons/Pear.svg';
+// ── Shape icons (SVG) ─────────────────────────────────────────────────────
+const String iconRound = 'assets/icons/Round.svg';
+const String iconOval = 'assets/icons/Oval.svg';
+const String iconPear = 'assets/icons/Pear.svg';
 const String iconMarquise = 'assets/icons/Marquise.svg';
-const String iconCushion  = 'assets/icons/Cushion.svg';
+const String iconCushion = 'assets/icons/Cushion.svg';
 const String iconPrincess = 'assets/icons/Princess.svg';
-const String iconEmerald  = 'assets/icons/Emerald.svg';
-const String iconHeart    = 'assets/icons/Heart.svg';
-const String iconAsscher  = 'assets/icons/Asscher.svg';
-const String iconRadiant  = 'assets/icons/Radiant.svg';
+const String iconEmerald = 'assets/icons/Emerald.svg';
+const String iconHeart = 'assets/icons/Heart.svg';
+const String iconAsscher = 'assets/icons/Asscher.svg';
+const String iconRadiant = 'assets/icons/Radiant.svg';
 
 //region Images
 const about_us_page = 'assets/images/about_us_page.png';
@@ -106,8 +104,10 @@ const phonepe_logo = 'assets/icons/phonepe_logo.png';
 const airtel_logo = 'assets/icons/airtel_logo.png';
 const ic_cancel_booking = 'assets/icons/ic_cancel_booking.png';
 const paystack_logo = 'assets/icons/paystack_logo.png';
-const ic_diagonal_left_down_arrow = 'assets/icons/ic_diagonal_left_down_arrow.png';
-const ic_diagonal_right_up_arrow = 'assets/icons/ic_diagonal_right_up_arrow.png';
+const ic_diagonal_left_down_arrow =
+    'assets/icons/ic_diagonal_left_down_arrow.png';
+const ic_diagonal_right_up_arrow =
+    'assets/icons/ic_diagonal_right_up_arrow.png';
 const ic_pending = 'assets/icons/ic_pending.png';
 const ic_coupon_prefix = 'assets/icons/ic_discount_prefix.png';
 const ic_share = 'assets/icons/ic_share.png';

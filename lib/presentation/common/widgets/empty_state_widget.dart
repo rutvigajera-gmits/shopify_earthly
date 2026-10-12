@@ -26,7 +26,8 @@ class EmptyStateWidget extends StatelessWidget {
           children: [
             Icon(icon, size: 48, color: AppColors.neutral300),
             const SizedBox(height: 16),
-            Text(message, style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
+            Text(message,
+                style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 16),
               TextButton(onPressed: onAction, child: Text(actionLabel!)),

@@ -71,9 +71,8 @@ class _ChatbotSheetState extends State<_ChatbotSheet> {
 
   Future<void> _addToCart(Product product) async {
     final cartProvider = context.read<CartProvider>();
-    final firstVariant = product.variants
-        .where((v) => v.availableForSale)
-        .firstOrNull;
+    final firstVariant =
+        product.variants.where((v) => v.availableForSale).firstOrNull;
     if (firstVariant == null) return;
 
     await cartProvider.addItem(firstVariant.id, 1);
@@ -121,7 +120,6 @@ class _ChatbotSheetState extends State<_ChatbotSheet> {
           child: Column(
             children: [
               _DragHandle(),
-
               _ChatHeader(
                 onClose: () => Navigator.of(context).pop(),
                 onCartTap: () {
@@ -130,9 +128,7 @@ class _ChatbotSheetState extends State<_ChatbotSheet> {
                     ..pushNamed(AppRoutes.cart);
                 },
               ),
-
               const Divider(height: 1, color: AppColors.divider),
-
               Expanded(
                 child: Consumer<ChatbotProvider>(
                   builder: (_, chatbot, __) {
@@ -141,8 +137,7 @@ class _ChatbotSheetState extends State<_ChatbotSheet> {
                     return ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      itemCount:
-                          messages.length + (chatbot.isTyping ? 1 : 0),
+                      itemCount: messages.length + (chatbot.isTyping ? 1 : 0),
                       itemBuilder: (_, i) {
                         if (chatbot.isTyping && i == messages.length) {
                           return const TypingIndicator();
@@ -153,7 +148,6 @@ class _ChatbotSheetState extends State<_ChatbotSheet> {
                   },
                 ),
               ),
-
               Consumer<ChatbotProvider>(
                 builder: (_, chatbot, __) => ChatbotInputBar(
                   onSend: _send,
@@ -177,7 +171,6 @@ class _ChatbotSheetState extends State<_ChatbotSheet> {
           UserBubble(text: message.text)
         else
           BotBubble(text: message.text, isError: message.isError),
-
         if (message.role == ChatRole.bot &&
             message.products != null &&
             message.products!.isNotEmpty)
@@ -185,7 +178,6 @@ class _ChatbotSheetState extends State<_ChatbotSheet> {
             products: message.products!,
             onAddToCart: _addToCart,
           ),
-
         if (message.role == ChatRole.bot &&
             message.suggestions != null &&
             message.suggestions!.isNotEmpty)
@@ -193,7 +185,6 @@ class _ChatbotSheetState extends State<_ChatbotSheet> {
             suggestions: message.suggestions!,
             onTap: _send,
           ),
-
         const SizedBox(height: 4),
       ],
     );

@@ -68,7 +68,8 @@ class HomeLogo {
   final int width;
   final int height;
 
-  const HomeLogo({required this.url, required this.width, required this.height});
+  const HomeLogo(
+      {required this.url, required this.width, required this.height});
 
   bool get hasUrl => url.isNotEmpty;
 
@@ -151,8 +152,7 @@ class HomeTypography {
   });
 
   factory HomeTypography.fromJson(Map<String, dynamic> json) => HomeTypography(
-        fontHeading:
-            json['font_heading'] as String? ?? 'Cormorant Garamond',
+        fontHeading: json['font_heading'] as String? ?? 'Cormorant Garamond',
         fontBody: json['font_body'] as String? ?? 'Jost',
         fontHeadingWeight: json['font_heading_weight'] as String? ?? '500',
         fontBodyWeight: json['font_body_weight'] as String? ?? '400',
@@ -186,8 +186,7 @@ class HomeLayout {
         borderRadius: (json['border_radius'] as num?)?.toDouble() ?? 0,
         buttonBorderRadius:
             (json['button_border_radius'] as num?)?.toDouble() ?? 0,
-        cardBorderRadius:
-            (json['card_border_radius'] as num?)?.toDouble() ?? 0,
+        cardBorderRadius: (json['card_border_radius'] as num?)?.toDouble() ?? 0,
         horizontalPadding:
             (json['horizontal_padding'] as num?)?.toDouble() ?? 16,
         sectionSpacing: (json['section_spacing'] as num?)?.toDouble() ?? 40,
@@ -351,12 +350,14 @@ class HomeSection {
   ImageTextData get imageTextData => ImageTextData.fromJson(data);
   CollectionRowData get collectionRowData => CollectionRowData.fromJson(data);
   BrandValuesData get brandValuesData => BrandValuesData.fromJson(data);
-  ReviewsCarouselData get reviewsCarouselData => ReviewsCarouselData.fromJson(data);
+  ReviewsCarouselData get reviewsCarouselData =>
+      ReviewsCarouselData.fromJson(data);
   FaqData get faqData => FaqData.fromJson(data);
   OccasionsData get occasionsData => OccasionsData.fromJson(data);
   FullWidthCtaData get fullWidthCtaData => FullWidthCtaData.fromJson(data);
   ProductGridData get orioleExclusiveData => ProductGridData.fromJson(data);
-  InstagramReelsData get instagramReelsData => InstagramReelsData.fromJson(data);
+  InstagramReelsData get instagramReelsData =>
+      InstagramReelsData.fromJson(data);
 }
 
 // ─── Section data: hero_banner ────────────────────────────────────────────────
@@ -440,9 +441,7 @@ class ProductGridData {
       ctaLabel: json['cta_label'] as String? ?? 'View all',
       ctaUrl: json['cta_url'] as String? ?? '/collections/all',
       columns: json['columns'] as int? ?? 2,
-      products: list
-          .map((e) => HomeProduct.fromJson(_asMap(e)))
-          .toList(),
+      products: list.map((e) => HomeProduct.fromJson(_asMap(e))).toList(),
     );
   }
 }
@@ -523,10 +522,8 @@ class HomeProduct {
 
   String get formattedPrice {
     final amount = double.tryParse(price) ?? 0;
-    final formatted = amount
-        .toStringAsFixed(0)
-        .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-            (m) => '${m[1]},');
+    final formatted = amount.toStringAsFixed(0).replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
     return '₹$formatted';
   }
 
@@ -659,8 +656,8 @@ class CollectionRowData {
             return CollectionTile(
               handle: m['handle'] as String? ?? '',
               title: m['title'] as String? ?? '',
-              imageUrl: FormatUtils.shopifyImageJpeg(
-                  m['image_url'] as String? ?? ''),
+              imageUrl:
+                  FormatUtils.shopifyImageJpeg(m['image_url'] as String? ?? ''),
               description: m['description'] as String? ?? '',
             );
           })
@@ -843,8 +840,8 @@ class OccasionsData {
             final productList = m['products'] as List? ?? [];
             return OccasionTab(
               title: m['title'] as String? ?? '',
-              imageUrl: FormatUtils.shopifyImageJpeg(
-                  m['image_url'] as String? ?? ''),
+              imageUrl:
+                  FormatUtils.shopifyImageJpeg(m['image_url'] as String? ?? ''),
               handle: m['handle'] as String? ?? '',
               products: productList
                   .map((p) => HomeProduct.fromJson(_asMap(p)))
@@ -888,7 +885,8 @@ class InstagramReelsData {
     final list = json['reels'] as List? ?? [];
     return InstagramReelsData(
       title: json['title'] as String? ?? 'Instagram Reels & Feeds',
-      instagramHandle: json['instagram_handle'] as String? ?? '@earthlyjewels.co',
+      instagramHandle:
+          json['instagram_handle'] as String? ?? '@earthlyjewels.co',
       reels: list
           .map((e) {
             final m = _asMap(e);
@@ -926,8 +924,8 @@ class FullWidthCtaData {
 
   factory FullWidthCtaData.fromJson(Map<String, dynamic> json) =>
       FullWidthCtaData(
-        imageUrl: FormatUtils.shopifyImageJpeg(
-            json['image_url'] as String? ?? ''),
+        imageUrl:
+            FormatUtils.shopifyImageJpeg(json['image_url'] as String? ?? ''),
         title: json['title'] as String? ?? '',
         subtitle: json['subtitle'] as String? ?? '',
         ctaLabel: json['cta_label'] as String? ?? 'Shop Now',

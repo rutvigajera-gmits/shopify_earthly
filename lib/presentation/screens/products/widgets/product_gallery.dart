@@ -82,8 +82,7 @@ class ProductGallerySection extends StatelessWidget {
         imageUrl: item.url,
         fit: BoxFit.cover,
         placeholder: (_, __) => Container(color: AppColors.surfaceCream),
-        errorWidget: (_, __, ___) =>
-            Container(color: AppColors.cardBackground),
+        errorWidget: (_, __, ___) => Container(color: AppColors.cardBackground),
       )
           .animate(key: ValueKey('gallery-img-$i'))
           .fadeIn(duration: 280.ms, curve: Curves.easeOut)
@@ -431,13 +430,11 @@ class _ProductVideoItemState extends State<_ProductVideoItem> {
           ? CachedNetworkImage(
               imageUrl: widget.thumbnailUrl!,
               fit: BoxFit.cover,
-              placeholder: (_, __) =>
-                  Container(color: AppColors.surfaceCream),
+              placeholder: (_, __) => Container(color: AppColors.surfaceCream),
               errorWidget: (_, __, ___) =>
                   Container(color: AppColors.cardBackground),
             )
           : Container(color: Colors.black87),
-
       if (_ready && _ctrl != null)
         LayoutBuilder(builder: (_, c) {
           final vs = _ctrl!.value.size;
@@ -456,10 +453,8 @@ class _ProductVideoItemState extends State<_ProductVideoItem> {
             ),
           );
         }),
-
       if (_initializing && !_ready)
         const Center(child: LoaderWidget(size: 36, color: Colors.white)),
-
       if (_ready)
         Positioned(
           right: 12,

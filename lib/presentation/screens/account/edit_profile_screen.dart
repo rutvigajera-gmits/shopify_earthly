@@ -29,12 +29,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _firstName;
   late final TextEditingController _lastName;
-  late final TextEditingController _phone;
 
   bool _saving = false;
 
   late Country selectedCountry;
-  Country? selectedCountryCode;
   final ValueNotifier<bool> _valueNotifier = ValueNotifier<bool>(false);
   ValueNotifier<bool> get valueNotifier => _valueNotifier;
   late final TextEditingController mobileCont;
@@ -43,25 +41,50 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   CustomerProvider get _customerProvider => context.read<CustomerProvider>();
 
+  /// Splits an E.164 phone (e.g. "+918765432109") into the matching
+  /// [Country] and the local number ("8765432109"). If no dial code prefix
+  /// matches the stored value, the whole string is returned as the local number.
+  ({Country country, String localNumber}) _parsePhone(String phone) {
+    if (phone.startsWith('+')) {
+      final allCountries = CountryService().getAll()
+        ..sort((a, b) => b.phoneCode.length.compareTo(a.phoneCode.length));
+      for (final c in allCountries) {
+        final prefix = '+${c.phoneCode}';
+        if (phone.startsWith(prefix)) {
+          return (country: c, localNumber: phone.substring(prefix.length));
+        }
+      }
+    }
+    final fallback = CountryParser.tryParseCountryCode('IN') ??
+        CountryService().getAll().first;
+    return (country: fallback, localNumber: phone);
+  }
+
   @override
   void initState() {
     super.initState();
     final c = _customerProvider.customer!;
     _firstName = TextEditingController(text: c.firstName);
-    _lastName  = TextEditingController(text: c.lastName);
-    _phone     = TextEditingController(text: c.phone ?? '');
-    mobileCont = TextEditingController(text: c.phone ?? '');
+    _lastName = TextEditingController(text: c.lastName);
+
+    final parsed = c.phone != null && c.phone!.isNotEmpty
+        ? _parsePhone(c.phone!)
+        : (
+            country: CountryParser.tryParseCountryCode('IN') ??
+                CountryService().getAll().first,
+            localNumber: '',
+          );
+
+    selectedCountry = parsed.country;
+    mobileCont = TextEditingController(text: parsed.localNumber);
     mobileFocus = FocusNode();
     passwordFocus = FocusNode();
-    selectedCountry = CountryParser.tryParseCountryCode('IN') ??
-        CountryService().getAll().first;
   }
 
   @override
   void dispose() {
     _firstName.dispose();
     _lastName.dispose();
-    _phone.dispose();
     mobileCont.dispose();
     mobileFocus.dispose();
     passwordFocus.dispose();
@@ -111,7 +134,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 label: 'Choose from Gallery',
                 onTap: () => Navigator.pop(sheetCtx, _PhotoAction.gallery),
               ),
-              if (context.read<CustomerProvider>().profileImagePath != null) ...[
+              if (context.read<CustomerProvider>().profileImagePath !=
+                  null) ...[
                 const Divider(height: 1, color: AppColors.neutral200),
                 _SourceTile(
                   icon: Icons.delete_outline,
@@ -153,7 +177,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Could not access photos. Please check permissions.')),
+              content:
+                  Text('Could not access photos. Please check permissions.')),
         );
       }
     }
@@ -169,8 +194,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final provider = context.read<CustomerProvider>();
     await provider.updateProfile(
       firstName: _firstName.text.trim(),
-      lastName:  _lastName.text.trim(),
-      phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
+      lastName: _lastName.text.trim(),
+      phone: mobileCont.text.trim().isEmpty
+          ? null
+          : '+${selectedCountry.phoneCode}${mobileCont.text.trim()}',
     );
     if (!mounted) return;
     setState(() => _saving = false);
@@ -231,7 +258,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         labelText: 'First Name',
                         prefixIcon: Icon(Icons.person_outline_rounded),
                       ),
-                    ).paddingSymmetric(horizontal: AppConstants.horizontalPadding),
+                    ).paddingSymmetric(
+                        horizontal: AppConstants.horizontalPadding),
                     14.height,
                     AppTextField(
                       controller: _lastName,
@@ -239,9 +267,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         context,
                         labelText: 'Last Name',
                         prefixIcon: Icon(Icons.person_outline_rounded),
-                      ), 
+                      ),
                       textFieldType: TextFieldType.NAME,
-                    ).paddingSymmetric(horizontal: AppConstants.horizontalPadding),
+                    ).paddingSymmetric(
+                        horizontal: AppConstants.horizontalPadding),
                     24.height,
                     _sectionLabel('CONTACT'),
                     12.height,
@@ -276,12 +305,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         10.width,
                         // Mobile number text field...
                         AppTextField(
-                          textFieldType: isAndroid ? TextFieldType.PHONE : TextFieldType.NAME,
+                          textFieldType: isAndroid
+                              ? TextFieldType.PHONE
+                              : TextFieldType.NAME,
                           controller: mobileCont,
                           focus: mobileFocus,
                           errorThisFieldRequired: 'This field is required',
                           nextFocus: passwordFocus,
-                          decoration: inputDecoration(context, labelText: "Contact Number").copyWith(
+                          decoration: inputDecoration(context,
+                                  labelText: "Contact Number")
+                              .copyWith(
                             hintText: 'Example: ${selectedCountry.example}',
                             hintStyle: secondaryTextStyle(),
                           ),
@@ -289,7 +322,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           suffix: ic_calling.iconImage(size: 10).paddingAll(14),
                         ).expand(),
                       ],
-                    ),
+                    ).paddingSymmetric(
+                        horizontal: AppConstants.horizontalPadding),
                     14.height,
                     AppTextField(
                       controller: TextEditingController(text: customer.email),
@@ -300,8 +334,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         prefixIcon: Icon(Icons.mail_outline_rounded),
                       ),
                       textFieldType: TextFieldType.EMAIL,
-                    ).paddingSymmetric(horizontal: AppConstants.horizontalPadding),
-
+                    ).paddingSymmetric(
+                        horizontal: AppConstants.horizontalPadding),
                     32.height,
                   ],
                 ),
@@ -344,7 +378,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
       showPhoneCode: true,
       onSelect: (Country country) {
-        selectedCountryCode = country;
+        selectedCountry = country;
         valueNotifier.value = !valueNotifier.value;
         setState(() {});
       },
@@ -482,8 +516,10 @@ class _WaveClipper extends CustomClipper<Path> {
     final path = Path()
       ..lineTo(0, size.height - 36)
       ..quadraticBezierTo(
-        size.width * 0.5, size.height + 8,
-        size.width, size.height - 36,
+        size.width * 0.5,
+        size.height + 8,
+        size.width,
+        size.height - 36,
       )
       ..lineTo(size.width, 0)
       ..close();
@@ -519,13 +555,12 @@ class _SourceTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
           children: [
-            Icon(icon, size: 22,
-                color: iconColor ?? AppColors.textSecondary),
+            Icon(icon, size: 22, color: iconColor ?? AppColors.textSecondary),
             const SizedBox(width: 16),
             Text(
               label,
-              style: AppTextStyles.bodyMedium.copyWith(
-                  color: labelColor ?? AppColors.textPrimary),
+              style: AppTextStyles.bodyMedium
+                  .copyWith(color: labelColor ?? AppColors.textPrimary),
             ),
           ],
         ),
@@ -546,8 +581,7 @@ class _SaveButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(
-          AppConstants.horizontalPadding, 12,
+      padding: const EdgeInsets.fromLTRB(AppConstants.horizontalPadding, 12,
           AppConstants.horizontalPadding, 16),
       child: SizedBox(
         width: double.infinity,
@@ -559,8 +593,8 @@ class _SaveButton extends StatelessWidget {
             disabledBackgroundColor: AppColors.neutral300,
             elevation: 0,
             padding: const EdgeInsets.symmetric(vertical: 18),
-            shape: const RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.all( Radius.circular(10))),
-
+            shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadiusGeometry.all(Radius.circular(10))),
           ),
           child: saving
               ? const LoaderWidget(size: 22, color: Colors.white)
@@ -573,5 +607,3 @@ class _SaveButton extends StatelessWidget {
     );
   }
 }
-
-

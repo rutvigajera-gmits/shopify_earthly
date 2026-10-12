@@ -17,7 +17,6 @@ import 'sections/section_occasions.dart';
 import 'sections/section_shop_by_shape.dart';
 import 'sections/section_designer_rings.dart';
 import 'sections/section_oriole_exclusive.dart';
-import 'sections/section_instagram_reels.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onSearchTap;
@@ -80,10 +79,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     return SliverToBoxAdapter(child: _LoadingView());
                   }
                   if (home.hasError && home.sections.isEmpty) {
-                    return SliverToBoxAdapter(child: _ErrorView(error: home.errorMessage!));
+                    return SliverToBoxAdapter(
+                        child: _ErrorView(error: home.errorMessage!));
                   }
 
-                  debugPrint('[Home] sections: ${home.sections.map((s) => s.type).toList()}');
+                  debugPrint(
+                      '[Home] sections: ${home.sections.map((s) => s.type).toList()}');
 
                   const sectionOrder = {
                     'hero_banner': 0,
@@ -96,8 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     'instagram_reels': 7,
                   };
 
-                  final sortedSections = [...home.sections]
-                    ..sort((a, b) {
+                  final sortedSections = [...home.sections]..sort((a, b) {
                       final ai = sectionOrder[a.type] ?? 99;
                       final bi = sectionOrder[b.type] ?? 99;
                       return ai.compareTo(bi);
@@ -255,7 +255,8 @@ class _LoadingView extends StatelessWidget {
           Container(height: 420, color: Colors.white),
           32.height,
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.horizontalPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -295,13 +296,15 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         children: [
           48.height,
-          const Icon(Icons.wifi_off_outlined, size: 48, color: AppColors.textMuted),
+          const Icon(Icons.wifi_off_outlined,
+              size: 48, color: AppColors.textMuted),
           16.height,
           Text('Could not load content', style: AppTextStyles.headlineSmall),
           8.height,
           Text(
             error,
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.bodySmall
+                .copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
           24.height,
@@ -311,7 +314,8 @@ class _ErrorView extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
               color: AppColors.primary,
               child: Text('Retry',
-                  style: AppTextStyles.button.copyWith(color: AppColors.textWhite)),
+                  style: AppTextStyles.button
+                      .copyWith(color: AppColors.textWhite)),
             ),
           ),
         ],

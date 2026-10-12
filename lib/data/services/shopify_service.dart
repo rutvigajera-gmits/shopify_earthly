@@ -184,7 +184,8 @@ class ShopifyService {
       return cols
           .where((c) => c.image != null)
           .take(4)
-          .map((c) => ShopBanner.fromCollection(imageUrl: c.image!.url, title: ''))
+          .map((c) =>
+              ShopBanner.fromCollection(imageUrl: c.image!.url, title: ''))
           .toList();
     } catch (_) {
       return [];
@@ -352,7 +353,8 @@ class ShopifyService {
 
   Future<List<Review>> fetchStoreReviews({int perPage = 10}) async {
     if (!_judgeMeConfigured) {
-      debugPrint('[JudgeMe] Token not configured — set judgeMePublicToken in app_constants.dart');
+      debugPrint(
+          '[JudgeMe] Token not configured — set judgeMePublicToken in app_constants.dart');
       return [];
     }
     try {
@@ -366,11 +368,13 @@ class ShopifyService {
       );
       debugPrint('[JudgeMe] fetchStoreReviews → ${uri.host}${uri.path}');
       final resp = await http.get(uri, headers: {'Accept': 'application/json'});
-      debugPrint('[JudgeMe] fetchStoreReviews status=${resp.statusCode} body=${resp.body.substring(0, resp.body.length.clamp(0, 300))}');
+      debugPrint(
+          '[JudgeMe] fetchStoreReviews status=${resp.statusCode} body=${resp.body.substring(0, resp.body.length.clamp(0, 300))}');
       if (resp.statusCode == 200) {
         final body = jsonDecode(resp.body) as Map<String, dynamic>;
         final summary = ReviewSummary.fromSprJson(body);
-        debugPrint('[JudgeMe] fetchStoreReviews → ${summary.reviews.length} reviews');
+        debugPrint(
+            '[JudgeMe] fetchStoreReviews → ${summary.reviews.length} reviews');
         return summary.reviews;
       }
     } catch (e) {
@@ -383,7 +387,8 @@ class ShopifyService {
     if (!_judgeMeConfigured) return ReviewSummary.empty();
     try {
       final productId = await _fetchShopifyProductId(handle);
-      debugPrint('[JudgeMe] fetchProductReviews handle=$handle productId=$productId');
+      debugPrint(
+          '[JudgeMe] fetchProductReviews handle=$handle productId=$productId');
       if (productId == null) return ReviewSummary.empty();
 
       final uri = Uri.parse(
@@ -396,12 +401,14 @@ class ShopifyService {
         '&sort_dir=desc',
       );
       final resp = await http.get(uri, headers: {'Accept': 'application/json'});
-      debugPrint('[JudgeMe] fetchProductReviews status=${resp.statusCode} body=${resp.body.substring(0, resp.body.length.clamp(0, 300))}');
+      debugPrint(
+          '[JudgeMe] fetchProductReviews status=${resp.statusCode} body=${resp.body.substring(0, resp.body.length.clamp(0, 300))}');
       if (resp.statusCode == 200) {
         final result = ReviewSummary.fromSprJson(
           jsonDecode(resp.body) as Map<String, dynamic>,
         );
-        debugPrint('[JudgeMe] fetchProductReviews → ${result.reviews.length} reviews');
+        debugPrint(
+            '[JudgeMe] fetchProductReviews → ${result.reviews.length} reviews');
         return result;
       }
     } catch (e) {
@@ -548,8 +555,7 @@ class ShopifyService {
 
     // 1. Product page HTML — try multiple patterns
     try {
-      final uri =
-          Uri.parse('https://${ApiConfig.shopDomain}/products/$handle');
+      final uri = Uri.parse('https://${ApiConfig.shopDomain}/products/$handle');
       final response = await http.get(uri, headers: baseHeaders);
       if (response.statusCode == 200) {
         final body = response.body;
@@ -557,13 +563,11 @@ class ShopifyService {
           RegExp('selectionId=($uuidPattern)', caseSensitive: false),
           RegExp('"selectionId"\\s*:\\s*"($uuidPattern)"',
               caseSensitive: false),
-          RegExp(
-              "selectionId\\s*[=:]\\s*[\"']($uuidPattern)[\"']",
+          RegExp("selectionId\\s*[=:]\\s*[\"']($uuidPattern)[\"']",
               caseSensitive: false),
           RegExp('data-selection-id=["\']($uuidPattern)["\']',
               caseSensitive: false),
-          RegExp('vtryon(?:[^"\']{0,300})($uuidPattern)',
-              caseSensitive: false),
+          RegExp('vtryon(?:[^"\']{0,300})($uuidPattern)', caseSensitive: false),
         ]) {
           final m = re.firstMatch(body);
           if (m != null) {
@@ -579,10 +583,10 @@ class ShopifyService {
 
     // 2. product.js JSON — only if VTryOn data appears in response
     try {
-      final uri = Uri.parse(
-          'https://${ApiConfig.shopDomain}/products/$handle.js');
-      final response = await http.get(uri,
-          headers: {...baseHeaders, 'Accept': 'application/json'});
+      final uri =
+          Uri.parse('https://${ApiConfig.shopDomain}/products/$handle.js');
+      final response = await http
+          .get(uri, headers: {...baseHeaders, 'Accept': 'application/json'});
       if (response.statusCode == 200) {
         final body = response.body;
         if (body.toLowerCase().contains('vtryon') ||
@@ -740,8 +744,7 @@ class ShopifyService {
     return Cart.fromStorefrontJson(data['cartCreate'] as Map<String, dynamic>);
   }
 
-  Future<Cart> addToCart(
-      String cartId, String variantId, int quantity) async {
+  Future<Cart> addToCart(String cartId, String variantId, int quantity) async {
     final data = await _query('''
       mutation {
         cartLinesAdd(cartId: "$cartId", lines: [
@@ -845,8 +848,8 @@ class ShopifyService {
     final result = data['cartCreate'] as Map<String, dynamic>? ?? {};
     final errors = result['userErrors'] as List?;
     if (errors != null && errors.isNotEmpty) {
-      throw Exception(
-          (errors.first as Map)['message'] as String? ?? 'Checkout creation failed');
+      throw Exception((errors.first as Map)['message'] as String? ??
+          'Checkout creation failed');
     }
     return ShopifyCheckout.fromCartJson(result);
   }
@@ -862,7 +865,8 @@ class ShopifyService {
   }) async {
     final payment = <String, dynamic>{
       'paymentAmount': {'amount': amount, 'currencyCode': currencyCode},
-      'idempotencyKey': '${checkoutId}_${DateTime.now().millisecondsSinceEpoch}',
+      'idempotencyKey':
+          '${checkoutId}_${DateTime.now().millisecondsSinceEpoch}',
       'billingAddress': billingAddress,
       'paymentData': stripeToken,
       'type': 'STRIPE_VAULT_TOKEN',
@@ -884,8 +888,9 @@ class ShopifyService {
       }
     ''', {'checkoutId': checkoutId, 'payment': payment});
 
-    final result =
-        data['checkoutCompleteWithTokenizedPaymentV3'] as Map<String, dynamic>? ?? {};
+    final result = data['checkoutCompleteWithTokenizedPaymentV3']
+            as Map<String, dynamic>? ??
+        {};
     final errors = result['checkoutUserErrors'] as List?;
     if (errors != null && errors.isNotEmpty) {
       throw Exception(
@@ -967,14 +972,17 @@ class ShopifyService {
 
   Future<Map<String, dynamic>> _queryWithVars(
       String gql, Map<String, dynamic> variables) async {
-    final response = await http.post(
-      Uri.parse(ApiConfig.storefrontApiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': ApiConfig.storefrontAccessToken,
-      },
-      body: jsonEncode({'query': gql, 'variables': variables}),
-    );
+    final response = await http
+        .post(
+          Uri.parse(ApiConfig.storefrontApiUrl),
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Shopify-Storefront-Access-Token':
+                ApiConfig.storefrontAccessToken,
+          },
+          body: jsonEncode({'query': gql, 'variables': variables}),
+        )
+        .timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
       throw Exception('Shopify API ${response.statusCode}');
     }
@@ -1006,8 +1014,7 @@ class ShopifyService {
       throw Exception(
           (errors.first as Map)['message'] as String? ?? 'Login failed');
     }
-    final token =
-        result['customerAccessToken']?['accessToken'] as String?;
+    final token = result['customerAccessToken']?['accessToken'] as String?;
     if (token == null || token.isEmpty) throw Exception('Login failed');
     return token;
   }
@@ -1108,11 +1115,9 @@ class ShopifyService {
         }
       }
     ''', {'token': accessToken});
-    final edges =
-        (data['customer']?['orders']?['edges'] as List?) ?? [];
+    final edges = (data['customer']?['orders']?['edges'] as List?) ?? [];
     return edges
-        .map((e) =>
-            CustomerOrder.fromStorefrontJson(e as Map<String, dynamic>))
+        .map((e) => CustomerOrder.fromStorefrontJson(e as Map<String, dynamic>))
         .toList();
   }
 
@@ -1147,7 +1152,8 @@ class ShopifyService {
     return json != null ? Customer.fromStorefrontJson(json) : null;
   }
 
-  Future<List<CustomerAddress>> fetchCustomerAddresses(String accessToken) async {
+  Future<List<CustomerAddress>> fetchCustomerAddresses(
+      String accessToken) async {
     try {
       final data = await _queryWithVars('''
         query getAddresses(\$token: String!) {
@@ -1199,8 +1205,8 @@ class ShopifyService {
     final result = data['customerAddressCreate'] as Map<String, dynamic>? ?? {};
     final errors = result['customerUserErrors'] as List?;
     if (errors != null && errors.isNotEmpty) {
-      throw Exception(
-          (errors.first as Map)['message'] as String? ?? 'Could not save address');
+      throw Exception((errors.first as Map)['message'] as String? ??
+          'Could not save address');
     }
     final json = result['customerAddress'] as Map<String, dynamic>?;
     if (json == null) throw Exception('Address not returned');
@@ -1228,8 +1234,8 @@ class ShopifyService {
     final result = data['customerAddressUpdate'] as Map<String, dynamic>? ?? {};
     final errors = result['customerUserErrors'] as List?;
     if (errors != null && errors.isNotEmpty) {
-      throw Exception(
-          (errors.first as Map)['message'] as String? ?? 'Could not update address');
+      throw Exception((errors.first as Map)['message'] as String? ??
+          'Could not update address');
     }
     final json = result['customerAddress'] as Map<String, dynamic>?;
     if (json == null) throw Exception('Address not returned');
@@ -1251,8 +1257,8 @@ class ShopifyService {
     final result = data['customerAddressDelete'] as Map<String, dynamic>? ?? {};
     final errors = result['customerUserErrors'] as List?;
     if (errors != null && errors.isNotEmpty) {
-      throw Exception(
-          (errors.first as Map)['message'] as String? ?? 'Could not delete address');
+      throw Exception((errors.first as Map)['message'] as String? ??
+          'Could not delete address');
     }
   }
 
@@ -1274,8 +1280,8 @@ class ShopifyService {
         data['customerDefaultAddressUpdate'] as Map<String, dynamic>? ?? {};
     final errors = result['customerUserErrors'] as List?;
     if (errors != null && errors.isNotEmpty) {
-      throw Exception(
-          (errors.first as Map)['message'] as String? ?? 'Could not set default');
+      throw Exception((errors.first as Map)['message'] as String? ??
+          'Could not set default');
     }
   }
 
@@ -1317,10 +1323,14 @@ class ShopifyService {
           }
         }
       ''');
-      final edges = (data['collectionByHandle']?['products']?['edges'] as List?) ?? [];
+      final edges =
+          (data['collectionByHandle']?['products']?['edges'] as List?) ?? [];
       if (edges.isNotEmpty) {
-        debugPrint('[Shopify] fetchShapeProducts tag="$tag" → ${edges.length} products');
-        return edges.map((e) => Product.fromStorefrontJson(e as Map<String, dynamic>)).toList();
+        debugPrint(
+            '[Shopify] fetchShapeProducts tag="$tag" → ${edges.length} products');
+        return edges
+            .map((e) => Product.fromStorefrontJson(e as Map<String, dynamic>))
+            .toList();
       }
     } catch (e) {
       debugPrint('[Shopify] fetchShapeProducts strategy1 error: $e');
@@ -1329,9 +1339,11 @@ class ShopifyService {
     // Strategy 2 — shape-specific collection handle
     if (collectionHandle.isNotEmpty) {
       try {
-        final col = await fetchCollectionByHandle(collectionHandle, productCount: productCount);
+        final col = await fetchCollectionByHandle(collectionHandle,
+            productCount: productCount);
         if (col != null && col.products.isNotEmpty) {
-          debugPrint('[Shopify] fetchShapeProducts handle="$collectionHandle" → ${col.products.length} products');
+          debugPrint(
+              '[Shopify] fetchShapeProducts handle="$collectionHandle" → ${col.products.length} products');
           return col.products;
         }
       } catch (e) {
@@ -1341,8 +1353,10 @@ class ShopifyService {
 
     // Strategy 3 — generic tag query
     try {
-      final products = await fetchProducts(first: productCount, query: 'tag:$tag');
-      debugPrint('[Shopify] fetchShapeProducts tag-query "$tag" → ${products.length} products');
+      final products =
+          await fetchProducts(first: productCount, query: 'tag:$tag');
+      debugPrint(
+          '[Shopify] fetchShapeProducts tag-query "$tag" → ${products.length} products');
       return products;
     } catch (e) {
       debugPrint('[Shopify] fetchShapeProducts strategy3 error: $e');

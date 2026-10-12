@@ -125,11 +125,11 @@ class _HeroBannerSlideState extends State<_HeroBannerSlide>
     );
 
     _titleOpacity = _intervalFade(0.00, 0.50);
-    _titleOffset  = _intervalSlide(0.00, 0.50);
-    _subOpacity   = _intervalFade(0.18, 0.68);
-    _subOffset    = _intervalSlide(0.18, 0.68);
-    _ctaOpacity   = _intervalFade(0.36, 0.86);
-    _ctaOffset    = _intervalSlide(0.36, 0.86);
+    _titleOffset = _intervalSlide(0.00, 0.50);
+    _subOpacity = _intervalFade(0.18, 0.68);
+    _subOffset = _intervalSlide(0.18, 0.68);
+    _ctaOpacity = _intervalFade(0.36, 0.86);
+    _ctaOffset = _intervalSlide(0.36, 0.86);
 
     if (widget.isActive) _activate();
     if (widget.slide.hasVideo) _initVideo();
@@ -239,8 +239,7 @@ class _HeroBannerSlideState extends State<_HeroBannerSlide>
           ),
 
           // ── Animated content ──────────────────────────────────────────────
-          if (widget.slide.title.isNotEmpty ||
-              widget.slide.ctaLabel.isNotEmpty)
+          if (widget.slide.title.isNotEmpty || widget.slide.ctaLabel.isNotEmpty)
             Positioned(
               left: 20,
               right: 20,
@@ -285,7 +284,8 @@ class _HeroBannerSlideState extends State<_HeroBannerSlide>
                         position: _ctaOffset,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white.withValues(alpha: 0.6),
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.6),
                             foregroundColor: AppColors.textPrimary,
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(

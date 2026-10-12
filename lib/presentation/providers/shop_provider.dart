@@ -60,7 +60,9 @@ class ShopProvider extends BaseProvider {
   }
 
   Future<void> _loadBrand() async {
-    try { _brand = await _repo.fetchBrand(); } catch (_) {}
+    try {
+      _brand = await _repo.fetchBrand();
+    } catch (_) {}
   }
 
   Future<void> _loadBanners() async {
@@ -71,11 +73,15 @@ class ShopProvider extends BaseProvider {
   }
 
   Future<void> _loadFeatureBanner() async {
-    try { _featureBanner = await _repo.fetchFeatureBanner(); } catch (_) {}
+    try {
+      _featureBanner = await _repo.fetchFeatureBanner();
+    } catch (_) {}
   }
 
   Future<void> _loadBrandValues() async {
-    try { _brandValues = await _repo.fetchBrandValues(); } catch (_) {}
+    try {
+      _brandValues = await _repo.fetchBrandValues();
+    } catch (_) {}
   }
 
   Future<void> _loadAnnouncements() async {
@@ -86,30 +92,44 @@ class ShopProvider extends BaseProvider {
   }
 
   Future<void> _loadNavItems() async {
-    try { _navItems = await _repo.fetchMainMenu(); } catch (_) {}
+    try {
+      _navItems = await _repo.fetchMainMenu();
+    } catch (_) {}
   }
 
   Future<void> _loadCategoryCollections() async {
-    try { _categoryCollections = await _repo.fetchCategoryCollections(); } catch (_) {}
+    try {
+      _categoryCollections = await _repo.fetchCategoryCollections();
+    } catch (_) {}
   }
 
   Future<void> _loadOccasionCollections() async {
-    try { _occasionCollections = await _repo.fetchOccasionCollections(); } catch (_) {}
+    try {
+      _occasionCollections = await _repo.fetchOccasionCollections();
+    } catch (_) {}
   }
 
   Future<void> _loadDesignerCollections() async {
-    try { _designerCollections = await _repo.fetchDesignerCollections(); } catch (_) {}
+    try {
+      _designerCollections = await _repo.fetchDesignerCollections();
+    } catch (_) {}
   }
 
   Future<void> _loadReviews() async {
-    try { _homeReviews = await _repo.fetchHomeReviews(); } catch (_) {}
+    try {
+      _homeReviews = await _repo.fetchHomeReviews();
+    } catch (_) {}
   }
 
   Future<void> _loadCtaBanner() async {
-    try { _ctaBanner = await _repo.fetchCtaBanner(); } catch (_) {}
+    try {
+      _ctaBanner = await _repo.fetchCtaBanner();
+    } catch (_) {}
   }
 
   Future<void> _loadSectionTitles() async {
-    try { _sectionTitles = await _repo.fetchSectionTitles(); } catch (_) {}
+    try {
+      _sectionTitles = await _repo.fetchSectionTitles();
+    } catch (_) {}
   }
 }

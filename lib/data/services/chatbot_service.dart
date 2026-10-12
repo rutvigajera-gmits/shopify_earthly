@@ -90,8 +90,8 @@ Keep suggestions short (max 5 words each). product_handles must only contain han
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body) as Map<String, dynamic>;
-          final rawText = (data['choices'] as List?)
-                  ?.firstOrNull?['message']?['content'] as String? ??
+          final rawText = (data['choices'] as List?)?.firstOrNull?['message']
+                  ?['content'] as String? ??
               '';
           return _parseResponse(rawText);
         }
@@ -106,7 +106,8 @@ Keep suggestions short (max 5 words each). product_handles must only contain han
           errorDetail = err['error']?['message'] as String? ?? errorDetail;
         } catch (_) {}
         return ChatbotServiceResponse(
-          text: 'Sorry, I\'m having trouble right now. Please try again in a moment.',
+          text:
+              'Sorry, I\'m having trouble right now. Please try again in a moment.',
           productHandles: const [],
           suggestions: const ['Try again', 'Show me rings', 'Contact support'],
         );
@@ -192,6 +193,5 @@ Keep suggestions short (max 5 words each). product_handles must only contain han
 }
 
 extension _ListExtension<T> on List<T> {
-  List<T> takeLast(int n) =>
-      length <= n ? this : sublist(length - n);
+  List<T> takeLast(int n) => length <= n ? this : sublist(length - n);
 }

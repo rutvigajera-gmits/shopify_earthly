@@ -64,8 +64,7 @@ class _SimpleWebScreenState extends State<SimpleWebScreen> {
                 loadWithOverviewMode: true,
                 mediaPlaybackRequiresUserGesture: false,
                 allowsInlineMediaPlayback: true,
-                userAgent:
-                    'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
+                userAgent: 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
                     '(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
               ),
               onWebViewCreated: (c) => _webController = c,

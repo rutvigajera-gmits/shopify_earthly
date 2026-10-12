@@ -96,8 +96,7 @@ class _SearchScreenState extends State<SearchScreen> {
   bool get _hasQuery => _controller.text.trim().length >= _kMinQueryLength;
 
   // True when user has typed enough but debounce hasn't fired yet
-  bool get _isPending =>
-      _hasQuery && _controller.text.trim() != _lastQuery;
+  bool get _isPending => _hasQuery && _controller.text.trim() != _lastQuery;
 
   @override
   Widget build(BuildContext context) {
@@ -128,60 +127,61 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Consumer<ProductProvider>(
           builder: (context, provider, _) {
             // No query or debounce pending — show trending
-          if (!_hasQuery || _isPending) {
-            return _TrendingSearches(
-              terms: _trending,
-              onTap: _searchTerm,
-            );
-          }
+            if (!_hasQuery || _isPending) {
+              return _TrendingSearches(
+                terms: _trending,
+                onTap: _searchTerm,
+              );
+            }
 
-          if (provider.loadingSearch) {
-            return const LoaderWidget();
-          }
+            if (provider.loadingSearch) {
+              return const LoaderWidget();
+            }
 
-          if (provider.searchResults.isEmpty) {
-            return _EmptyResults(query: _controller.text.trim());
-          }
+            if (provider.searchResults.isEmpty) {
+              return _EmptyResults(query: _controller.text.trim());
+            }
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                    AppConstants.horizontalPadding, 14, 0, 0),
-                child: Text(
-                  '${provider.searchResults.length} result${provider.searchResults.length == 1 ? '' : 's'}',
-                  style: AppTextStyles.labelSmall,
-                ),
-              ),
-              Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(AppConstants.horizontalPadding),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 24,
-                    childAspectRatio: 0.65,
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppConstants.horizontalPadding, 14, 0, 0),
+                  child: Text(
+                    '${provider.searchResults.length} result${provider.searchResults.length == 1 ? '' : 's'}',
+                    style: AppTextStyles.labelSmall,
                   ),
-                  itemCount: provider.searchResults.length,
-                  itemBuilder: (context, i) => FadeSlideIn(
-                    delay: Duration(milliseconds: (i.clamp(0, 8) * 55)),
-                    child: ProductCard(
-                      product: provider.searchResults[i],
-                      onTap: () => Navigator.of(context).pushNamed(
-                        '/product',
-                        arguments: provider.searchResults[i].handle,
+                ),
+                Expanded(
+                  child: GridView.builder(
+                    padding:
+                        const EdgeInsets.all(AppConstants.horizontalPadding),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 24,
+                      childAspectRatio: 0.65,
+                    ),
+                    itemCount: provider.searchResults.length,
+                    itemBuilder: (context, i) => FadeSlideIn(
+                      delay: Duration(milliseconds: (i.clamp(0, 8) * 55)),
+                      child: ProductCard(
+                        product: provider.searchResults[i],
+                        onTap: () => Navigator.of(context).pushNamed(
+                          '/product',
+                          arguments: provider.searchResults[i].handle,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
-    ),
     );
   }
 }

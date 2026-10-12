@@ -25,7 +25,8 @@ class ProductGridSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (data.title.isNotEmpty)
-          SectionHeader(title: data.title, actionLabel: null, onActionTap: onViewAll)
+          SectionHeader(
+                  title: data.title, actionLabel: null, onActionTap: onViewAll)
               .paddingSymmetric(horizontal: AppConstants.horizontalPadding),
         20.height,
         GridView.builder(
@@ -40,7 +41,8 @@ class ProductGridSection extends StatelessWidget {
           itemCount: data.products.length,
           itemBuilder: (_, i) {
             final p = data.products[i];
-            return ProductCard(product: p.toProduct(), onTap: () => onProductTap(p.handle));
+            return ProductCard(
+                product: p.toProduct(), onTap: () => onProductTap(p.handle));
           },
         ).paddingSymmetric(horizontal: AppConstants.horizontalPadding),
         if (data.ctaLabel.isNotEmpty) ...[
@@ -49,7 +51,8 @@ class ProductGridSection extends StatelessWidget {
             child: GestureDetector(
               onTap: onViewAll,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.transparent,
                   borderRadius: BorderRadius.circular(30),

@@ -38,7 +38,9 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(
-        showSearchBar ? _barHeight + _searchBarHeight + _searchBarPadding : _barHeight,
+        showSearchBar
+            ? _barHeight + _searchBarHeight + _searchBarPadding
+            : _barHeight,
       );
 
   @override
@@ -61,7 +63,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                       : showBack
                           ? IconButton(
                               icon: const Icon(Icons.arrow_back_ios, size: 18),
-                              onPressed: onBackTap ?? () => Navigator.of(context).pop(),
+                              onPressed: onBackTap ??
+                                  () => Navigator.of(context).pop(),
                               color: AppColors.textPrimary,
                             )
                           : _ProfileAvatar(onTap: onProfileTap),
@@ -70,7 +73,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                   child: Center(
                     child: title != null
                         ? Text(title!, style: AppTextStyles.headlineSmall)
-                        : Image.asset(imgAppLogo, height: 48, fit: BoxFit.contain),
+                        : Image.asset(imgAppLogo,
+                            height: 48, fit: BoxFit.contain),
                   ),
                 ),
                 SizedBox(
@@ -83,7 +87,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                         onPressed: onWishlistTap,
                         color: AppColors.textPrimary,
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                        constraints:
+                            const BoxConstraints(minWidth: 40, minHeight: 40),
                       ),
                       _CartIcon(onTap: onCartTap),
                     ],
@@ -106,11 +111,13 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                   child: Row(
                     children: [
                       const SizedBox(width: 14),
-                      const Icon(Icons.search, size: 18, color: AppColors.textMuted),
+                      const Icon(Icons.search,
+                          size: 18, color: AppColors.textMuted),
                       const SizedBox(width: 10),
                       Text(
                         'Search jewellery, diamonds...',
-                        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
+                        style: AppTextStyles.bodyMedium
+                            .copyWith(color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -134,9 +141,8 @@ class _ProfileAvatar extends StatelessWidget {
     final customer = provider.customer;
     final isLoggedIn = customer != null;
     final imagePath = provider.profileImagePath;
-    final hasImage = isLoggedIn &&
-        imagePath != null &&
-        File(imagePath).existsSync();
+    final hasImage =
+        isLoggedIn && imagePath != null && File(imagePath).existsSync();
 
     return GestureDetector(
       onTap: onTap,

@@ -53,7 +53,9 @@ class HomeOutlineBtn extends StatelessWidget {
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
-      child: Text(label, style: AppTextStyles.button.copyWith(color: Colors.white, letterSpacing: 1.5)),
+      child: Text(label,
+          style: AppTextStyles.button
+              .copyWith(color: Colors.white, letterSpacing: 1.5)),
     );
   }
 }
@@ -69,7 +71,9 @@ class HomeDarkBtn extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 13),
       color: AppColors.primary,
-      child: Text(label, style: AppTextStyles.button.copyWith(color: AppColors.textWhite, letterSpacing: 1.5)),
+      child: Text(label,
+          style: AppTextStyles.button
+              .copyWith(color: AppColors.textWhite, letterSpacing: 1.5)),
     );
   }
 }

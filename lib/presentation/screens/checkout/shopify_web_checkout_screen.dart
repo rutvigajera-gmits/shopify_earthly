@@ -39,20 +39,38 @@ class _ShopifyWebCheckoutScreenState extends State<ShopifyWebCheckoutScreen> {
   }
 
   Future<void> _createCheckout() async {
-    final cart = context.read<CartProvider>();
+    final cartProvider = context.read<CartProvider>();
     final customer = context.read<CustomerProvider>();
 
+    // Prefer the checkout URL already attached to the existing Shopify cart.
+    // Creating a second cart duplicates inventory reservations and loses any
+    // changes made by the user before tapping Checkout.
+    final existingUrl = cartProvider.checkoutUrl;
+    if (existingUrl != null && existingUrl.isNotEmpty) {
+      _cartSnapshot = List.from(cartProvider.cart.lines);
+      _checkoutTotal = cartProvider.cart.subtotal;
+      if (mounted) {
+        setState(() {
+          _webUrl = existingUrl;
+          _creating = false;
+        });
+      }
+      return;
+    }
+
+    // Fallback: cart has no checkoutUrl yet — create one via Shopify API.
     try {
       final checkout = await ShopifyService.instance.createCheckout(
-        lineItems: cart.cart.lines,
+        lineItems: cartProvider.cart.lines,
         customerAccessToken: customer.accessToken,
       );
 
       if (checkout.webUrl.isEmpty) {
-        throw Exception('Shopify did not return a checkout URL. Please try again.');
+        throw Exception(
+            'Shopify did not return a checkout URL. Please try again.');
       }
 
-      _cartSnapshot = List.from(cart.cart.lines);
+      _cartSnapshot = List.from(cartProvider.cart.lines);
       _checkoutTotal = checkout.totalPrice;
 
       if (mounted) {
@@ -122,7 +140,13 @@ class _ShopifyWebCheckoutScreenState extends State<ShopifyWebCheckoutScreen> {
 
     // UPI and Indian payment app deep-link schemes.
     const paymentSchemes = {
-      'upi', 'phonepe', 'gpay', 'paytm', 'bhim', 'tez', 'freecharge',
+      'upi',
+      'phonepe',
+      'gpay',
+      'paytm',
+      'bhim',
+      'tez',
+      'freecharge',
     };
     if (paymentSchemes.contains(scheme)) {
       try {
@@ -179,8 +203,8 @@ class _ShopifyWebCheckoutScreenState extends State<ShopifyWebCheckoutScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text('Leave',
-                style: AppTextStyles.bodyMedium
-                    .copyWith(color: AppColors.error)),
+                style:
+                    AppTextStyles.bodyMedium.copyWith(color: AppColors.error)),
           ),
         ],
       ),
@@ -192,7 +216,7 @@ class _ShopifyWebCheckoutScreenState extends State<ShopifyWebCheckoutScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _onBackPressed();
       },
       child: Scaffold(
@@ -264,8 +288,8 @@ class _ShopifyWebCheckoutScreenState extends State<ShopifyWebCheckoutScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.textPrimary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 32, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   shape: const RoundedRectangleBorder(),
                   elevation: 0,
                 ),

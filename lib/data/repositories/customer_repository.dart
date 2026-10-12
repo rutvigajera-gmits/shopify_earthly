@@ -23,8 +23,7 @@ class CustomerRepository {
         lastName: lastName,
       );
 
-  Future<Customer?> fetchProfile(String token) =>
-      _service.fetchCustomer(token);
+  Future<Customer?> fetchProfile(String token) => _service.fetchCustomer(token);
 
   Future<void> logout(String token) => _service.logoutCustomer(token);
 

@@ -46,7 +46,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // Address management (used when logged in)
   CustomerAddress? _selectedAddress;
-  bool _showAddressForm = false; // true = "add new" mode even if addresses exist
+  bool _showAddressForm =
+      false; // true = "add new" mode even if addresses exist
   bool _saveAddress = false;
 
   @override
@@ -103,8 +104,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (addr.phone != null && addr.phone!.isNotEmpty) {
       _phoneController.text = addr.phone!;
     }
-    final addrName =
-        '${addr.firstName ?? ''} ${addr.lastName ?? ''}'.trim();
+    final addrName = '${addr.firstName ?? ''} ${addr.lastName ?? ''}'.trim();
     if (addrName.isNotEmpty) _nameController.text = addrName;
   }
 
@@ -142,8 +142,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final nameParts = _nameController.text.trim().split(' ');
       final addressMap = <String, String>{
         'firstName': nameParts.first,
-        'lastName':
-            nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '',
+        'lastName': nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '',
         'address1': _addressController.text.trim(),
         'city': _cityController.text.trim(),
         'province': _stateController.text.trim(),
@@ -161,8 +160,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
 
       // 4. Complete the checkout — Shopify charges via its Stripe gateway.
-      String? orderName = await ShopifyService.instance
-          .checkoutCompleteWithToken(
+      String? orderName =
+          await ShopifyService.instance.checkoutCompleteWithToken(
         checkoutId: checkout.id,
         amount: checkout.totalPrice.toStringAsFixed(2),
         currencyCode: checkout.currencyCode,
@@ -320,8 +319,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildAddressSection() {
     return Consumer<CustomerProvider>(
       builder: (_, auth, __) {
-        final hasAddresses =
-            auth.isLoggedIn && auth.addresses.isNotEmpty;
+        final hasAddresses = auth.isLoggedIn && auth.addresses.isNotEmpty;
 
         if (hasAddresses && !_showAddressForm) {
           // Saved address selected — show tile + change button.
@@ -388,8 +386,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     value: _saveAddress,
                     activeColor: AppColors.teal,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    onChanged: (v) =>
-                        setState(() => _saveAddress = v ?? false),
+                    onChanged: (v) => setState(() => _saveAddress = v ?? false),
                   ),
                   Text('Save address to my account',
                       style: AppTextStyles.bodySmall),
@@ -455,8 +452,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 class _SavedAddressTile extends StatelessWidget {
   final CustomerAddress address;
   final VoidCallback onChangeTap;
-  const _SavedAddressTile(
-      {required this.address, required this.onChangeTap});
+  const _SavedAddressTile({required this.address, required this.onChangeTap});
 
   @override
   Widget build(BuildContext context) {
@@ -477,8 +473,7 @@ class _SavedAddressTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(address.displayName,
-                    style: AppTextStyles.labelLarge),
+                Text(address.displayName, style: AppTextStyles.labelLarge),
                 if (lines.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
@@ -550,9 +545,8 @@ class _AddressSelectorSheet extends StatelessWidget {
                         isSelected
                             ? Icons.radio_button_checked
                             : Icons.radio_button_unchecked,
-                        color: isSelected
-                            ? AppColors.teal
-                            : AppColors.textMuted,
+                        color:
+                            isSelected ? AppColors.teal : AppColors.textMuted,
                         size: 18,
                       ),
                       const SizedBox(width: 10),
@@ -564,8 +558,8 @@ class _AddressSelectorSheet extends StatelessWidget {
                                 style: AppTextStyles.labelMedium),
                             Text(
                               addr.lines.join(', '),
-                              style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.textSecondary),
+                              style: AppTextStyles.bodySmall
+                                  .copyWith(color: AppColors.textSecondary),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -614,8 +608,7 @@ class _OrderSummaryCard extends StatelessWidget {
               .map((item) => _OrderItemRow(item: item, showDivider: true)),
           const Divider(height: 1),
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -661,8 +654,7 @@ class _OrderItemRow extends StatelessWidget {
                             Icons.image_not_supported_outlined,
                             size: 20),
                       )
-                    : const Icon(Icons.image_not_supported_outlined,
-                        size: 20),
+                    : const Icon(Icons.image_not_supported_outlined, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -675,8 +667,7 @@ class _OrderItemRow extends StatelessWidget {
                         overflow: TextOverflow.ellipsis),
                     if (item.variantTitle.isNotEmpty &&
                         item.variantTitle != 'Default Title')
-                      Text(item.variantTitle,
-                          style: AppTextStyles.bodySmall),
+                      Text(item.variantTitle, style: AppTextStyles.bodySmall),
                     const SizedBox(height: 2),
                     Text(
                       'Qty ${item.quantity}  ·  ${item.formattedLineTotal}',
@@ -740,8 +731,7 @@ class _Field extends StatelessWidget {
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(4),
-          borderSide:
-              const BorderSide(color: AppColors.error, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
         filled: true,
         fillColor: Colors.white,
@@ -770,8 +760,7 @@ class _PayButton extends StatelessWidget {
     final canPay = !processing && cardComplete;
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.fromLTRB(
-            AppConstants.horizontalPadding, 12,
+        padding: const EdgeInsets.fromLTRB(AppConstants.horizontalPadding, 12,
             AppConstants.horizontalPadding, 8),
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.border)),
@@ -796,8 +785,8 @@ class _PayButton extends StatelessWidget {
                     ? const LoaderWidget(size: 22, color: Colors.white)
                     : Text(
                         'PAY  ${cartProvider.cart.formattedSubtotal}',
-                        style: AppTextStyles.button
-                            .copyWith(color: Colors.white),
+                        style:
+                            AppTextStyles.button.copyWith(color: Colors.white),
                       ),
               ),
             ),
@@ -819,4 +808,3 @@ class _PayButton extends StatelessWidget {
     );
   }
 }
-

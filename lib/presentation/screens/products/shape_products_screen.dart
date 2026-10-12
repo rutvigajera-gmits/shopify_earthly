@@ -50,9 +50,17 @@ class _ShapeProductsScreenState extends State<ShapeProductsScreen> {
         shapeName: widget.shapeName,
         collectionHandle: widget.collectionHandle,
       );
-      if (mounted) setState(() { _products = results; _loading = false; });
+      if (mounted)
+        setState(() {
+          _products = results;
+          _loading = false;
+        });
     } catch (e) {
-      if (mounted) setState(() { _error = e.toString().replaceFirst('Exception: ', ''); _loading = false; });
+      if (mounted)
+        setState(() {
+          _error = e.toString().replaceFirst('Exception: ', '');
+          _loading = false;
+        });
     }
   }
 
@@ -103,14 +111,14 @@ class _ShapeProductsScreenState extends State<ShapeProductsScreen> {
           children: [
             const Divider(height: 1, color: AppColors.neutral200),
             _SortBar(
-            sortBy: _sortBy,
-            onChanged: (v) => setState(() => _sortBy = v),
-          ),
-          const Divider(height: 1, color: AppColors.neutral200),
-          Expanded(child: _body()),
-        ],
+              sortBy: _sortBy,
+              onChanged: (v) => setState(() => _sortBy = v),
+            ),
+            const Divider(height: 1, color: AppColors.neutral200),
+            Expanded(child: _body()),
+          ],
+        ),
       ),
-    ),
     );
   }
 
@@ -159,11 +167,13 @@ class _ShapeProductsScreenState extends State<ShapeProductsScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.diamond_outlined, size: 48, color: AppColors.textLight),
+          const Icon(Icons.diamond_outlined,
+              size: 48, color: AppColors.textLight),
           16.height,
           Text(
             'No ${widget.shapeName} Diamond products found',
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.bodyMedium
+                .copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -176,13 +186,15 @@ class _ShapeProductsScreenState extends State<ShapeProductsScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.wifi_off_outlined, size: 48, color: AppColors.textMuted),
+          const Icon(Icons.wifi_off_outlined,
+              size: 48, color: AppColors.textMuted),
           16.height,
           Text('Could not load products', style: AppTextStyles.headlineSmall),
           8.height,
           Text(
             _error ?? '',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.bodySmall
+                .copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
           24.height,
@@ -193,7 +205,8 @@ class _ShapeProductsScreenState extends State<ShapeProductsScreen> {
               color: AppColors.primary,
               child: Text(
                 'Retry',
-                style: AppTextStyles.button.copyWith(color: AppColors.textWhite),
+                style:
+                    AppTextStyles.button.copyWith(color: AppColors.textWhite),
               ),
             ),
           ),
@@ -215,7 +228,8 @@ class _SortBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppConstants.horizontalPadding),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -224,12 +238,16 @@ class _SortBar extends StatelessWidget {
           DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: sortBy,
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
-              icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: AppColors.textPrimary),
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: AppColors.textPrimary),
+              icon: const Icon(Icons.keyboard_arrow_down,
+                  size: 16, color: AppColors.textPrimary),
               items: _kSortOptions
                   .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                   .toList(),
-              onChanged: (v) { if (v != null) onChanged(v); },
+              onChanged: (v) {
+                if (v != null) onChanged(v);
+              },
             ),
           ),
         ],

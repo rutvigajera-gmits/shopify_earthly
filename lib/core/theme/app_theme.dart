@@ -71,7 +71,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(0),
           borderSide: const BorderSide(color: AppColors.textPrimary),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       dividerTheme: const DividerThemeData(
         color: AppColors.divider,

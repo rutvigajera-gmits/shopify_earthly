@@ -42,7 +42,12 @@ class ProductsScreen extends StatefulWidget {
   final VoidCallback? onProfileTap;
   final VoidCallback? onBackTap;
 
-  const ProductsScreen({super.key, this.onSearchTap, this.onCartTap, this.onProfileTap, this.onBackTap});
+  const ProductsScreen(
+      {super.key,
+      this.onSearchTap,
+      this.onCartTap,
+      this.onProfileTap,
+      this.onBackTap});
 
   @override
   State<ProductsScreen> createState() => _ProductsScreenState();
@@ -151,8 +156,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             border: Border.all(color: AppColors.border),
                           ),
                           alignment: Alignment.center,
-                          child: Text('Clear', style: AppTextStyles.button
-                              .copyWith(color: AppColors.textPrimary, letterSpacing: 1.5)),
+                          child: Text('Clear',
+                              style: AppTextStyles.button.copyWith(
+                                  color: AppColors.textPrimary,
+                                  letterSpacing: 1.5)),
                         ),
                       ),
                     ),
@@ -163,8 +170,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           setState(() {
                             _minPrice = tempMin;
                             _maxPrice = tempMax;
-                            _filtersActive =
-                                tempMin > 0 || tempMax < 500000;
+                            _filtersActive = tempMin > 0 || tempMax < 500000;
                           });
                           Navigator.pop(ctx);
                         },
@@ -172,8 +178,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           color: AppColors.textPrimary,
                           alignment: Alignment.center,
-                          child: Text('Apply', style: AppTextStyles.button
-                              .copyWith(color: AppColors.textWhite, letterSpacing: 1.5)),
+                          child: Text('Apply',
+                              style: AppTextStyles.button.copyWith(
+                                  color: AppColors.textWhite,
+                                  letterSpacing: 1.5)),
                         ),
                       ),
                     ),
@@ -205,29 +213,29 @@ class _ProductsScreenState extends State<ProductsScreen> {
           children: [
             const Divider(height: 1),
             _CategoryTabBar(
-            categories: _categories,
-            selectedIndex: _selectedCategory,
-            onSelected: _onCategoryChanged,
-          ),
-          const Divider(height: 1),
-          _SortFilterBar(
-            sortBy: _sortBy,
-            filtersActive: _filtersActive,
-            onSortChanged: (v) => setState(() => _sortBy = v),
-            onFilterTap: _openFilterSheet,
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: _ProductGrid(
-              categoryHandle: _categories[_selectedCategory].handle,
-              sortBy: _sortBy,
-              minPrice: _minPrice,
-              maxPrice: _maxPrice,
+              categories: _categories,
+              selectedIndex: _selectedCategory,
+              onSelected: _onCategoryChanged,
             ),
-          ),
-        ],
+            const Divider(height: 1),
+            _SortFilterBar(
+              sortBy: _sortBy,
+              filtersActive: _filtersActive,
+              onSortChanged: (v) => setState(() => _sortBy = v),
+              onFilterTap: _openFilterSheet,
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: _ProductGrid(
+                categoryHandle: _categories[_selectedCategory].handle,
+                sortBy: _sortBy,
+                minPrice: _minPrice,
+                maxPrice: _maxPrice,
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -263,9 +271,8 @@ class _CategoryTabBar extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: isSelected
-                        ? AppColors.textPrimary
-                        : Colors.transparent,
+                    color:
+                        isSelected ? AppColors.textPrimary : Colors.transparent,
                     width: 2,
                   ),
                 ),
@@ -318,18 +325,15 @@ class _SortFilterBar extends StatelessWidget {
                 Icon(
                   Icons.tune,
                   size: 16,
-                  color: filtersActive
-                      ? AppColors.gold
-                      : AppColors.textPrimary,
+                  color: filtersActive ? AppColors.gold : AppColors.textPrimary,
                 ),
                 6.width,
                 Text(
                   filtersActive ? 'Filter •' : 'Filter',
                   style: AppTextStyles.labelLarge.copyWith(
                     fontSize: 13,
-                    color: filtersActive
-                        ? AppColors.gold
-                        : AppColors.textPrimary,
+                    color:
+                        filtersActive ? AppColors.gold : AppColors.textPrimary,
                   ),
                 ),
               ],
@@ -378,13 +382,11 @@ class _ProductGrid extends StatelessWidget {
     final list = List<Product>.from(products);
     switch (sortBy) {
       case 'Price: Low to High':
-        list.sort((a, b) =>
-            (double.tryParse(a.minPrice) ?? 0)
-                .compareTo(double.tryParse(b.minPrice) ?? 0));
+        list.sort((a, b) => (double.tryParse(a.minPrice) ?? 0)
+            .compareTo(double.tryParse(b.minPrice) ?? 0));
       case 'Price: High to Low':
-        list.sort((a, b) =>
-            (double.tryParse(b.minPrice) ?? 0)
-                .compareTo(double.tryParse(a.minPrice) ?? 0));
+        list.sort((a, b) => (double.tryParse(b.minPrice) ?? 0)
+            .compareTo(double.tryParse(a.minPrice) ?? 0));
       case 'Newest':
         // Products are already ordered by collection/best-selling;
         // reverse to approximate newest-first.
@@ -408,9 +410,8 @@ class _ProductGrid extends StatelessWidget {
     return Consumer<ProductProvider>(
       builder: (context, provider, _) {
         final isAll = categoryHandle.isEmpty;
-        final loading = isAll
-            ? provider.loadingFeatured
-            : provider.loadingCollection;
+        final loading =
+            isAll ? provider.loadingFeatured : provider.loadingCollection;
 
         if (loading) {
           return GridView.builder(

@@ -30,16 +30,15 @@ class DesignerRingsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title:
-              data.title.isNotEmpty ? data.title : 'Rings Collection',
+          title: data.title.isNotEmpty ? data.title : 'Rings Collection',
           actionLabel: null,
           onActionTap: onViewAll,
         )
             .paddingSymmetric(horizontal: AppConstants.horizontalPadding)
             .animate()
             .fadeIn(duration: 380.ms, curve: Curves.easeOut)
-            .slideY(begin: -0.08, end: 0, duration: 380.ms,
-                curve: Curves.easeOut),
+            .slideY(
+                begin: -0.08, end: 0, duration: 380.ms, curve: Curves.easeOut),
         14.height,
         SizedBox(
           height: 175,
@@ -141,8 +140,8 @@ class _RingCollectionCardState extends State<_RingCollectionCard> {
                 bottom: 14,
                 child: Text(
                   widget.tile.title,
-                  style: AppTextStyles.headlineMedium.copyWith(
-                      color: Colors.white, fontSize: 18, height: 1.2),
+                  style: AppTextStyles.headlineMedium
+                      .copyWith(color: Colors.white, fontSize: 18, height: 1.2),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),

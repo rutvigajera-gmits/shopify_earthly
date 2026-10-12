@@ -9,6 +9,9 @@ class CartProvider extends BaseProvider {
 
   Cart _cart = const Cart();
 
+  // Serialises concurrent _ensureCart calls so only one cartCreate is issued.
+  Future<void>? _ensureCartFuture;
+
   Cart get cart => _cart;
   int get itemCount => _cart.totalQuantity;
   String? get checkoutUrl => _cart.checkoutUrl;
@@ -32,12 +35,16 @@ class CartProvider extends BaseProvider {
     }
   }
 
-  Future<void> _ensureCart() async {
-    if (_cart.id == null) {
-      _cart = await _repo.createCart();
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(AppStrings.cartIdKey, _cart.id!);
-    }
+  Future<void> _ensureCart() {
+    if (_cart.id != null) return Future.value();
+    return _ensureCartFuture ??=
+        _createNewCart().whenComplete(() => _ensureCartFuture = null);
+  }
+
+  Future<void> _createNewCart() async {
+    _cart = await _repo.createCart();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(AppStrings.cartIdKey, _cart.id!);
   }
 
   Future<void> addItem(String variantId, int quantity) async {

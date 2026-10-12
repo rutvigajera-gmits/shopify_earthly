@@ -69,12 +69,10 @@ class Review {
     }
 
     int rating = 5;
-    final ratingStr =
-        fields['rating'] ?? fields['stars'] ?? fields['score'];
+    final ratingStr = fields['rating'] ?? fields['stars'] ?? fields['score'];
     if (ratingStr != null) {
-      rating = int.tryParse(ratingStr) ??
-          double.tryParse(ratingStr)?.round() ??
-          5;
+      rating =
+          int.tryParse(ratingStr) ?? double.tryParse(ratingStr)?.round() ?? 5;
     }
 
     DateTime? createdAt;
@@ -108,8 +106,18 @@ class Review {
   String get formattedDate {
     if (createdAt == null) return '';
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[createdAt!.month - 1]} ${createdAt!.year}';
   }

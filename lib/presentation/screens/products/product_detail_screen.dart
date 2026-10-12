@@ -20,7 +20,6 @@ import 'widgets/product_gallery.dart';
 import 'widgets/product_info_section.dart';
 import 'widgets/product_customize_section.dart';
 import 'widgets/product_actions_section.dart';
-import 'widgets/product_ratings_grid.dart';
 import 'widgets/product_accordions.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -37,6 +36,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _imageIndex = 0;
   Map<String, String> _selectedOptions = {};
   ProductVariant? _selectedVariant;
+  bool _variantExplicitlySelected = false;
   bool _addingToCart = false;
   List<Product> _relatedProducts = [];
 
@@ -57,10 +57,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           await ShopifyService.instance.fetchBestSellingProducts(first: 10);
       if (mounted) {
         setState(() {
-          _relatedProducts = products
-              .where((p) => p.handle != widget.handle)
-              .take(6)
-              .toList();
+          _relatedProducts =
+              products.where((p) => p.handle != widget.handle).take(6).toList();
         });
       }
     } catch (_) {}
@@ -76,6 +74,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void _onOptionChanged(
       String name, String value, List<ProductVariant> variants) {
     setState(() {
+      _variantExplicitlySelected = true;
       _selectedOptions = {..._selectedOptions, name: value};
       final isUiOnly =
           variants.every((v) => !v.selectedOptions.containsKey(name));
@@ -98,10 +97,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             );
         if (partial != null) {
           _selectedVariant = partial;
-          _selectedOptions = {
-            ..._selectedOptions,
-            ...partial.selectedOptions
-          };
+          _selectedOptions = {..._selectedOptions, ...partial.selectedOptions};
         }
       }
     });
@@ -110,6 +106,38 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Future<void> _addToCart(Product product) async {
     final variant = _selectedVariant ?? product.variants.firstOrNull;
     if (variant == null) return;
+
+    if (product.variants.length > 1 && !_variantExplicitlySelected) {
+      final optionSummary = _selectedOptions.entries
+          .map((e) => '${e.key}: ${e.value}')
+          .join('\n');
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text('Confirm Selection', style: AppTextStyles.headlineSmall),
+          content: Text(
+            'Adding to cart with:\n$optionSummary',
+            style: AppTextStyles.bodyMedium,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('Change', style: AppTextStyles.bodyMedium),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                'Add to Cart',
+                style: AppTextStyles.bodyMedium
+                    .copyWith(color: AppColors.textPrimary),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+
     setState(() => _addingToCart = true);
     try {
       await context.read<CartProvider>().addItem(variant.id, 1);
@@ -141,8 +169,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         IconButton(
           icon: const Icon(Icons.favorite_border,
               size: 22, color: AppColors.textPrimary),
-          onPressed: () =>
-              Navigator.of(context).pushNamed(AppRoutes.wishlist),
+          onPressed: () => Navigator.of(context).pushNamed(AppRoutes.wishlist),
         ),
         Consumer<CartProvider>(
           builder: (context, cart, _) => Stack(
@@ -198,9 +225,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Consumer<ProductProvider>(
       builder: (context, provider, _) {
         if (provider.loadingProduct) {
-          return Scaffold(
-              appBar: _buildAppBar(),
-              body: const LoaderWidget());
+          return Scaffold(appBar: _buildAppBar(), body: const LoaderWidget());
         }
         final product = provider.selectedProduct;
         if (product == null) {
@@ -236,7 +261,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           )
               .animate(delay: 180.ms)
               .fadeIn(duration: 350.ms, curve: Curves.easeOut)
-              .slideY(begin: 0.4, end: 0, duration: 350.ms, curve: Curves.easeOut),
+              .slideY(
+                  begin: 0.4, end: 0, duration: 350.ms, curve: Curves.easeOut),
           body: CustomScrollView(
             key: ValueKey(product.id),
             slivers: [
@@ -255,7 +281,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 )
                     .animate(delay: 80.ms)
                     .fadeIn(duration: 360.ms, curve: Curves.easeOut)
-                    .slideY(begin: 0.05, end: 0, duration: 360.ms, curve: Curves.easeOut),
+                    .slideY(
+                        begin: 0.05,
+                        end: 0,
+                        duration: 360.ms,
+                        curve: Curves.easeOut),
               ),
               SliverToBoxAdapter(
                 child: ProductCustomizeSection(
@@ -266,7 +296,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 )
                     .animate(delay: 150.ms)
                     .fadeIn(duration: 360.ms, curve: Curves.easeOut)
-                    .slideY(begin: 0.05, end: 0, duration: 360.ms, curve: Curves.easeOut),
+                    .slideY(
+                        begin: 0.05,
+                        end: 0,
+                        duration: 360.ms,
+                        curve: Curves.easeOut),
               ),
               // SliverToBoxAdapter(
               //   child: ProductActionButtons(
@@ -283,7 +317,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 )
                     .animate(delay: 270.ms)
                     .fadeIn(duration: 360.ms, curve: Curves.easeOut)
-                    .slideY(begin: 0.05, end: 0, duration: 360.ms, curve: Curves.easeOut),
+                    .slideY(
+                        begin: 0.05,
+                        end: 0,
+                        duration: 360.ms,
+                        curve: Curves.easeOut),
               ),
               // SliverToBoxAdapter(
               //   child: const ProductConsultationBanner()
@@ -317,7 +355,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   )
                       .animate(delay: 500.ms)
                       .fadeIn(duration: 360.ms, curve: Curves.easeOut)
-                      .slideY(begin: 0.04, end: 0, duration: 360.ms, curve: Curves.easeOut),
+                      .slideY(
+                          begin: 0.04,
+                          end: 0,
+                          duration: 360.ms,
+                          curve: Curves.easeOut),
                 ),
               SliverToBoxAdapter(child: 24.height),
             ],
@@ -333,8 +375,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 class _YouMayAlsoLikeSection extends StatelessWidget {
   final List<Product> products;
   final ValueChanged<String> onTap;
-  const _YouMayAlsoLikeSection(
-      {required this.products, required this.onTap});
+  const _YouMayAlsoLikeSection({required this.products, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

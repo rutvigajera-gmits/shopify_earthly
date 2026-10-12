@@ -203,8 +203,7 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
                 // Fresh sessions are already guaranteed by the deleteAllCookies()
                 // call in initState above, which runs before this WebView mounts.
                 // Let GoKwik's scripts run as if on the real website.
-                userAgent:
-                    'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
+                userAgent: 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
                     '(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
               ),
               onWebViewCreated: (controller) {
@@ -324,16 +323,30 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
     }
 
     if (payload['fetchError'] != null) {
-      debugPrint('[KwikPass] account.json fetch failed: ${payload['fetchError']}');
-      if (mounted) Navigator.of(context).pop();
+      debugPrint(
+          '[KwikPass] account.json fetch failed: ${payload['fetchError']}');
+      if (mounted) {
+        setState(() {
+          _authenticating = false;
+          _loginHandled = false; // allow retry on next post-login navigation
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Sign-in could not be verified. Please try again.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
       return;
     }
 
-    final email     = payload['email']     as String? ?? '';
+    final email = payload['email'] as String? ?? '';
     final firstName = payload['firstName'] as String? ?? '';
-    final lastName  = payload['lastName']  as String? ?? '';
-    final phone     = payload['phone']     as String? ?? '';
-    final id        = payload['id']        as String? ?? '';
+    final lastName = payload['lastName'] as String? ?? '';
+    final phone = payload['phone'] as String? ?? '';
+    final id = payload['id'] as String? ?? '';
 
     debugPrint('[KwikPass] Identity received — email: $email  phone: $phone');
 

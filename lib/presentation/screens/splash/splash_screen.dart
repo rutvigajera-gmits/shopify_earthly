@@ -73,7 +73,9 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: _videoReady ? _buildCoverVideo(context) : const ColoredBox(color: Colors.black),
+      body: _videoReady
+          ? _buildCoverVideo(context)
+          : const ColoredBox(color: Colors.black),
     );
   }
 

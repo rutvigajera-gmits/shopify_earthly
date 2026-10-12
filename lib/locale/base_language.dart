@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 abstract class Languages {
-  static Languages of(BuildContext context) => Localizations.of<Languages>(context, Languages)!;
+  static Languages of(BuildContext context) =>
+      Localizations.of<Languages>(context, Languages)!;
 
   String planAboutToExpire(int days);
 
@@ -1812,21 +1813,21 @@ abstract class Languages {
   String get sendingOTP;
 
   String get theEnteredPhoneNumberIsInvalidPleaseEnterValidPhoneNumber;
-  
+
   String get youHaveMadeTooManyRequestsPleaseTryAgainLater;
-  
+
   String get otpCodeIsSentToYourMobileNumber;
-  
+
   String get theEnteredCodeIsInvalidPleaseTryAgain;
-  
+
   String get pleaseEnterValidOTP;
-  
+
   String get btnSendOtp;
-  
+
   String get confirmOTP;
-  
+
   String get lblEnterPhnNumber;
-  
+
   String get lblLocationPermissionDenied;
 
   String get lblEnableLocation;
@@ -1860,7 +1861,7 @@ abstract class Languages {
   String get transportationDistance;
 
   String get transportationStatus;
-  
+
   String get lblKm;
 
   String get payTransportationFee;
@@ -2018,13 +2019,12 @@ abstract class Languages {
   String get lblPortfolioSectionForCorporateProviders;
 
   String get lblWaitingForTransportationFee;
-  
+
   String get lblPaymentRequestSent;
-  
+
   String get lblPlanSubscribeRequired;
 
   String get lblSubscriptionLimitReached;
 
   String get lblHolding;
-
 }

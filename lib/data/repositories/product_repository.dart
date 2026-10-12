@@ -11,8 +11,10 @@ class ProductRepository {
   Future<List<Product>> fetchBestSelling({int count = 24}) =>
       _service.fetchBestSellingProducts(first: count);
 
-  Future<List<Product>> fetchByCollection(String handle, {int count = 24}) async {
-    final col = await _service.fetchCollectionByHandle(handle, productCount: count);
+  Future<List<Product>> fetchByCollection(String handle,
+      {int count = 24}) async {
+    final col =
+        await _service.fetchCollectionByHandle(handle, productCount: count);
     return col?.products ?? [];
   }
 
@@ -22,8 +24,7 @@ class ProductRepository {
   Future<Product?> fetchByHandle(String handle) =>
       _service.fetchProductByHandle(handle);
 
-  Future<List<Product>> search(String query) =>
-      _service.searchProducts(query);
+  Future<List<Product>> search(String query) => _service.searchProducts(query);
 
   Future<List<Product>> fetchByShape({
     required String shapeName,

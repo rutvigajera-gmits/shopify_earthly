@@ -57,8 +57,8 @@ class _ChatbotInputBarState extends State<ChatbotInputBar> {
                 enabled: widget.enabled,
                 onSubmitted: (_) => _send(),
                 textInputAction: TextInputAction.send,
-                style: const TextStyle(
-                    color: AppColors.textPrimary, fontSize: 14),
+                style:
+                    const TextStyle(color: AppColors.textPrimary, fontSize: 14),
                 cursorColor: AppColors.gold,
                 decoration: const InputDecoration(
                   hintText: 'Message Ring Matchmaker',
@@ -68,8 +68,8 @@ class _ChatbotInputBarState extends State<ChatbotInputBar> {
                   ),
                   filled: true,
                   fillColor: AppColors.chatInputFill,
-                  contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(24)),
                     borderSide: BorderSide.none,

@@ -58,8 +58,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
           color: AppColors.chatAvatar,
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.auto_awesome,
-            color: AppColors.gold, size: 16),
+        child: const Icon(Icons.auto_awesome, color: AppColors.gold, size: 16),
       );
 }
 

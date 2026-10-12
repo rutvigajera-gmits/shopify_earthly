@@ -37,7 +37,7 @@ class CachedImageWidget extends StatelessWidget {
       return Container(
         height: height,
         width: width ?? height,
-        color: color ?? grey.withValues(alpha:0.1),
+        color: color ?? grey.withValues(alpha: 0.1),
         alignment: alignment,
         //padding: EdgeInsets.all(10),
         //child: Image.asset(ic_no_photo, color: appStore.isDarkMode ? Colors.white : Colors.black),
@@ -61,7 +61,8 @@ class CachedImageWidget extends StatelessWidget {
                 height: height,
                 width: width,
                 alignment: alignment ?? Alignment.center,
-              ).cornerRadiusWithClipRRect(radius ?? (circle ? (height / 2) : 0)),
+              ).cornerRadiusWithClipRRect(
+                  radius ?? (circle ? (height / 2) : 0)),
               child ?? Offstage(),
             ],
           );
@@ -79,7 +80,8 @@ class CachedImageWidget extends StatelessWidget {
                 height: height,
                 width: width,
                 alignment: alignment ?? Alignment.center,
-              ).cornerRadiusWithClipRRect(radius ?? (circle ? (height / 2) : 0)),
+              ).cornerRadiusWithClipRRect(
+                  radius ?? (circle ? (height / 2) : 0)),
               child ?? Offstage(),
             ],
           );
@@ -101,7 +103,8 @@ class CachedImageWidget extends StatelessWidget {
                   height: height,
                   width: width,
                   alignment: alignment ?? Alignment.center,
-                ).cornerRadiusWithClipRRect(radius ?? (circle ? (height / 2) : 0)),
+                ).cornerRadiusWithClipRRect(
+                    radius ?? (circle ? (height / 2) : 0)),
                 child ?? Offstage(),
               ],
             );
@@ -122,12 +125,14 @@ class CachedImageWidget extends StatelessWidget {
                   height: height,
                   width: width,
                   alignment: alignment ?? Alignment.center,
-                ).cornerRadiusWithClipRRect(radius ?? (circle ? (height / 2) : 0)),
+                ).cornerRadiusWithClipRRect(
+                    radius ?? (circle ? (height / 2) : 0)),
                 child ?? Offstage(),
               ],
             );
           },
-        ).cornerRadiusWithClipRRect(radius ?? (circle ? (height.validate() / 2) : 0));
+        ).cornerRadiusWithClipRRect(
+            radius ?? (circle ? (height.validate() / 2) : 0));
       }
     }
   }

@@ -48,7 +48,8 @@ class CartLineItem {
         {'amount': '0'};
 
     final qty = node['quantity'] as int? ?? 1;
-    final totalAmount = double.tryParse(priceV2['amount'] as String? ?? '0') ?? 0;
+    final totalAmount =
+        double.tryParse(priceV2['amount'] as String? ?? '0') ?? 0;
 
     return CartLineItem(
       lineId: node['id'] as String? ?? '',
@@ -102,7 +103,8 @@ class Cart {
     final linesData = cartData['lines'];
     if (linesData is Map && linesData['edges'] is List) {
       lines = (linesData['edges'] as List)
-          .map((e) => CartLineItem.fromStorefrontJson(e as Map<String, dynamic>))
+          .map(
+              (e) => CartLineItem.fromStorefrontJson(e as Map<String, dynamic>))
           .toList();
     }
 

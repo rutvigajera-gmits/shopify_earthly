@@ -27,15 +27,35 @@ class EarthlyBottomNav extends StatelessWidget {
           height: 60,
           child: Row(
             children: [
-              _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home,
-                  label: 'Home', index: 0, currentIndex: currentIndex, onTap: onTap),
-              _NavItem(icon: Icons.grid_view_outlined, activeIcon: Icons.grid_view,
-                  label: 'Shop', index: 1, currentIndex: currentIndex, onTap: onTap),
-              _NavItem(icon: Icons.search, activeIcon: Icons.search,
-                  label: 'Search', index: 2, currentIndex: currentIndex, onTap: onTap),
+              _NavItem(
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home,
+                  label: 'Home',
+                  index: 0,
+                  currentIndex: currentIndex,
+                  onTap: onTap),
+              _NavItem(
+                  icon: Icons.grid_view_outlined,
+                  activeIcon: Icons.grid_view,
+                  label: 'Shop',
+                  index: 1,
+                  currentIndex: currentIndex,
+                  onTap: onTap),
+              _NavItem(
+                  icon: Icons.search,
+                  activeIcon: Icons.search,
+                  label: 'Search',
+                  index: 2,
+                  currentIndex: currentIndex,
+                  onTap: onTap),
               _CartNavItem(currentIndex: currentIndex, onTap: onTap),
-              _NavItem(icon: Icons.person_outline, activeIcon: Icons.person,
-                  label: 'Account', index: 4, currentIndex: currentIndex, onTap: onTap),
+              _NavItem(
+                  icon: Icons.person_outline,
+                  activeIcon: Icons.person,
+                  label: 'Account',
+                  index: 4,
+                  currentIndex: currentIndex,
+                  onTap: onTap),
             ],
           ),
         ),
@@ -71,12 +91,15 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(isActive ? activeIcon : icon, size: 22,
+            Icon(isActive ? activeIcon : icon,
+                size: 22,
                 color: isActive ? AppColors.textPrimary : AppColors.textLight),
             const SizedBox(height: 4),
             Text(label,
                 style: AppTextStyles.navLabel.copyWith(
-                  color: isActive ? AppColors.textPrimary : AppColors.textLight)),
+                    color: isActive
+                        ? AppColors.textPrimary
+                        : AppColors.textLight)),
           ],
         ),
       ),
@@ -106,9 +129,13 @@ class _CartNavItem extends StatelessWidget {
                   clipBehavior: Clip.none,
                   children: [
                     Icon(
-                      isActive ? Icons.shopping_bag : Icons.shopping_bag_outlined,
+                      isActive
+                          ? Icons.shopping_bag
+                          : Icons.shopping_bag_outlined,
                       size: 22,
-                      color: isActive ? AppColors.textPrimary : AppColors.textLight,
+                      color: isActive
+                          ? AppColors.textPrimary
+                          : AppColors.textLight,
                     ),
                     if (cart.itemCount > 0)
                       Positioned(
@@ -132,7 +159,9 @@ class _CartNavItem extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text('Cart',
                     style: AppTextStyles.navLabel.copyWith(
-                      color: isActive ? AppColors.textPrimary : AppColors.textLight)),
+                        color: isActive
+                            ? AppColors.textPrimary
+                            : AppColors.textLight)),
               ],
             );
           },

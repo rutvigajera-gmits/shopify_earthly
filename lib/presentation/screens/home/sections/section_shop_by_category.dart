@@ -11,7 +11,8 @@ class ShopByCategorySection extends StatelessWidget {
   final CollectionRowData data;
   final ValueChanged<CollectionTile> onTap;
 
-  const ShopByCategorySection({super.key, required this.data, required this.onTap});
+  const ShopByCategorySection(
+      {super.key, required this.data, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +23,17 @@ class ShopByCategorySection extends StatelessWidget {
       children: [
         Text('Shop by Category', style: AppTextStyles.headlineLarge)
             .paddingSymmetric(horizontal: AppConstants.horizontalPadding)
-            .animate().fadeIn(duration: 400.ms).slideX(begin: -0.15, end: 0, duration: 400.ms, curve: Curves.easeOut),
+            .animate()
+            .fadeIn(duration: 400.ms)
+            .slideX(
+                begin: -0.15, end: 0, duration: 400.ms, curve: Curves.easeOut),
         16.height,
         SizedBox(
           height: 100,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.horizontalPadding),
             itemCount: data.tiles.length,
             separatorBuilder: (_, __) => 14.width,
             itemBuilder: (_, i) => _CategoryTile(
@@ -37,8 +42,12 @@ class ShopByCategorySection extends StatelessWidget {
             )
                 .animate(delay: Duration(milliseconds: 80 + i * 60))
                 .fadeIn(duration: 300.ms)
-                .slideY(begin: 0.3, end: 0, duration: 300.ms, curve: Curves.easeOut)
-                .scale(begin: const Offset(0.92, 0.92), end: const Offset(1, 1), duration: 300.ms),
+                .slideY(
+                    begin: 0.3, end: 0, duration: 300.ms, curve: Curves.easeOut)
+                .scale(
+                    begin: const Offset(0.92, 0.92),
+                    end: const Offset(1, 1),
+                    duration: 300.ms),
           ),
         ),
       ],
@@ -72,8 +81,10 @@ class _CategoryTile extends StatelessWidget {
                   ? CachedNetworkImage(
                       imageUrl: tile.imageUrl,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(color: AppColors.surfaceCream),
-                      errorWidget: (_, __, ___) => Container(color: AppColors.surfaceCream),
+                      placeholder: (_, __) =>
+                          Container(color: AppColors.surfaceCream),
+                      errorWidget: (_, __, ___) =>
+                          Container(color: AppColors.surfaceCream),
                     )
                   : Container(color: AppColors.surfaceCream),
             ),

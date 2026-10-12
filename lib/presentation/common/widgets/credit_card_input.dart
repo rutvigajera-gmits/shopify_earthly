@@ -78,9 +78,8 @@ class _CreditCardInputState extends State<CreditCardInput>
   // ── Derived display values ────────────────────────────────────────────────
 
   String get _displayNumber {
-    final digits = widget.cardNumberController.text
-        .replaceAll(' ', '')
-        .padRight(16, '•');
+    final digits =
+        widget.cardNumberController.text.replaceAll(' ', '').padRight(16, '•');
     String g(int n) => digits.substring(n, n + 4);
     return '${g(0)}  ${g(4)}  ${g(8)}  ${g(12)}';
   }
@@ -211,7 +210,8 @@ class _CreditCardInputState extends State<CreditCardInput>
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.lock_outline, size: 11, color: AppColors.textMuted),
+            const Icon(Icons.lock_outline,
+                size: 11, color: AppColors.textMuted),
             const SizedBox(width: 4),
             Text(
               'Secured by Stripe · 256-bit SSL encrypted',

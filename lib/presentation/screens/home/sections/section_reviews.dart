@@ -47,13 +47,16 @@ class _ReviewsCarouselSectionState extends State<ReviewsCarouselSection> {
                 height: 200,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.horizontalPadding),
                   itemCount: 3,
-                  separatorBuilder: (_, __) => const SizedBox(width: AppConstants.cardSpacing),
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: AppConstants.cardSpacing),
                   itemBuilder: (_, __) => Shimmer.fromColors(
                     baseColor: AppColors.shimmerBase,
                     highlightColor: AppColors.shimmerHighlight,
-                    child: Container(width: 260, height: 200, color: Colors.white),
+                    child:
+                        Container(width: 260, height: 200, color: Colors.white),
                   ),
                 ),
               )
@@ -62,9 +65,11 @@ class _ReviewsCarouselSectionState extends State<ReviewsCarouselSection> {
                 height: 210,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.horizontalPadding),
                   itemCount: reviews.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: AppConstants.cardSpacing),
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: AppConstants.cardSpacing),
                   itemBuilder: (_, i) => _ReviewCard(review: reviews[i]),
                 ),
               ),
@@ -92,18 +97,24 @@ class _ReviewCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: List.generate(5, (i) => Icon(
-              i < review.rating ? Icons.star_rounded : Icons.star_outline_rounded,
-              size: 14,
-              color: AppColors.rating,
-            )),
+            children: List.generate(
+                5,
+                (i) => Icon(
+                      i < review.rating
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      size: 14,
+                      color: AppColors.rating,
+                    )),
           ),
           8.height,
           if (review.title != null && review.title!.isNotEmpty) ...[
             Text(
               review.title!,
               style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.textPrimary, letterSpacing: 0.2, fontWeight: FontWeight.w600),
+                  color: AppColors.textPrimary,
+                  letterSpacing: 0.2,
+                  fontWeight: FontWeight.w600),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -112,7 +123,8 @@ class _ReviewCard extends StatelessWidget {
           Expanded(
             child: Text(
               review.body,
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, height: 1.55),
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: AppColors.textSecondary, height: 1.55),
               overflow: TextOverflow.fade,
               maxLines: 6,
             ),
@@ -128,19 +140,23 @@ class _ReviewCard extends StatelessWidget {
                   children: [
                     Text(
                       review.reviewerName,
-                      style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary),
+                      style: AppTextStyles.labelSmall
+                          .copyWith(color: AppColors.textPrimary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.verified, size: 10, color: AppColors.teal),
+                        const Icon(Icons.verified,
+                            size: 10, color: AppColors.teal),
                         3.width,
                         Text('Verified Buyer',
-                            style: AppTextStyles.labelSmall.copyWith(color: AppColors.teal, fontSize: 9)),
+                            style: AppTextStyles.labelSmall
+                                .copyWith(color: AppColors.teal, fontSize: 9)),
                         if (review.formattedDate.isNotEmpty)
                           Text('  ·  ${review.formattedDate}',
-                              style: AppTextStyles.labelSmall.copyWith(color: AppColors.textMuted, fontSize: 9)),
+                              style: AppTextStyles.labelSmall.copyWith(
+                                  color: AppColors.textMuted, fontSize: 9)),
                       ],
                     ),
                   ],
@@ -162,12 +178,15 @@ class _AvatarCircle extends StatelessWidget {
   Widget build(BuildContext context) {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     return Container(
-      width: 30, height: 30,
-      decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.teal),
+      width: 30,
+      height: 30,
+      decoration:
+          const BoxDecoration(shape: BoxShape.circle, color: AppColors.teal),
       alignment: Alignment.center,
       child: Text(
         initial,
-        style: AppTextStyles.labelMedium.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+        style: AppTextStyles.labelMedium
+            .copyWith(color: Colors.white, fontWeight: FontWeight.w600),
       ),
     );
   }

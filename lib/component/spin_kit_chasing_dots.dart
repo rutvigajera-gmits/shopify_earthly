@@ -7,7 +7,10 @@ class SpinKitChasingDots extends StatefulWidget {
     this.size = 50.0,
     this.itemBuilder,
     this.duration = const Duration(milliseconds: 2000),
-  })  : assert(!(itemBuilder is IndexedWidgetBuilder && color is Color) && !(itemBuilder == null && color == null), 'You should specify either a itemBuilder or a color'),
+  })  : assert(
+            !(itemBuilder is IndexedWidgetBuilder && color is Color) &&
+                !(itemBuilder == null && color == null),
+            'You should specify either a itemBuilder or a color'),
         super(key: key);
 
   final Color? color;
@@ -19,7 +22,8 @@ class SpinKitChasingDots extends StatefulWidget {
   _SpinKitChasingDotsState createState() => _SpinKitChasingDotsState();
 }
 
-class _SpinKitChasingDotsState extends State<SpinKitChasingDots> with TickerProviderStateMixin {
+class _SpinKitChasingDotsState extends State<SpinKitChasingDots>
+    with TickerProviderStateMixin {
   late AnimationController _scaleCtrl;
   late AnimationController _rotateCtrl;
   late Animation<double> _scale;
@@ -32,12 +36,14 @@ class _SpinKitChasingDotsState extends State<SpinKitChasingDots> with TickerProv
     _scaleCtrl = AnimationController(vsync: this, duration: widget.duration)
       ..addListener(() => setState(() {}))
       ..repeat(reverse: true);
-    _scale = Tween(begin: -1.0, end: 1.0).animate(CurvedAnimation(parent: _scaleCtrl, curve: Curves.easeInOut));
+    _scale = Tween(begin: -1.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _scaleCtrl, curve: Curves.easeInOut));
 
     _rotateCtrl = AnimationController(vsync: this, duration: widget.duration)
       ..addListener(() => setState(() {}))
       ..repeat();
-    _rotate = Tween(begin: 0.0, end: 360.0).animate(CurvedAnimation(parent: _rotateCtrl, curve: Curves.linear));
+    _rotate = Tween(begin: 0.0, end: 360.0)
+        .animate(CurvedAnimation(parent: _rotateCtrl, curve: Curves.linear));
   }
 
   @override
@@ -70,7 +76,11 @@ class _SpinKitChasingDotsState extends State<SpinKitChasingDots> with TickerProv
       scale: scale,
       child: SizedBox.fromSize(
         size: Size.square(widget.size * 0.6),
-        child: widget.itemBuilder != null ? widget.itemBuilder!(context, index) : DecoratedBox(decoration: BoxDecoration(shape: BoxShape.circle, color: widget.color)),
+        child: widget.itemBuilder != null
+            ? widget.itemBuilder!(context, index)
+            : DecoratedBox(
+                decoration:
+                    BoxDecoration(shape: BoxShape.circle, color: widget.color)),
       ),
     );
   }

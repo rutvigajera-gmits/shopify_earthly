@@ -45,8 +45,8 @@ class _ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageUrl = product.primaryImage?.url ?? '';
-    final price = FormatUtils.formatPrice(
-        double.tryParse(product.minPrice) ?? 0);
+    final price =
+        FormatUtils.formatPrice(double.tryParse(product.minPrice) ?? 0);
 
     return GestureDetector(
       onTap: () => Navigator.of(context)

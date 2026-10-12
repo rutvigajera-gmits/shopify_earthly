@@ -165,8 +165,7 @@ class ProductConsultationBanner extends StatelessWidget {
           AppConstants.horizontalPadding, 16),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-          color: AppColors.surfaceWarm,
-          borderRadius: BorderRadius.circular(8)),
+          color: AppColors.surfaceWarm, borderRadius: BorderRadius.circular(8)),
       child: Row(children: [
         Container(
           width: 36,
@@ -178,14 +177,13 @@ class ProductConsultationBanner extends StatelessWidget {
         ),
         12.width,
         Expanded(
-          child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Book your private video',
-                    style: AppTextStyles.labelLarge.copyWith(fontSize: 13)),
-                Text('consultation',
-                    style: AppTextStyles.labelLarge.copyWith(fontSize: 13)),
-              ]),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Book your private video',
+                style: AppTextStyles.labelLarge.copyWith(fontSize: 13)),
+            Text('consultation',
+                style: AppTextStyles.labelLarge.copyWith(fontSize: 13)),
+          ]),
         ),
         GestureDetector(
           onTap: () async {
@@ -222,19 +220,18 @@ class ProductPickDiamondCard extends StatelessWidget {
         const Icon(Icons.diamond_outlined, size: 30, color: AppColors.teal),
         12.width,
         Expanded(
-          child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Pick a Unique Diamond',
-                    style: AppTextStyles.labelLarge
-                        .copyWith(color: AppColors.teal, fontSize: 14)),
-                3.height,
-                Text(
-                  'Explore rare diamonds crafted to make every design extraordinary.',
-                  style: AppTextStyles.bodySmall
-                      .copyWith(color: AppColors.textSecondary),
-                ),
-              ]),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Pick a Unique Diamond',
+                style: AppTextStyles.labelLarge
+                    .copyWith(color: AppColors.teal, fontSize: 14)),
+            3.height,
+            Text(
+              'Explore rare diamonds crafted to make every design extraordinary.',
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: AppColors.textSecondary),
+            ),
+          ]),
         ),
         8.width,
         const Icon(Icons.arrow_forward,

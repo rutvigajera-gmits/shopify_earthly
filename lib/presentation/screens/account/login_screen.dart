@@ -44,31 +44,31 @@ class _LoginScreenState extends State<LoginScreen>
           children: [
             const Divider(height: 1),
             TabBar(
-            controller: _tabs,
-            labelStyle: AppTextStyles.labelLarge,
-            unselectedLabelStyle: AppTextStyles.labelMedium,
-            labelColor: AppColors.textPrimary,
-            unselectedLabelColor: AppColors.textSecondary,
-            indicatorColor: AppColors.textPrimary,
-            indicatorWeight: 1.5,
-            tabs: const [
-              Tab(text: 'SIGN IN'),
-              Tab(text: 'CREATE ACCOUNT'),
-            ],
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: TabBarView(
               controller: _tabs,
-              children: const [
-                _SignInForm(),
-                _RegisterForm(),
+              labelStyle: AppTextStyles.labelLarge,
+              unselectedLabelStyle: AppTextStyles.labelMedium,
+              labelColor: AppColors.textPrimary,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: AppColors.textPrimary,
+              indicatorWeight: 1.5,
+              tabs: const [
+                Tab(text: 'SIGN IN'),
+                Tab(text: 'CREATE ACCOUNT'),
               ],
             ),
-          ),
-        ],
+            const Divider(height: 1),
+            Expanded(
+              child: TabBarView(
+                controller: _tabs,
+                children: const [
+                  _SignInForm(),
+                  _RegisterForm(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -134,20 +134,18 @@ class _SignInFormState extends State<_SignInForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 8),
-
               if (auth.errorMessage != null) ...[
-                _ErrorBanner(message: auth.errorMessage!,
+                _ErrorBanner(
+                    message: auth.errorMessage!,
                     onClose: () => auth.clearError()),
                 const SizedBox(height: 16),
               ],
-
               _Field(
                 controller: _emailCtrl,
                 label: 'Email',
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-
               _Field(
                 controller: _passCtrl,
                 label: 'Password',
@@ -155,7 +153,8 @@ class _SignInFormState extends State<_SignInForm> {
                 suffix: GestureDetector(
                   onTap: () => setState(() => _obscure = !_obscure),
                   child: Icon(
-                    _obscure ? Icons.visibility_outlined
+                    _obscure
+                        ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
                     size: 18,
                     color: AppColors.textSecondary,
@@ -163,7 +162,6 @@ class _SignInFormState extends State<_SignInForm> {
                 ),
               ),
               const SizedBox(height: 12),
-
               Align(
                 alignment: Alignment.centerRight,
                 child: GestureDetector(
@@ -176,7 +174,6 @@ class _SignInFormState extends State<_SignInForm> {
                 ),
               ),
               const SizedBox(height: 32),
-
               _SubmitButton(
                 label: 'SIGN IN',
                 loading: auth.isLoading,
@@ -244,35 +241,30 @@ class _RegisterFormState extends State<_RegisterForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 8),
-
               if (auth.errorMessage != null) ...[
-                _ErrorBanner(message: auth.errorMessage!,
+                _ErrorBanner(
+                    message: auth.errorMessage!,
                     onClose: () => auth.clearError()),
                 const SizedBox(height: 16),
               ],
-
               Row(
                 children: [
                   Expanded(
-                    child: _Field(
-                        controller: _firstCtrl, label: 'First Name'),
+                    child: _Field(controller: _firstCtrl, label: 'First Name'),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _Field(
-                        controller: _lastCtrl, label: 'Last Name'),
+                    child: _Field(controller: _lastCtrl, label: 'Last Name'),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
-
               _Field(
                 controller: _emailCtrl,
                 label: 'Email',
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-
               _Field(
                 controller: _passCtrl,
                 label: 'Password',
@@ -280,7 +272,8 @@ class _RegisterFormState extends State<_RegisterForm> {
                 suffix: GestureDetector(
                   onTap: () => setState(() => _obscure = !_obscure),
                   child: Icon(
-                    _obscure ? Icons.visibility_outlined
+                    _obscure
+                        ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
                     size: 18,
                     color: AppColors.textSecondary,
@@ -288,7 +281,6 @@ class _RegisterFormState extends State<_RegisterForm> {
                 ),
               ),
               const SizedBox(height: 32),
-
               _SubmitButton(
                 label: 'CREATE ACCOUNT',
                 loading: auth.isLoading,
@@ -341,8 +333,7 @@ class _Field extends StatelessWidget {
         focusedBorder: const UnderlineInputBorder(
           borderSide: BorderSide(color: AppColors.textPrimary, width: 1.5),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(vertical: 12),
       ),
     );
   }
@@ -370,8 +361,8 @@ class _SubmitButton extends StatelessWidget {
         child: loading
             ? const LoaderWidget(size: 22, color: Colors.white)
             : Text(label,
-                style: AppTextStyles.button.copyWith(
-                    color: Colors.white, letterSpacing: 2)),
+                style: AppTextStyles.button
+                    .copyWith(color: Colors.white, letterSpacing: 2)),
       ),
     );
   }
@@ -399,8 +390,7 @@ class _ErrorBanner extends StatelessWidget {
           ),
           GestureDetector(
             onTap: onClose,
-            child: const Icon(Icons.close, size: 16,
-                color: Colors.red),
+            child: const Icon(Icons.close, size: 16, color: Colors.red),
           ),
         ],
       ),

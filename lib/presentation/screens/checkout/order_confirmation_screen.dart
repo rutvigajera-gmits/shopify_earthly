@@ -95,8 +95,8 @@ class OrderConfirmationScreen extends StatelessWidget {
                   Text('Items Ordered', style: AppTextStyles.headlineSmall),
                   const SizedBox(height: 12),
                   Container(
-                    decoration:
-                        BoxDecoration(border: Border.all(color: AppColors.border)),
+                    decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.border)),
                     child: Column(
                       children: [
                         for (int i = 0; i < order.items.length; i++) ...[
@@ -126,8 +126,8 @@ class OrderConfirmationScreen extends StatelessWidget {
                               style: AppTextStyles.labelLarge),
                           const SizedBox(height: 4),
                           Text(order.deliveryAddress,
-                              style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.textSecondary)),
+                              style: AppTextStyles.bodySmall
+                                  .copyWith(color: AppColors.textSecondary)),
                         ],
                       ),
                     ),
@@ -150,8 +150,8 @@ class OrderConfirmationScreen extends StatelessWidget {
                       ),
                       child: Text(
                         'CONTINUE SHOPPING',
-                        style: AppTextStyles.button
-                            .copyWith(color: Colors.white),
+                        style:
+                            AppTextStyles.button.copyWith(color: Colors.white),
                       ),
                     ),
                   ),
@@ -172,8 +172,7 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
-  const _InfoRow(
-      {required this.label, required this.value, this.valueColor});
+  const _InfoRow({required this.label, required this.value, this.valueColor});
 
   @override
   Widget build(BuildContext context) {

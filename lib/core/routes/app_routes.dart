@@ -59,7 +59,8 @@ class AppRoutes {
         return _sharedAxisRoute(settings, const AddressesScreen());
       case allShapes:
         final apiHandles = (settings.arguments as Map<String, String>?) ?? {};
-        return _sharedAxisRoute(settings, AllShapesScreen(apiHandles: apiHandles));
+        return _sharedAxisRoute(
+            settings, AllShapesScreen(apiHandles: apiHandles));
       case shapeProducts:
         final args = settings.arguments as Map<String, String>? ?? {};
         return _sharedAxisRoute(

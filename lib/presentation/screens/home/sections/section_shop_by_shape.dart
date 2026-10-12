@@ -34,24 +34,39 @@ class ShopByShapeSection extends StatelessWidget {
           title: data.title.isNotEmpty ? data.title : 'Shop by Shape',
           actionLabel: 'View All',
           onActionTap: onViewAll,
-        ).paddingSymmetric(horizontal: AppConstants.horizontalPadding)
-            .animate().fadeIn(duration: 400.ms).slideX(begin: -0.15, end: 0, duration: 400.ms, curve: Curves.easeOut),
+        )
+            .paddingSymmetric(horizontal: AppConstants.horizontalPadding)
+            .animate()
+            .fadeIn(duration: 400.ms)
+            .slideX(
+                begin: -0.15, end: 0, duration: 400.ms, curve: Curves.easeOut),
         16.height,
         SizedBox(
           height: 96,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.horizontalPadding),
             itemCount: kAllShapes.length,
             separatorBuilder: (_, __) => 20.width,
             itemBuilder: (_, i) {
               final (name, svg, fallbackHandle) = kAllShapes[i];
               final handle = apiHandles[name.toLowerCase()] ?? fallbackHandle;
-              return _ShapeTile(label: name, svgPath: svg, onTap: () => onTap(name, handle))
+              return _ShapeTile(
+                      label: name,
+                      svgPath: svg,
+                      onTap: () => onTap(name, handle))
                   .animate(delay: Duration(milliseconds: 80 + i * 50))
                   .fadeIn(duration: 300.ms)
-                  .slideY(begin: 0.3, end: 0, duration: 300.ms, curve: Curves.easeOut)
-                  .scale(begin: const Offset(0.92, 0.92), end: const Offset(1, 1), duration: 300.ms);
+                  .slideY(
+                      begin: 0.3,
+                      end: 0,
+                      duration: 300.ms,
+                      curve: Curves.easeOut)
+                  .scale(
+                      begin: const Offset(0.92, 0.92),
+                      end: const Offset(1, 1),
+                      duration: 300.ms);
             },
           ),
         ),
@@ -65,7 +80,8 @@ class _ShapeTile extends StatelessWidget {
   final String svgPath;
   final VoidCallback onTap;
 
-  const _ShapeTile({required this.label, required this.svgPath, required this.onTap});
+  const _ShapeTile(
+      {required this.label, required this.svgPath, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +93,8 @@ class _ShapeTile extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Container(
-              width: 62, height: 62,
+              width: 62,
+              height: 62,
               decoration: BoxDecoration(
                 color: AppColors.surfaceCream,
                 borderRadius: BorderRadius.circular(6),
@@ -85,14 +102,17 @@ class _ShapeTile extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               child: SvgPicture.asset(
                 svgPath,
-                colorFilter: const ColorFilter.mode(AppColors.teal, BlendMode.srcIn),
+                colorFilter:
+                    const ColorFilter.mode(AppColors.teal, BlendMode.srcIn),
               ),
             ),
             6.height,
             Text(
               label,
               style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.textSecondary, fontSize: 10, letterSpacing: 0.3),
+                  color: AppColors.textSecondary,
+                  fontSize: 10,
+                  letterSpacing: 0.3),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

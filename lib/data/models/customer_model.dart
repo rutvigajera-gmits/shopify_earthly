@@ -107,9 +107,8 @@ class CustomerAddress {
     final parts = <String>[];
     if (address1?.isNotEmpty == true) parts.add(address1!);
     if (address2?.isNotEmpty == true) parts.add(address2!);
-    final cityState = [city, province]
-        .where((s) => s?.isNotEmpty == true)
-        .join(', ');
+    final cityState =
+        [city, province].where((s) => s?.isNotEmpty == true).join(', ');
     if (cityState.isNotEmpty) parts.add(cityState);
     if (zip?.isNotEmpty == true) parts.add(zip!);
     if (country?.isNotEmpty == true) parts.add(country!);
@@ -257,8 +256,7 @@ class CustomerOrder {
       currencyCode: json['currencyCode'] as String? ?? 'INR',
       processedAt: processedAt,
       lineItems: (json['lineItems'] as List? ?? [])
-          .map((e) =>
-              OrderLineItem.fromLocalJson(e as Map<String, dynamic>))
+          .map((e) => OrderLineItem.fromLocalJson(e as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -299,8 +297,18 @@ class CustomerOrder {
 
   String get formattedDate {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${processedAt.day} ${months[processedAt.month - 1]} ${processedAt.year}';
   }

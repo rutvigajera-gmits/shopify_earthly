@@ -3,14 +3,30 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 const _kSizeRows = [
-  (6, '14.6', '45.9'), (7, '15.0', '47.1'), (8, '15.3', '48.1'),
-  (9, '15.6', '49.0'), (10, '15.9', '50.0'), (11, '16.2', '50.9'),
-  (12, '16.5', '51.8'), (13, '16.8', '52.8'), (14, '17.2', '54.0'),
-  (15, '17.5', '55.0'), (16, '17.8', '55.9'), (17, '18.1', '56.9'),
-  (18, '18.4', '57.8'), (19, '18.7', '59.1'), (20, '19.1', '60.0'),
-  (21, '19.4', '60.9'), (22, '19.7', '61.9'), (23, '20.0', '62.8'),
-  (24, '20.3', '63.8'), (25, '20.6', '64.7'), (26, '21.0', '66.0'),
-  (27, '21.3', '66.9'), (28, '21.6', '67.9'), (29, '22.0', '69.1'),
+  (6, '14.6', '45.9'),
+  (7, '15.0', '47.1'),
+  (8, '15.3', '48.1'),
+  (9, '15.6', '49.0'),
+  (10, '15.9', '50.0'),
+  (11, '16.2', '50.9'),
+  (12, '16.5', '51.8'),
+  (13, '16.8', '52.8'),
+  (14, '17.2', '54.0'),
+  (15, '17.5', '55.0'),
+  (16, '17.8', '55.9'),
+  (17, '18.1', '56.9'),
+  (18, '18.4', '57.8'),
+  (19, '18.7', '59.1'),
+  (20, '19.1', '60.0'),
+  (21, '19.4', '60.9'),
+  (22, '19.7', '61.9'),
+  (23, '20.0', '62.8'),
+  (24, '20.3', '63.8'),
+  (25, '20.6', '64.7'),
+  (26, '21.0', '66.0'),
+  (27, '21.3', '66.9'),
+  (28, '21.6', '67.9'),
+  (29, '22.0', '69.1'),
   (30, '22.3', '70.1'),
 ];
 
@@ -27,7 +43,8 @@ class SizeChartLink extends StatelessWidget {
         builder: (_) => const SizeChartSheet(),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.straighten_outlined, size: 14, color: AppColors.textSecondary),
+        const Icon(Icons.straighten_outlined,
+            size: 14, color: AppColors.textSecondary),
         const SizedBox(width: 4),
         Text('Size chart',
             style: AppTextStyles.bodySmall.copyWith(
@@ -70,7 +87,8 @@ class SizeChartSheet extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.border)),
                   alignment: Alignment.center,
-                  child: const Icon(Icons.close, size: 16, color: AppColors.textPrimary),
+                  child: const Icon(Icons.close,
+                      size: 16, color: AppColors.textPrimary),
                 ),
               ),
             ]),
@@ -105,7 +123,8 @@ class SizeChartSheet extends StatelessWidget {
                     elevation: 0,
                   ),
                   child: Text('How to Measure?',
-                      style: AppTextStyles.button.copyWith(color: Colors.white)),
+                      style:
+                          AppTextStyles.button.copyWith(color: Colors.white)),
                 ),
               ),
             ),
@@ -121,12 +140,16 @@ class _SizeTable extends StatelessWidget {
   const _SizeTable({required this.rows});
 
   static const _h = TextStyle(
-      fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF444444), height: 1.4);
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      color: Color(0xFF444444),
+      height: 1.4);
   static const _c = TextStyle(fontSize: 11, color: Color(0xFF333333));
 
   Widget _cell(String t, {bool h = false}) => Padding(
       padding: const EdgeInsets.all(6),
-      child: Text(t, style: h ? _h : _c, textAlign: TextAlign.center, maxLines: 2));
+      child: Text(t,
+          style: h ? _h : _c, textAlign: TextAlign.center, maxLines: 2));
 
   @override
   Widget build(BuildContext context) {

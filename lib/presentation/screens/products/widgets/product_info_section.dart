@@ -42,7 +42,8 @@ class ProductInfoSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(price,
-                style: AppTextStyles.priceLarge.copyWith(color: AppColors.teal)),
+                style:
+                    AppTextStyles.priceLarge.copyWith(color: AppColors.teal)),
             if (compareAt != null) ...[
               8.width,
               Text(compareAt, style: AppTextStyles.priceStrikethrough),
@@ -51,7 +52,8 @@ class ProductInfoSection extends StatelessWidget {
             GestureDetector(
               onTap: () => _showBreakup(context, price),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(
                     border: Border.all(color: AppColors.border),
                     borderRadius: BorderRadius.circular(4)),
@@ -64,7 +66,8 @@ class ProductInfoSection extends StatelessWidget {
         ),
         4.height,
         Text('MRP Incl. of all taxes',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted)),
+            style:
+                AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted)),
         10.height,
 
         // Star rating
@@ -108,10 +111,8 @@ class ProductInfoSection extends StatelessWidget {
         // Virtual Try-On
         Builder(builder: (ctx) {
           final sku = selectedVariant?.sku ?? '';
-          final customerId =
-              ctx.read<CustomerProvider>().customer?.id ?? '';
-          final slug =
-              sku.contains('-') ? sku.split('-').first : sku;
+          final customerId = ctx.read<CustomerProvider>().customer?.id ?? '';
+          final slug = sku.contains('-') ? sku.split('-').first : sku;
           final numericId = customerId.contains('/')
               ? customerId.split('/').last
               : customerId;
@@ -177,8 +178,7 @@ class ProductInfoSection extends StatelessWidget {
               ));
             },
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: AppColors.teal,
                 borderRadius: BorderRadius.circular(8),
@@ -217,8 +217,23 @@ class ProductInfoSection extends StatelessWidget {
   String? _vtryonCategory(Product p) {
     const categories = {
       'ring': ['ring', 'rings', 'engagement', 'solitaire', 'band'],
-      'necklace': ['necklace', 'necklaces', 'chain', 'choker', 'mangalsutra', 'pendant'],
-      'earring': ['earring', 'earrings', 'ear stud', 'ear studs', 'studs', 'jhumka', 'hoop'],
+      'necklace': [
+        'necklace',
+        'necklaces',
+        'chain',
+        'choker',
+        'mangalsutra',
+        'pendant'
+      ],
+      'earring': [
+        'earring',
+        'earrings',
+        'ear stud',
+        'ear studs',
+        'studs',
+        'jhumka',
+        'hoop'
+      ],
       'bracelet': ['bracelet', 'bracelets', 'bangle', 'bangles', 'cuff'],
     };
 

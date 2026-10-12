@@ -23,19 +23,25 @@ class ProductCarouselSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (data.title.isNotEmpty)
-          SectionHeader(title: data.title, actionLabel: null, onActionTap: onViewAll)
+          SectionHeader(
+                  title: data.title, actionLabel: null, onActionTap: onViewAll)
               .paddingSymmetric(horizontal: AppConstants.horizontalPadding),
         16.height,
         SizedBox(
           height: 290,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.horizontalPadding),
             itemCount: data.products.length,
-            separatorBuilder: (_, __) => const SizedBox(width: AppConstants.cardSpacing),
+            separatorBuilder: (_, __) =>
+                const SizedBox(width: AppConstants.cardSpacing),
             itemBuilder: (_, i) {
               final p = data.products[i];
-              return ProductCard(product: p.toProduct(), width: 168, onTap: () => onProductTap(p.handle));
+              return ProductCard(
+                  product: p.toProduct(),
+                  width: 168,
+                  onTap: () => onProductTap(p.handle));
             },
           ),
         ),
