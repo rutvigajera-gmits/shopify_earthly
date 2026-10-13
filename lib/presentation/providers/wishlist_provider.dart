@@ -19,6 +19,13 @@ class WishlistProvider extends BaseProvider {
     notifyListeners();
   }
 
+  Future<void> clear() async {
+    _handles.clear();
+    _products = [];
+    await WishlistService.clearAll();
+    notifyListeners();
+  }
+
   Future<void> toggle(String handle) async {
     if (_handles.contains(handle)) {
       _handles.remove(handle);

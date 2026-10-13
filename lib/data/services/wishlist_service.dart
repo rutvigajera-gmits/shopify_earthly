@@ -25,4 +25,9 @@ class WishlistService {
     list.remove(handle);
     await prefs.setStringList(_key, list);
   }
+
+  static Future<void> clearAll() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+  }
 }

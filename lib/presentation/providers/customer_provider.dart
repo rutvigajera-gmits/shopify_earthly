@@ -166,10 +166,13 @@ class CustomerProvider extends BaseProvider {
     _customer = null;
     _accessToken = null;
     _orders = [];
+    _addresses = [];
     _ordersLoaded = false;
+    _profileImagePath = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(AppStrings.customerTokenKey);
     await prefs.remove(AppStrings.kwikPassIdentityKey);
+    await prefs.remove(AppStrings.profileImageKey);
     notifyListeners();
   }
 

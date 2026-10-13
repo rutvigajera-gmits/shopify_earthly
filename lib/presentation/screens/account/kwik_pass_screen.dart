@@ -51,7 +51,10 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
     // deleteAllCookies() clears every domain (Shopify + GoKwik's own cookies).
     // Clearing only earthlyjewels.co leaves GoKwik's session intact, which
     // causes it to silently re-authenticate the user and skip the OTP form.
-    CookieManager.instance().deleteAllCookies().then((_) {
+    Future.wait([
+      CookieManager.instance().deleteAllCookies(),
+      WebStorageManager.instance().deleteAllData(),
+    ]).then((_) {
       if (mounted) setState(() => _cookiesCleared = true);
     });
   }

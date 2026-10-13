@@ -8,8 +8,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../providers/cart_provider.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/shop_provider.dart';
+import '../../providers/wishlist_provider.dart';
 import '../../common/widgets/app_header.dart';
 import 'account_webview_screen.dart';
 import 'kwik_pass_screen.dart';
@@ -267,13 +269,15 @@ class AccountScreen extends StatelessWidget {
                         icon: Icons.logout,
                         label: 'Sign Out',
                         onTap: () async {
-                          final customerProvider =
-                              context.read<CustomerProvider>();
                           final confirm = await _showSignOutSheet(context);
-                          if (confirm == true) {
-                            await customerProvider.logout();
-                            await CookieManager.instance().deleteAllCookies();
-                          }
+                          if (confirm != true || !context.mounted) return;
+                          await Future.wait([
+                            context.read<CustomerProvider>().logout(),
+                            context.read<CartProvider>().clearCart(),
+                            context.read<WishlistProvider>().clear(),
+                            CookieManager.instance().deleteAllCookies(),
+                            WebStorageManager.instance().deleteAllData(),
+                          ]);
                         },
                       )
                     else
