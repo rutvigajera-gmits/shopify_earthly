@@ -109,6 +109,9 @@ class CustomerProvider extends BaseProvider {
         AppStrings.kwikPassIdentityKey,
         jsonEncode(customer.toIdentityJson()),
       );
+      if (numericId.isNotEmpty) {
+        await prefs.setString('vtryon_shopify_user_id', numericId);
+      }
       setLoaded();
     } catch (e) {
       setError(FormatUtils.trimException(e));
@@ -124,6 +127,11 @@ class CustomerProvider extends BaseProvider {
       _ordersLoaded = false;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(AppStrings.customerTokenKey, token);
+      final gid = _customer?.id ?? '';
+      final numericId = gid.contains('/') ? gid.split('/').last : gid;
+      if (numericId.isNotEmpty) {
+        await prefs.setString('vtryon_shopify_user_id', numericId);
+      }
       setLoaded();
     } catch (e) {
       setError(FormatUtils.trimException(e));
@@ -173,6 +181,7 @@ class CustomerProvider extends BaseProvider {
     await prefs.remove(AppStrings.customerTokenKey);
     await prefs.remove(AppStrings.kwikPassIdentityKey);
     await prefs.remove(AppStrings.profileImageKey);
+    await prefs.remove('vtryon_shopify_user_id');
     notifyListeners();
   }
 

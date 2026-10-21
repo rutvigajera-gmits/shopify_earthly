@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import '../../core/utils/format_utils.dart';
 
 class ProductImage {
@@ -300,10 +299,7 @@ class Product {
             .map((t) => t.substring('vtryon:'.length).trim())
             .cast<String?>()
             .firstOrNull;
-        final resolved = fromMetafield ?? fromTag;
-        debugPrint('[VTryOn] product=${node['handle']}  '
-            'metafield=$fromMetafield  tag=$fromTag  resolved=$resolved');
-        return resolved;
+        return fromMetafield ?? fromTag;
       }(),
     );
   }

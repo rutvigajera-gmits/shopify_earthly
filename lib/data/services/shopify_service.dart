@@ -541,70 +541,150 @@ class ShopifyService {
         data['productByHandle'] as Map<String, dynamic>);
   }
 
-  // Extracts the VTryOn selectionId from the live store product page.
-  // Tries the rendered HTML and the product.js JSON endpoint.
-  Future<String?> scrapeVTryOnSelectionId(String handle) async {
-    const uuidPattern =
-        r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
-    const baseHeaders = {
+  // Fetches the Shopify numeric customer ID from /account.json using the
+  // provided session cookie header (read from InAppWebView's cookie store).
+  // Returns the numeric ID string (e.g. "31298404581597") or null on failure.
+  Future<String?> fetchCustomerIdWithCookies(String cookieHeader) async {
+    if (cookieHeader.isEmpty) return null;
+    try {
+      final res = await http.get(
+        Uri.parse('https://earthlyjewels.co/account.json'),
+        headers: {
+          'Cookie': cookieHeader,
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
+              '(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+        },
+      ).timeout(const Duration(seconds: 5));
+      debugPrint('[VTryOn] account.json status=${res.statusCode}');
+      if (res.statusCode == 200) {
+        final ct = res.headers['content-type'] ?? '';
+        if (ct.contains('json')) {
+          final data = jsonDecode(res.body) as Map<String, dynamic>?;
+          final customer = data?['customer'] as Map<String, dynamic>?;
+          final id = customer?['id']?.toString() ?? '';
+          if (id.isNotEmpty && RegExp(r'^\d{8,}$').hasMatch(id)) {
+            debugPrint('[VTryOn] account.json customerId: $id');
+            return id;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[VTryOn] account.json err: $e');
+    }
+    return null;
+  }
+
+  // Fetches VTryOn selectionId via the Shopify App Proxy endpoint the storefront
+  // uses. Tries GET (query params), POST (query params), then POST (form body)
+  // with up to three CDN URL variants: converted CDN, raw CDN, original+format.
+  // sessionCookies: Shopify session cookie header from the InAppWebView store,
+  // required for the App Proxy auth check ("Logged-in customer required").
+  Future<String?> scrapeVTryOnSelectionId(String handle,
+      {String sku = '', String imageUrl = '', String customerId = '',
+       String sessionCookies = ''}) async {
+    if (imageUrl.isEmpty) {
+      debugPrint('[VTryOn] scrape: imageUrl empty — skipping');
+      return null;
+    }
+    // Three URL variants to maximise the chance of matching VTryOn's index.
+    final convertedCdn = vtryonCdnUrl(imageUrl);
+    final rawCdn = imageUrl
+        .replaceAll('&format=jpg', '')
+        .replaceAll('?format=jpg', '');
+    final candidates = <String>{convertedCdn, rawCdn, imageUrl}
+        .where((u) => u.isNotEmpty)
+        .toList();
+
+    final baseUri =
+        Uri.parse('https://earthlyjewels.co/apps/vtryon/selection');
+    final headers = <String, String>{
+      'Referer': 'https://earthlyjewels.co/',
+      'Origin': 'https://earthlyjewels.co',
       'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
           '(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
-      'Accept':
-          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      if (sessionCookies.isNotEmpty) 'Cookie': sessionCookies,
     };
 
-    // 1. Product page HTML — try multiple patterns
-    try {
-      final uri = Uri.parse('https://${ApiConfig.shopDomain}/products/$handle');
-      final response = await http.get(uri, headers: baseHeaders);
-      if (response.statusCode == 200) {
-        final body = response.body;
-        for (final re in <RegExp>[
-          RegExp('selectionId=($uuidPattern)', caseSensitive: false),
-          RegExp('"selectionId"\\s*:\\s*"($uuidPattern)"',
-              caseSensitive: false),
-          RegExp("selectionId\\s*[=:]\\s*[\"']($uuidPattern)[\"']",
-              caseSensitive: false),
-          RegExp('data-selection-id=["\']($uuidPattern)["\']',
-              caseSensitive: false),
-          RegExp('vtryon(?:[^"\']{0,300})($uuidPattern)', caseSensitive: false),
-        ]) {
-          final m = re.firstMatch(body);
-          if (m != null) {
-            debugPrint('[VTryOn] scrape HTML match: ${m.group(1)}');
-            return m.group(1);
-          }
-        }
-        debugPrint('[VTryOn] scrape: no selectionId in HTML');
-      }
-    } catch (e) {
-      debugPrint('[VTryOn] scrape HTML error: $e');
+    String? extractSid(Map<String, dynamic> data) {
+      final sid = data['selectionId'] ?? data['selection_id'] ??
+          (data['selection'] as Map?)?['id'] ??
+          (data['selection'] as Map?)?['selectionId'] ??
+          (data['data'] as Map?)?['selectionId'] ??
+          (data['data'] as Map?)?['id'];
+      if (sid == null) return null;
+      final s = sid.toString();
+      return s.isNotEmpty ? s : null;
     }
 
-    // 2. product.js JSON — only if VTryOn data appears in response
-    try {
-      final uri =
-          Uri.parse('https://${ApiConfig.shopDomain}/products/$handle.js');
-      final response = await http
-          .get(uri, headers: {...baseHeaders, 'Accept': 'application/json'});
-      if (response.statusCode == 200) {
-        final body = response.body;
-        if (body.toLowerCase().contains('vtryon') ||
-            body.toLowerCase().contains('selection_id') ||
-            body.toLowerCase().contains('selectionid')) {
-          final m = RegExp(uuidPattern, caseSensitive: false).firstMatch(body);
-          if (m != null) {
-            debugPrint('[VTryOn] scrape product.js match: ${m.group(0)}');
-            return m.group(0);
-          }
+    Future<String?> tryParse(http.Response res, String label) async {
+      debugPrint('[VTryOn] scrape $label: status=${res.statusCode} body=${res.body}');
+      if (res.statusCode != 200) return null;
+      try {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        // Accept ok:true, success:true, or any response that has a selectionId.
+        final ok = data['ok'] == true || data['success'] == true ||
+            data['status'] == 'ok';
+        final sid = extractSid(data);
+        if (sid != null && (ok || data.containsKey('selectionId') || data.containsKey('selection'))) {
+          return sid;
         }
-        debugPrint('[VTryOn] scrape: no VTryOn data in product.js');
-      }
-    } catch (e) {
-      debugPrint('[VTryOn] scrape product.js error: $e');
+      } catch (_) {}
+      return null;
     }
 
+    for (final cdn in candidates) {
+      debugPrint('[VTryOn] scrape: trying cdn=$cdn');
+      final params = <String, String>{
+        'cdn': cdn,
+        'shop': VTryOnConfig.shopDomain,
+        'path_prefix': '/apps/vtryon',
+        if (customerId.isNotEmpty) 'logged_in_customer_id': customerId,
+      };
+      final uriQ = baseUri.replace(queryParameters: params);
+      try {
+        // 1. GET with query params
+        final getRes = await http.get(uriQ, headers: headers)
+            .timeout(const Duration(seconds: 8));
+        final getSid = await tryParse(getRes, 'GET');
+        if (getSid != null) return getSid;
+
+        // 2. POST with query params
+        final postRes = await http.post(uriQ, headers: headers)
+            .timeout(const Duration(seconds: 8));
+        final postSid = await tryParse(postRes, 'POST-Q');
+        if (postSid != null) return postSid;
+
+        // 3. POST with form body (matches VTryOn widget's actual request format)
+        final bodyHeaders = Map<String, String>.from(headers)
+          ..['Content-Type'] = 'application/x-www-form-urlencoded';
+        final bodyStr = params.entries
+            .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+            .join('&');
+        final bodyRes = await http.post(baseUri, headers: bodyHeaders, body: bodyStr)
+            .timeout(const Duration(seconds: 8));
+        final bodySid = await tryParse(bodyRes, 'POST-BODY');
+        if (bodySid != null) return bodySid;
+      } catch (e) {
+        debugPrint('[VTryOn] scrape error for cdn=$cdn: $e');
+      }
+    }
     return null;
+  }
+
+  // Converts a cdn.shopify.com image URL to the store's own CDN domain format
+  // that VTryOn's system indexed when the app was installed on the storefront.
+  static String vtryonCdnUrl(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null || !uri.host.contains('cdn.shopify.com')) return url;
+    final segments = uri.pathSegments;
+    final idx = segments.lastIndexOf('files');
+    if (idx < 0 || idx + 1 >= segments.length) return url;
+    final filename = segments.sublist(idx + 1).join('/');
+    final v = uri.queryParameters['v'];
+    return 'https://earthlyjewels.co/cdn/shop/files/$filename'
+        '${v != null ? '?v=$v' : ''}';
   }
 
   // ─── Collections ──────────────────────────────────────────────────────────

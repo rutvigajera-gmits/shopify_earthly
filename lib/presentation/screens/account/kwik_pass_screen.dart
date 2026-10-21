@@ -60,8 +60,11 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
   }
 
   // Tries five strategies in order; last resort sends a diagnostic dump.
+  // getAnalyticsId() supplements the numeric Shopify id in all strategies —
+  // ShopifyAnalytics.meta.page.customerId is injected by Shopify on every
+  // authenticated page and is always the numeric customer id, never a UUID.
   // 1. window.Shopify.customer  — theme global, no network needed
-  // 2. GoKwik / KwikPass global — post-OTP JS state
+  // 2. GoKwik / KwikPass global — post-OTP JS state (id is GoKwik UUID → supplement)
   // 3. localStorage scan        — GoKwik caches identity here
   // 4. /account.json fetch      — works on stores that honour Accept:json
   // 5. DOM email extraction     — customer email is always rendered on /account
@@ -70,32 +73,51 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
   setTimeout(function() {
     function send(d) { window.flutter_inappwebview.callHandler('KwikPassChannel', d); }
 
-    // 1. window.Shopify.customer
+    // Returns the numeric Shopify customer ID from Shopify's analytics globals.
+    // ShopifyAnalytics.meta.page.customerId is present on every authenticated
+    // Shopify page — always the numeric id (e.g. 31298404581597), never a UUID.
+    function getAnalyticsId() {
+      try {
+        var c = (window.ShopifyAnalytics && window.ShopifyAnalytics.meta
+                  && window.ShopifyAnalytics.meta.page
+                  && window.ShopifyAnalytics.meta.page.customerId)
+             || (window.meta && window.meta.page && window.meta.page.customerId)
+             || (window.__st && window.__st.v && window.__st.v.customerId);
+        if (c && /^\d{8,}$/.test(String(c))) return String(c);
+      } catch(_) {}
+      return '';
+    }
+
+    // 1. window.Shopify.customer — only shortcut when id is present;
+    //    if id is missing, fall through to /account.json to get it.
     try {
       var sc = window.Shopify && window.Shopify.customer;
-      if (sc && (sc.email || sc.id)) {
+      if (sc && sc.id) {
         send({ email:sc.email||'', firstName:sc.first_name||'',
-               lastName:sc.last_name||'', phone:sc.phone||'', id:String(sc.id||'') });
+               lastName:sc.last_name||'', phone:sc.phone||'', id:String(sc.id) });
         return;
       }
     } catch(_) {}
 
-    // 2. GoKwik / KwikPass global objects
+    // 2. GoKwik / KwikPass global objects — GoKwik's id is a UUID, not the
+    //    Shopify numeric customer id; supplement from analytics globals.
     try {
       var gk = window.GoKwik || window.gokwik || window.KwikPass
                || window.kwikpass || window._gokwik || window.GK;
       if (gk) {
         var cu = gk.customer || gk.customerData || gk.userData || gk.user;
-        if (cu && (cu.email || cu.phone)) {
+        var gkId = cu ? String(cu.id || cu.customer_id || '') : '';
+        if (cu && gkId) {
+          var useId2 = /^\d{8,}$/.test(gkId) ? gkId : getAnalyticsId();
           send({ email:cu.email||'', firstName:cu.first_name||cu.firstName||'',
                  lastName:cu.last_name||cu.lastName||'', phone:cu.phone||'',
-                 id:String(cu.id||cu.customer_id||'') });
+                 id:useId2 });
           return;
         }
       }
     } catch(_) {}
 
-    // 3. localStorage — GoKwik / Shopify key patterns
+    // 3. localStorage — supplement numeric id from analytics if missing
     var lsKeys = ['kwikpass_customer','gk_customer_data','gokwik_customer',
                   'kwikpass_identity','kp_user_info','shopify_customer',
                   'customer_identity','kwik_customer','kp_customer'];
@@ -105,10 +127,12 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
         if (!raw) continue;
         try {
           var p = JSON.parse(raw);
-          if (p && (p.email || p.phone)) {
+          var lsId = p ? String(p.id || p.customer_id || '') : '';
+          if (p && lsId) {
+            var useId3 = /^\d{8,}$/.test(lsId) ? lsId : getAnalyticsId();
             send({ email:p.email||'', firstName:p.first_name||p.firstName||'',
                    lastName:p.last_name||p.lastName||'', phone:p.phone||'',
-                   id:String(p.id||p.customer_id||'') });
+                   id:useId3 });
             return;
           }
         } catch(_) {}
@@ -117,20 +141,27 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
 
     // 4. /account.json with JSON content-negotiation headers
     fetch('/account.json', {
+      credentials: 'include',
       headers: { 'Accept':'application/json', 'X-Requested-With':'XMLHttpRequest' }
     })
     .then(function(r) {
       var ct = r.headers.get('content-type') || '';
+      console.log('[KwikPass:4] status='+r.status+' ct='+ct);
       if (!ct.includes('json')) throw new Error('html:' + r.status);
       return r.json();
     })
     .then(function(data) {
       var c = data.customer || {};
+      var id = String(c.id || '') || getAnalyticsId();
+      console.log('[KwikPass:4] id='+id+' email='+c.email);
       send({ email:c.email||'', firstName:c.first_name||'',
-             lastName:c.last_name||'', phone:c.phone||'', id:String(c.id||'') });
+             lastName:c.last_name||'', phone:c.phone||'', id:id });
     })
     .catch(function(fetchErr) {
-      // 5. DOM extraction — email is always rendered on the /account page
+      console.log('[KwikPass:4] err: '+fetchErr);
+      // 5. DOM extraction — email is always rendered on the /account page.
+      // Supplement id from analytics globals so we always capture numeric id.
+      var analyticsId = getAnalyticsId();
       try {
         var skip = ['earthlyjewels','shopify','gokwik','kwikpass','support','noreply'];
         // a) mailto links — iterate all, skip store/platform addresses
@@ -140,7 +171,7 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
           if (!raw.includes('@')) continue;
           var ml = raw.toLowerCase(), bad = false;
           for (var s = 0; s < skip.length; s++) { if (ml.includes(skip[s])) { bad=true; break; } }
-          if (!bad) { send({ email:raw, firstName:'', lastName:'', phone:'', id:'' }); return; }
+          if (!bad) { send({ email:raw, firstName:'', lastName:'', phone:'', id:analyticsId }); return; }
         }
         // b) regex scan of visible page text; skip store / platform addresses
         var text  = document.body.innerText || '';
@@ -148,7 +179,7 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
         for (var i = 0; i < found.length; i++) {
           var m = found[i].toLowerCase(), bad = false;
           for (var j = 0; j < skip.length; j++) { if (m.includes(skip[j])) { bad=true; break; } }
-          if (!bad) { send({ email:found[i], firstName:'', lastName:'', phone:'', id:'' }); return; }
+          if (!bad) { send({ email:found[i], firstName:'', lastName:'', phone:'', id:analyticsId }); return; }
         }
       } catch(_) {}
 
@@ -351,7 +382,7 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
     final phone = payload['phone'] as String? ?? '';
     final id = payload['id'] as String? ?? '';
 
-    debugPrint('[KwikPass] Identity received — email: $email  phone: $phone');
+    debugPrint('[KwikPass] Identity received — email: $email  phone: $phone  id: $id');
 
     if (email.isEmpty && phone.isEmpty) {
       debugPrint('[KwikPass] No identity data in account.json response.');
