@@ -3,6 +3,13 @@ allprojects {
         google()
         mavenCentral()
     }
+    // play-services-tapandpay is only in Google's internal SDK distribution
+    // (not on any public Maven repo). Exclude it globally — stripe_android's
+    // push provisioning source still compiles; only the NFC card-wallet runtime
+    // is removed, which this app does not use.
+    configurations.all {
+        exclude(group = "com.google.android.gms", module = "play-services-tapandpay")
+    }
 }
 
 val newBuildDir: Directory =

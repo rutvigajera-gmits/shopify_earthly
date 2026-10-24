@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -197,9 +198,6 @@ class ProductInfoSection extends StatelessWidget {
               final originalImageUrl = product.primaryImage?.url ?? '';
               final cdnUrl = ShopifyService.vtryonCdnUrl(originalImageUrl);
               debugPrint('[VTryOn] imageUrl=$originalImageUrl cdnUrl=$cdnUrl');
-              final rawCdnUrl = originalImageUrl
-                  .replaceAll('&format=jpg', '')
-                  .replaceAll('?format=jpg', '');
 
               // Ensure OS-level camera permission before opening WebView.
               final status = await Permission.camera.request();
@@ -208,34 +206,34 @@ class ProductInfoSection extends StatelessWidget {
                 return;
               }
 
-              // Fire both background fetches — neither blocks the UI.
-              // Logs from scrapeVTryOnSelectionId and headless JS will appear
-              // in the debug console so we can diagnose App Proxy responses.
-              if (selectionId.isEmpty || numericId.isEmpty) {
-                ShopifyService.instance
+              // Always re-fetch the selectionId when we have a user ID so the
+              // POST includes product_type — required for VTryOn to set
+              // photoGroup="HAND" for rings. Without it, try-on shows "not
+              // supported". VTryOn returns fast (cached) if the CDN URL is known.
+              if (numericId.isNotEmpty) {
+                final sid = await ShopifyService.instance
                     .scrapeVTryOnSelectionId(
                       product.handle,
+                      sku: sku,
                       imageUrl: originalImageUrl,
                       customerId: numericId,
-                      sessionCookies: cookieHeader,
+                      productTitle: product.title,
+                      productType: product.productType ?? '',
                     )
-                    .then((sid) {
-                  if (sid != null && sid.isNotEmpty) {
-                    debugPrint('[VTryOn] bg HTTP scrape found: $sid');
-                  }
-                }).catchError((_) {});
-
-                _fetchSelectionIdHeadless(
-                        product.handle, cdnUrl, product.handle,
-                        originalImageUrl: originalImageUrl,
-                        rawCdnUrl: rawCdnUrl)
-                    .catchError((_) => <String, String?>{});
+                    .catchError((_) => null as String?);
+                if (sid != null && sid.isNotEmpty) {
+                  selectionId = sid;
+                  await prefs.setString(
+                      SimpleWebScreen.prefKey(product.handle), sid);
+                  debugPrint('[VTryOn] scrape found: $sid');
+                }
               }
 
               debugPrint(
                   '[VTryOn] selectionId=$selectionId numericId=$numericId');
-              final category = _vtryonCategory(product, slug: slug);
-
+              // Confirmed URL format from live site DevTools inspection:
+              // ?selectionId=UUID&variantSku=SKU&variantSlug=SLUG&variantCarat=CARAT
+              //   &shop=y7srws-f4.myshopify.com&user_id=NUMERIC_ID
               final params = <String, String>{
                 'shop': VTryOnConfig.shopDomain,
                 if (selectionId.isNotEmpty) 'selectionId': selectionId,
@@ -243,7 +241,6 @@ class ProductInfoSection extends StatelessWidget {
                 if (slug.isNotEmpty) 'variantSlug': slug,
                 if (carat.isNotEmpty) 'variantCarat': carat,
                 if (numericId.isNotEmpty) 'user_id': numericId,
-                if (category != null) 'type': category,
               };
               final tryOnUrl = Uri.parse(VTryOnConfig.baseUrl)
                   .replace(queryParameters: params)
@@ -256,6 +253,7 @@ class ProductInfoSection extends StatelessWidget {
                   title: 'Virtual Try-On',
                   url: tryOnUrl,
                   vtryonProductHandle: product.handle,
+                  vtryonCdnUrl: cdnUrl,
                 ),
               ));
             },
@@ -294,14 +292,7 @@ class ProductInfoSection extends StatelessWidget {
     );
   }
 
-  // Fetches selectionId and userId via a hidden WebView.
-  //
-  // Loads the product page (not /account) to avoid GoKwik external redirects.
-  // The VTryOn App Proxy (/apps/vtryon/selection) is same-origin and works
-  // from any earthlyjewels.co page. userId is fetched via /account.json which
-  // works from any page when valid Shopify session cookies are present.
-  //
-  // External redirects (e.g. GoKwik login) are skipped via the domain guard.
+  // ignore: unused_element
   static Future<Map<String, String?>> _fetchSelectionIdHeadless(
       String handle, String cdnUrl, String prefHandle,
       {String originalImageUrl = '', String rawCdnUrl = ''}) async {
@@ -329,6 +320,71 @@ class ProductInfoSection extends StatelessWidget {
         userAgent: 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
             '(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
       ),
+      // Intercepts the fetch/XHR call that vtryon-storefront.js makes to
+      // https://vtryon.earthlyjewels.co/api/tryon/selection at page load to
+      // resolve the product's selectionId. Injected before any script runs so
+      // the patch is in place before the VTryOn embed script executes.
+      initialUserScripts: UnmodifiableListView([
+        UserScript(
+          injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
+          source: r'''
+(function() {
+  function extractSid(d) {
+    if (!d) return null;
+    return d.selectionId || d.selection_id ||
+      (d.selection && (d.selection.id || d.selection.selectionId)) ||
+      (d.data && (d.data.selectionId || d.data.id)) || null;
+  }
+  function isVtryonApi(url) {
+    return typeof url === 'string' && url.includes('vtryon') && url.includes('selection');
+  }
+  // Patch fetch
+  try {
+    var _f = window.fetch;
+    window.fetch = function() {
+      var args = arguments;
+      var url = String(args[0] && args[0].url ? args[0].url : args[0] || '');
+      var p = _f.apply(this, args);
+      if (isVtryonApi(url)) {
+        p.then(function(r) { return r.clone().json(); })
+         .then(function(d) {
+           var sid = extractSid(d);
+           if (sid) {
+             console.log('[VTryOn] headless intercept selectionId: ' + sid);
+             window.flutter_inappwebview.callHandler('VTryOnHeadless', String(sid));
+           }
+         }).catch(function() {});
+      }
+      return p;
+    };
+  } catch(_) {}
+  // Patch XHR
+  try {
+    var _XHR = window.XMLHttpRequest;
+    window.XMLHttpRequest = function() {
+      var xhr = new _XHR();
+      var _open = xhr.open.bind(xhr);
+      var _url = '';
+      xhr.open = function(m, u) { _url = String(u || ''); return _open.apply(xhr, arguments); };
+      xhr.addEventListener('load', function() {
+        try {
+          if (isVtryonApi(_url)) {
+            var sid = extractSid(JSON.parse(xhr.responseText));
+            if (sid) {
+              console.log('[VTryOn] headless XHR selectionId: ' + sid);
+              window.flutter_inappwebview.callHandler('VTryOnHeadless', String(sid));
+            }
+          }
+        } catch(_) {}
+      });
+      return xhr;
+    };
+    window.XMLHttpRequest.prototype = _XHR.prototype;
+  } catch(_) {}
+})();
+''',
+        ),
+      ]),
       onWebViewCreated: (c) {
         c.addJavaScriptHandler(
           handlerName: 'VTryOnHeadless',
@@ -454,8 +510,8 @@ class ProductInfoSection extends StatelessWidget {
             }
             function tryProxy(cdnParam, label) {
               var qStr = 'cdn=' + encodeURIComponent(cdnParam)
-                + '&shop=${VTryOnConfig.shopDomain}&path_prefix=%2Fapps%2Fvtryon';
-              var urlQ = '/apps/vtryon/selection?' + qStr;
+                + '&shop=${VTryOnConfig.shopDomain}';
+              var urlQ = '${VTryOnConfig.tryOnApiUrl}?' + qStr;
               console.log('[VTryOn] '+label+' GET cdn='+cdnParam);
               fetch(urlQ, {credentials:'include'})
                 .then(function(r){
@@ -488,7 +544,7 @@ class ProductInfoSection extends StatelessWidget {
                     })
                     .catch(function(e2){
                       console.log('[VTryOn] '+label+' POST err='+e2+' -> POSTBODY');
-                      fetch('/apps/vtryon/selection',{
+                      fetch('${VTryOnConfig.tryOnApiUrl}',{
                         method:'POST',credentials:'include',
                         headers:{'Content-Type':'application/x-www-form-urlencoded'},
                         body:qStr
@@ -666,63 +722,6 @@ class ProductInfoSection extends StatelessWidget {
       }
     }
     return '';
-  }
-
-  // Maps Shopify productType / tags / handle / SKU slug to a VTryOn category.
-  // Priority: productType → tags → handle keywords → SKU slug prefix.
-  String? _vtryonCategory(Product p, {String slug = ''}) {
-    const categories = {
-      'ring': ['ring', 'rings', 'engagement', 'solitaire', 'band'],
-      'necklace': [
-        'necklace',
-        'necklaces',
-        'chain',
-        'choker',
-        'mangalsutra',
-        'pendant'
-      ],
-      'earring': [
-        'earring',
-        'earrings',
-        'ear stud',
-        'ear studs',
-        'studs',
-        'jhumka',
-        'hoop'
-      ],
-      'bracelet': ['bracelet', 'bracelets', 'bangle', 'bangles', 'cuff'],
-    };
-
-    String? match(String text) {
-      final lower = text.toLowerCase();
-      for (final entry in categories.entries) {
-        if (entry.value.any((kw) => lower.contains(kw))) return entry.key;
-      }
-      return null;
-    }
-
-    if (p.productType != null && p.productType!.isNotEmpty) {
-      final r = match(p.productType!);
-      if (r != null) return r;
-    }
-    for (final tag in p.tags) {
-      final r = match(tag);
-      if (r != null) return r;
-    }
-    final fromHandle = match(p.handle);
-    if (fromHandle != null) return fromHandle;
-
-    // Last resort: infer from the first 2 chars of the SKU slug (e.g. RG → ring).
-    if (slug.length >= 2) {
-      const prefixMap = {
-        'RG': 'ring', 'RI': 'ring',
-        'NL': 'necklace', 'NK': 'necklace', 'NC': 'necklace', 'PE': 'necklace',
-        'ER': 'earring', 'EA': 'earring', 'ES': 'earring',
-        'BR': 'bracelet', 'BA': 'bracelet', 'BN': 'bracelet',
-      };
-      return prefixMap[slug.substring(0, 2).toUpperCase()];
-    }
-    return null;
   }
 
   void _showBreakup(BuildContext context, String total) {

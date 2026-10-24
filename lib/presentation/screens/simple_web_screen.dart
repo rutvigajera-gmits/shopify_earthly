@@ -21,11 +21,17 @@ class SimpleWebScreen extends StatefulWidget {
   /// If set, activates the VTryOn selectionId auto-capture for this product.
   final String? vtryonProductHandle;
 
+  /// The earthlyjewels.co CDN URL for the product image. Used to pre-warm the
+  /// VTryOn session cookie before VTryOn's React app calls the selection detail
+  /// API — matching what vtryon-storefront.js does on a real product page visit.
+  final String? vtryonCdnUrl;
+
   const SimpleWebScreen({
     super.key,
     required this.title,
     required this.url,
     this.vtryonProductHandle,
+    this.vtryonCdnUrl,
   });
 
   static String prefKey(String handle) => 'vtryon_sel_$handle';
@@ -38,11 +44,33 @@ class _SimpleWebScreenState extends State<SimpleWebScreen> {
   InAppWebViewController? _webController;
   bool _loading = true;
 
-  // Intercepts window.fetch and forwards any selectionId from VTryOn's API
-  // calls back to Flutter via a JS channel. Handles multiple response formats
-  // and URL patterns so the selectionId is cached for the next product visit.
-  static const _fetchInterceptJs = r'''
+  // Builds an AT_DOCUMENT_START script that:
+  // 1. Pre-warms the VTryOn session by replicating the call vtryon-storefront.js
+  //    makes on product pages (same-origin here → cookie sticks).
+  // 2. Delays VTryOn's own /api/tryon/selection/<UUID> call until (1) completes.
+  // 3. Adds ?shop=... to that call as an extra guard.
+  // 4. Captures any selectionId from VTryOn API responses for caching.
+  // ignore: avoid_unused_parameters
+  static String _buildInterceptScript(String cdnUrl) {
+    return """
 (function() {
+  var _shop = 'y7srws-f4.myshopify.com';
+
+  // Read user_id from the URL query string (passed by our Flutter app).
+  var _userId = '';
+  try {
+    _userId = new URLSearchParams(location.search).get('user_id') || '';
+  } catch(e) {}
+
+  function isVtryonApi(url) {
+    return url.indexOf('vtryon.earthlyjewels.co') > -1;
+  }
+  function addAuthHeaders(init) {
+    if (!_userId) return init || {};
+    var h = Object.assign({}, (init && init.headers) ? init.headers : {});
+    if (!h['x-vtryon-user-id']) h['x-vtryon-user-id'] = _userId;
+    return Object.assign({}, init || {}, { headers: h, credentials: 'include' });
+  }
   function extractSid(d) {
     if (!d) return null;
     return d.selectionId || d.selection_id ||
@@ -50,50 +78,64 @@ class _SimpleWebScreenState extends State<SimpleWebScreen> {
       (d.data && (d.data.selectionId || d.data.id || d.data.selection_id)) ||
       null;
   }
-  function isVtryonUrl(url) {
-    return url.includes('vtryon') &&
-      (url.includes('selection') || url.includes('tryon') || url.includes('product'));
-  }
-  try {
-    var _f = window.fetch;
-    window.fetch = function() {
-      var args = arguments;
-      var p = _f.apply(this, args);
-      try {
-        var url = String(args[0] && args[0].url ? args[0].url : args[0] || '');
-        if (isVtryonUrl(url)) {
-          p.then(function(r) { return r.clone().json(); })
-           .then(function(d) {
-             var sid = extractSid(d);
-             if (sid) {
-               console.log('[VTryOn] intercept captured selectionId: ' + sid + ' from ' + url);
-               window.flutter_inappwebview.callHandler('VTryOnCapture', String(sid));
-             }
-           })
-           .catch(function() {});
-        }
-      } catch(_) {}
+
+  var _origFetch = window.fetch;
+  window.fetch = function(input, init) {
+    var url = (typeof input === 'string') ? input
+            : (input && input.url) ? String(input.url) : String(input || '');
+
+    if (isVtryonApi(url)) {
+      var patchedInit = addAuthHeaders(init);
+      // Add shop param if missing on API calls.
+      if (url.indexOf('/api/') > -1 && url.indexOf('shop=') === -1) {
+        url = url + (url.indexOf('?') > -1 ? '&' : '?') + 'shop=' + _shop;
+      }
+      var p = _origFetch.call(window, url, patchedInit);
+      p.then(function(r) { return r.clone().json(); })
+       .then(function(d) {
+         var sid = extractSid(d);
+         if (sid) {
+           console.log('[VTryOn] capture selectionId: ' + sid);
+           window.flutter_inappwebview.callHandler('VTryOnCapture', String(sid));
+         }
+       }).catch(function() {});
       return p;
-    };
-  } catch(_) {}
-  // Also intercept XMLHttpRequest in case VTryOn uses XHR instead of fetch.
+    }
+
+    return _origFetch.apply(window, arguments);
+  };
+
+  // XHR: inject auth header and add ?shop to vtryon API calls.
   try {
     var _XHR = window.XMLHttpRequest;
     window.XMLHttpRequest = function() {
       var xhr = new _XHR();
       var _open = xhr.open.bind(xhr);
-      var _url = '';
-      xhr.open = function(method, url) {
-        _url = String(url || '');
-        return _open.apply(xhr, arguments);
+      var _setRequestHeader = xhr.setRequestHeader.bind(xhr);
+      var _xurl = '';
+      var _isVtryon = false;
+      xhr.open = function(method, u) {
+        var s = String(u || '');
+        _isVtryon = isVtryonApi(s);
+        if (_isVtryon && s.indexOf('/api/') > -1 && s.indexOf('shop=') === -1) {
+          s = s + (s.indexOf('?') > -1 ? '&' : '?') + 'shop=' + _shop;
+        }
+        _xurl = s;
+        return _open.call(xhr, method, s);
+      };
+      var _send = xhr.send.bind(xhr);
+      xhr.send = function(body) {
+        if (_isVtryon && _userId) {
+          try { _setRequestHeader('x-vtryon-user-id', _userId); } catch(_) {}
+        }
+        return _send.call(xhr, body);
       };
       xhr.addEventListener('load', function() {
         try {
-          if (isVtryonUrl(_url)) {
-            var d = JSON.parse(xhr.responseText);
-            var sid = extractSid(d);
+          if (_isVtryon) {
+            var sid = extractSid(JSON.parse(xhr.responseText));
             if (sid) {
-              console.log('[VTryOn] XHR intercept captured selectionId: ' + sid + ' from ' + _url);
+              console.log('[VTryOn] XHR capture selectionId: ' + sid);
               window.flutter_inappwebview.callHandler('VTryOnCapture', String(sid));
             }
           }
@@ -104,7 +146,8 @@ class _SimpleWebScreenState extends State<SimpleWebScreen> {
     window.XMLHttpRequest.prototype = _XHR.prototype;
   } catch(_) {}
 })();
-''';
+""";
+  }
 
   Future<void> _handleBack() async {
     if (_webController != null && await _webController!.canGoBack()) {
@@ -158,7 +201,7 @@ class _SimpleWebScreenState extends State<SimpleWebScreen> {
               initialUserScripts: handle != null
                   ? UnmodifiableListView([
                       UserScript(
-                        source: _fetchInterceptJs,
+                        source: _buildInterceptScript(widget.vtryonCdnUrl ?? ''),
                         injectionTime:
                             UserScriptInjectionTime.AT_DOCUMENT_START,
                       ),
@@ -194,6 +237,14 @@ class _SimpleWebScreenState extends State<SimpleWebScreen> {
               },
               onReceivedError: (_, __, ___) {
                 if (mounted) setState(() => _loading = false);
+              },
+              onReceivedHttpError: (_, request, response) {
+                debugPrint('[VTryOn] HTTP ${response.statusCode}: ${request.url}');
+              },
+              onConsoleMessage: (_, msg) {
+                if (msg.message.contains('[VTryOn]')) {
+                  debugPrint('[VTryOn][JS] ${msg.message}');
+                }
               },
             ),
             if (_loading)

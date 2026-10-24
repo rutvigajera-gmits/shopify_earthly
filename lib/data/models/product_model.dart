@@ -291,15 +291,18 @@ class Product {
       productType: node['productType'] as String?,
       // Priority: any metafield alias → product tag (vtryon:UUID) → null
       vtryonSelectionId: () {
-        final fromMetafield = (node['vtryonId'] as Map?)?['value'] as String? ??
-            (node['vtryonId2'] as Map?)?['value'] as String? ??
-            (node['vtryonId3'] as Map?)?['value'] as String?;
-        final fromTag = tags
+        for (final key in [
+          'vtryonId', 'vtryonId2', 'vtryonId3',
+          'vtryonId4', 'vtryonId5', 'vtryonId6', 'vtryonId7',
+        ]) {
+          final v = (node[key] as Map?)?['value'] as String?;
+          if (v != null && v.isNotEmpty) return v;
+        }
+        return tags
             .where((t) => t.toLowerCase().startsWith('vtryon:'))
             .map((t) => t.substring('vtryon:'.length).trim())
             .cast<String?>()
             .firstOrNull;
-        return fromMetafield ?? fromTag;
       }(),
     );
   }

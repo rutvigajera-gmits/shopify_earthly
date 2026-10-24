@@ -533,6 +533,10 @@ class ShopifyService {
           vtryonId: metafield(namespace: "custom", key: "vtryon_selection_id") { value }
           vtryonId2: metafield(namespace: "vtryon", key: "selection_id") { value }
           vtryonId3: metafield(namespace: "vtryon", key: "selectionId") { value }
+          vtryonId4: metafield(namespace: "custom", key: "selection_id") { value }
+          vtryonId5: metafield(namespace: "custom", key: "selectionId") { value }
+          vtryonId6: metafield(namespace: "custom", key: "vtryon_id") { value }
+          vtryonId7: metafield(namespace: "custom", key: "tryon_id") { value }
         }
       }
     ''');
@@ -576,99 +580,59 @@ class ShopifyService {
     return null;
   }
 
-  // Fetches VTryOn selectionId via the Shopify App Proxy endpoint the storefront
-  // uses. Tries GET (query params), POST (query params), then POST (form body)
-  // with up to three CDN URL variants: converted CDN, raw CDN, original+format.
-  // sessionCookies: Shopify session cookie header from the InAppWebView store,
-  // required for the App Proxy auth check ("Logged-in customer required").
+  // POSTs to VTryOn's selection API with the authenticated payload format that
+  // vtryon-storefront.js uses. Auth is via the x-vtryon-user-id header (Shopify
+  // customer numeric ID). Returns the selectionId for the product, or null on
+  // failure. productType must be set (e.g. "Rings") for VTryOn to classify the
+  // jewelry type correctly — without it, photoGroup stays null and try-on fails.
   Future<String?> scrapeVTryOnSelectionId(String handle,
-      {String sku = '', String imageUrl = '', String customerId = '',
-       String sessionCookies = ''}) async {
-    if (imageUrl.isEmpty) {
-      debugPrint('[VTryOn] scrape: imageUrl empty — skipping');
+      {String sku = '',
+      String imageUrl = '',
+      String customerId = '',
+      String sessionCookies = '',
+      String productTitle = '',
+      String productType = ''}) async {
+    if (imageUrl.isEmpty || customerId.isEmpty) {
+      debugPrint('[VTryOn] scrape: imageUrl or customerId empty — skipping');
       return null;
     }
-    // Three URL variants to maximise the chance of matching VTryOn's index.
-    final convertedCdn = vtryonCdnUrl(imageUrl);
-    final rawCdn = imageUrl
-        .replaceAll('&format=jpg', '')
-        .replaceAll('?format=jpg', '');
-    final candidates = <String>{convertedCdn, rawCdn, imageUrl}
-        .where((u) => u.isNotEmpty)
-        .toList();
-
-    final baseUri =
-        Uri.parse('https://earthlyjewels.co/apps/vtryon/selection');
+    final cdnUrl = vtryonCdnUrl(imageUrl);
     final headers = <String, String>{
-      'Referer': 'https://earthlyjewels.co/',
+      'Content-Type': 'application/json',
+      'x-vtryon-user-id': customerId,
       'Origin': 'https://earthlyjewels.co',
-      'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
-          '(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
-      if (sessionCookies.isNotEmpty) 'Cookie': sessionCookies,
+      'Referer': 'https://earthlyjewels.co/',
     };
-
-    String? extractSid(Map<String, dynamic> data) {
-      final sid = data['selectionId'] ?? data['selection_id'] ??
-          (data['selection'] as Map?)?['id'] ??
-          (data['selection'] as Map?)?['selectionId'] ??
-          (data['data'] as Map?)?['selectionId'] ??
-          (data['data'] as Map?)?['id'];
-      if (sid == null) return null;
-      final s = sid.toString();
-      return s.isNotEmpty ? s : null;
-    }
-
-    Future<String?> tryParse(http.Response res, String label) async {
-      debugPrint('[VTryOn] scrape $label: status=${res.statusCode} body=${res.body}');
-      if (res.statusCode != 200) return null;
-      try {
-        final data = jsonDecode(res.body) as Map<String, dynamic>;
-        // Accept ok:true, success:true, or any response that has a selectionId.
-        final ok = data['ok'] == true || data['success'] == true ||
-            data['status'] == 'ok';
-        final sid = extractSid(data);
-        if (sid != null && (ok || data.containsKey('selectionId') || data.containsKey('selection'))) {
-          return sid;
-        }
-      } catch (_) {}
-      return null;
-    }
-
-    for (final cdn in candidates) {
-      debugPrint('[VTryOn] scrape: trying cdn=$cdn');
-      final params = <String, String>{
-        'cdn': cdn,
+    final body = jsonEncode({
+      'payload': {
+        'product': {
+          'handle': handle,
+          if (productTitle.isNotEmpty) 'title': productTitle,
+          if (productType.isNotEmpty) 'product_type': productType,
+          'images': [
+            {'url': cdnUrl}
+          ],
+        },
+        if (sku.isNotEmpty) 'variant': {'sku': sku},
+      },
+      'user': {
+        'user_id': customerId,
         'shop': VTryOnConfig.shopDomain,
-        'path_prefix': '/apps/vtryon',
-        if (customerId.isNotEmpty) 'logged_in_customer_id': customerId,
-      };
-      final uriQ = baseUri.replace(queryParameters: params);
-      try {
-        // 1. GET with query params
-        final getRes = await http.get(uriQ, headers: headers)
-            .timeout(const Duration(seconds: 8));
-        final getSid = await tryParse(getRes, 'GET');
-        if (getSid != null) return getSid;
-
-        // 2. POST with query params
-        final postRes = await http.post(uriQ, headers: headers)
-            .timeout(const Duration(seconds: 8));
-        final postSid = await tryParse(postRes, 'POST-Q');
-        if (postSid != null) return postSid;
-
-        // 3. POST with form body (matches VTryOn widget's actual request format)
-        final bodyHeaders = Map<String, String>.from(headers)
-          ..['Content-Type'] = 'application/x-www-form-urlencoded';
-        final bodyStr = params.entries
-            .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
-            .join('&');
-        final bodyRes = await http.post(baseUri, headers: bodyHeaders, body: bodyStr)
-            .timeout(const Duration(seconds: 8));
-        final bodySid = await tryParse(bodyRes, 'POST-BODY');
-        if (bodySid != null) return bodySid;
-      } catch (e) {
-        debugPrint('[VTryOn] scrape error for cdn=$cdn: $e');
+      },
+    });
+    try {
+      final res = await http
+          .post(Uri.parse(VTryOnConfig.tryOnApiUrl), headers: headers, body: body)
+          .timeout(const Duration(seconds: 10));
+      debugPrint('[VTryOn] scrape POST: status=${res.statusCode} body=${res.body}');
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        final sid = data['selectionId']?.toString() ??
+            (data['data'] as Map?)?['selectionId']?.toString();
+        if (sid != null && sid.isNotEmpty) return sid;
       }
+    } catch (e) {
+      debugPrint('[VTryOn] scrape error: $e');
     }
     return null;
   }

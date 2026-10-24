@@ -1,0 +1,16 @@
+{
+  "name": "earthly-jewels-backend",
+  "version": "1.0.0",
+  "description": "GoKwik + Shopify Admin API proxy for Earthly Jewels Flutter app",
+  "main": "index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

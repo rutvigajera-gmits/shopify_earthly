@@ -118,6 +118,52 @@ class CustomerProvider extends BaseProvider {
     }
   }
 
+  // Called when the GoKwik backend proxy returns customer data (orders, addresses).
+  // Applies only to identity-only (KwikPass) sessions — email/password sessions
+  // already have full Storefront API access and don't need this path.
+  Future<void> updateFromBackend({
+    required String shopifyId,
+    required List<CustomerOrder> orders,
+    required List<CustomerAddress> addresses,
+  }) async {
+    if (_customer == null || _accessToken != null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+
+    // Update the stored Shopify ID if the backend resolved a more reliable one.
+    if (shopifyId.isNotEmpty) {
+      final gid = 'gid://shopify/Customer/$shopifyId';
+      if (_customer!.id != gid) {
+        _customer = Customer(
+          id: gid,
+          firstName: _customer!.firstName,
+          lastName: _customer!.lastName,
+          email: _customer!.email,
+          phone: _customer!.phone,
+        );
+        await prefs.setString('vtryon_shopify_user_id', shopifyId);
+        await prefs.setString(
+          AppStrings.kwikPassIdentityKey,
+          jsonEncode(_customer!.toIdentityJson()),
+        );
+      }
+    }
+
+    // Merge backend orders with any local orders not already present.
+    try {
+      final localOrders = await LocalOrderService.instance.loadOrders();
+      final backendIds = orders.map((o) => o.id).toSet();
+      final localOnly =
+          localOrders.where((o) => !backendIds.contains(o.id)).toList();
+      _orders = [...orders, ...localOnly];
+    } catch (_) {
+      _orders = orders;
+    }
+    _ordersLoaded = orders.isNotEmpty;
+    _addresses = addresses;
+    notifyListeners();
+  }
+
   Future<void> login(String email, String password) async {
     setLoading();
     try {
@@ -196,7 +242,9 @@ class CustomerProvider extends BaseProvider {
             ? _repo
                 .fetchOrders(_accessToken!)
                 .catchError((_) => <CustomerOrder>[])
-            : Future.value(<CustomerOrder>[]),
+            // KwikPass users: no Storefront API token — preserve any orders
+            // already loaded from the backend proxy rather than returning empty.
+            : Future.value(List<CustomerOrder>.from(_orders)),
         LocalOrderService.instance.loadOrders(),
       ]);
 
@@ -226,7 +274,24 @@ class CustomerProvider extends BaseProvider {
 
   Future<void> updateProfile(
       {String? firstName, String? lastName, String? phone}) async {
-    if (_accessToken == null) return;
+    // KwikPass users have no Storefront API token — persist changes locally.
+    if (_accessToken == null) {
+      if (_customer == null) return;
+      _customer = Customer(
+        id: _customer!.id,
+        firstName: firstName ?? _customer!.firstName,
+        lastName: lastName ?? _customer!.lastName,
+        email: _customer!.email,
+        phone: (phone != null && phone.isNotEmpty) ? phone : _customer!.phone,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        AppStrings.kwikPassIdentityKey,
+        jsonEncode(_customer!.toIdentityJson()),
+      );
+      notifyListeners();
+      return;
+    }
     setLoading();
     try {
       final updated = await _repo.updateProfile(

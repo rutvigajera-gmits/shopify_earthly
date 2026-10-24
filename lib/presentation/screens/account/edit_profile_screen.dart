@@ -31,6 +31,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _lastName;
 
   bool _saving = false;
+  String _originalPhone = '';
 
   late Country selectedCountry;
   final ValueNotifier<bool> _valueNotifier = ValueNotifier<bool>(false);
@@ -75,6 +76,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             localNumber: '',
           );
 
+    _originalPhone = c.phone ?? '';
     selectedCountry = parsed.country;
     mobileCont = TextEditingController(text: parsed.localNumber);
     mobileFocus = FocusNode();
@@ -190,14 +192,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _saving = true);
     final provider = context.read<CustomerProvider>();
+
+    final newPhone = mobileCont.text.trim().isEmpty
+        ? null
+        : '+${selectedCountry.phoneCode}${mobileCont.text.trim()}';
+
+    // Warn KwikPass users if they're saving a phone that differs from the
+    // OTP-verified number they signed in with.
+    if (!provider.hasApiToken &&
+        _originalPhone.isNotEmpty &&
+        newPhone != null &&
+        newPhone.isNotEmpty &&
+        newPhone != _originalPhone) {
+      final confirmed = await _showPhoneMismatchDialog(_originalPhone, newPhone);
+      if (!mounted || !confirmed) return;
+    }
+
+    setState(() => _saving = true);
     await provider.updateProfile(
       firstName: _firstName.text.trim(),
       lastName: _lastName.text.trim(),
-      phone: mobileCont.text.trim().isEmpty
-          ? null
-          : '+${selectedCountry.phoneCode}${mobileCont.text.trim()}',
+      phone: newPhone,
     );
     if (!mounted) return;
     setState(() => _saving = false);
@@ -220,6 +236,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
       provider.clearError();
     }
+  }
+
+  Future<bool> _showPhoneMismatchDialog(
+      String loginPhone, String newPhone) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Different Phone Number'),
+            content: Text(
+              'You signed in with $loginPhone, but you\'re saving '
+              '$newPhone instead.\n\nYou can still save it.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Save Anyway'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   @override

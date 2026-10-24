@@ -15,6 +15,12 @@ class ApiConfig {
   static const String storefrontAccessToken =
       'f0a6b56aed212f4ea6a306e9909e3fac';
 
+  // Backend proxy URL for the GoKwik ↔ Shopify Admin API bridge.
+  // Deploy tools/backend/ and replace the placeholder with the live URL.
+  // Example: 'https://your-project.cloudfunctions.net'
+  static const String backendUrl =
+      'https://TODO-replace-with-your-backend-url.com';
+
   // Judge.me public read-only token — safe to commit.
   static const String judgeMePublicToken = '1lo-Qc8pmxTOpzmH2b36IiheWrg';
   static const String judgeMeShopDomain = 'gold-rate-update.myshopify.com';
@@ -40,6 +46,10 @@ class VTryOnConfig {
   static const String baseUrl = 'https://vtryon.earthlyjewels.co/';
   // The internal myshopify.com domain shown in the try-on URL's ?shop= param.
   static const String shopDomain = 'y7srws-f4.myshopify.com';
+  // VTryOn's own API endpoint (confirmed from vtryon-storefront.js page script).
+  // vtryon-storefront.js calls this to resolve a product's selectionId at page load.
+  static const String tryOnApiUrl =
+      'https://vtryon.earthlyjewels.co/api/tryon/selection';
   // ── Update these after finding the metafield in Shopify Admin ──────────────
   static const String metafieldNamespace = 'custom';
   static const String metafieldKey = 'vtryon_selection_id';
