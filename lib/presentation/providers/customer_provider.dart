@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/customer_model.dart';
 import '../../data/repositories/customer_repository.dart';
 import '../../data/services/local_order_service.dart';
+import '../../data/services/secure_storage_service.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/format_utils.dart';
 import '../common/base_provider.dart';
@@ -42,8 +43,10 @@ class CustomerProvider extends BaseProvider {
         _profileImagePath = imagePath;
       }
 
+      final ss = SecureStorageService.instance;
+
       // 1. Full Storefront API token (email/password login).
-      final token = prefs.getString(AppStrings.customerTokenKey);
+      final token = await ss.read(AppStrings.customerTokenKey);
       if (token != null && token.isNotEmpty) {
         final customer = await _repo.fetchProfile(token);
         if (customer != null) {
@@ -52,18 +55,18 @@ class CustomerProvider extends BaseProvider {
           notifyListeners();
           return;
         }
-        await prefs.remove(AppStrings.customerTokenKey);
+        await ss.delete(AppStrings.customerTokenKey);
       }
 
       // 2. KwikPass identity-only session (phone OTP — no API token).
-      final identityJson = prefs.getString(AppStrings.kwikPassIdentityKey);
+      final identityJson = await ss.read(AppStrings.kwikPassIdentityKey);
       if (identityJson != null) {
         try {
           final map = jsonDecode(identityJson) as Map<String, dynamic>;
           _customer = Customer.fromIdentityJson(map);
           _accessToken = null;
         } catch (_) {
-          await prefs.remove(AppStrings.kwikPassIdentityKey);
+          await ss.delete(AppStrings.kwikPassIdentityKey);
         }
       }
     } catch (_) {}
@@ -103,14 +106,14 @@ class CustomerProvider extends BaseProvider {
       _customer = customer;
       _accessToken = null;
       _ordersLoaded = false;
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(AppStrings.customerTokenKey);
-      await prefs.setString(
+      final ss = SecureStorageService.instance;
+      await ss.delete(AppStrings.customerTokenKey);
+      await ss.write(
         AppStrings.kwikPassIdentityKey,
         jsonEncode(customer.toIdentityJson()),
       );
       if (numericId.isNotEmpty) {
-        await prefs.setString('vtryon_shopify_user_id', numericId);
+        await ss.write('vtryon_shopify_user_id', numericId);
       }
       setLoaded();
     } catch (e) {
@@ -128,7 +131,7 @@ class CustomerProvider extends BaseProvider {
   }) async {
     if (_customer == null || _accessToken != null) return;
 
-    final prefs = await SharedPreferences.getInstance();
+    final ss = SecureStorageService.instance;
 
     // Update the stored Shopify ID if the backend resolved a more reliable one.
     if (shopifyId.isNotEmpty) {
@@ -141,8 +144,8 @@ class CustomerProvider extends BaseProvider {
           email: _customer!.email,
           phone: _customer!.phone,
         );
-        await prefs.setString('vtryon_shopify_user_id', shopifyId);
-        await prefs.setString(
+        await ss.write('vtryon_shopify_user_id', shopifyId);
+        await ss.write(
           AppStrings.kwikPassIdentityKey,
           jsonEncode(_customer!.toIdentityJson()),
         );
@@ -171,12 +174,12 @@ class CustomerProvider extends BaseProvider {
       _accessToken = token;
       _customer = await _repo.fetchProfile(token);
       _ordersLoaded = false;
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(AppStrings.customerTokenKey, token);
+      final ss = SecureStorageService.instance;
+      await ss.write(AppStrings.customerTokenKey, token);
       final gid = _customer?.id ?? '';
       final numericId = gid.contains('/') ? gid.split('/').last : gid;
       if (numericId.isNotEmpty) {
-        await prefs.setString('vtryon_shopify_user_id', numericId);
+        await ss.write('vtryon_shopify_user_id', numericId);
       }
       setLoaded();
     } catch (e) {
@@ -201,8 +204,7 @@ class CustomerProvider extends BaseProvider {
       final token = await _repo.login(email: email, password: password);
       _accessToken = token;
       _customer = await _repo.fetchProfile(token);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(AppStrings.customerTokenKey, token);
+      await SecureStorageService.instance.write(AppStrings.customerTokenKey, token);
       setLoaded();
     } catch (e) {
       setError(FormatUtils.trimException(e));
@@ -224,10 +226,11 @@ class CustomerProvider extends BaseProvider {
     _ordersLoaded = false;
     _profileImagePath = null;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(AppStrings.customerTokenKey);
-    await prefs.remove(AppStrings.kwikPassIdentityKey);
     await prefs.remove(AppStrings.profileImageKey);
-    await prefs.remove('vtryon_shopify_user_id');
+    final ss = SecureStorageService.instance;
+    await ss.delete(AppStrings.customerTokenKey);
+    await ss.delete(AppStrings.kwikPassIdentityKey);
+    await ss.delete('vtryon_shopify_user_id');
     notifyListeners();
   }
 
@@ -284,8 +287,7 @@ class CustomerProvider extends BaseProvider {
         email: _customer!.email,
         phone: (phone != null && phone.isNotEmpty) ? phone : _customer!.phone,
       );
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
+      await SecureStorageService.instance.write(
         AppStrings.kwikPassIdentityKey,
         jsonEncode(_customer!.toIdentityJson()),
       );

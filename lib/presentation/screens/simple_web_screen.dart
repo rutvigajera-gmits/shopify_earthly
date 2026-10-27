@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -196,6 +197,10 @@ class _SimpleWebScreenState extends State<SimpleWebScreen> {
                 allowsInlineMediaPlayback: true,
                 userAgent: 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
                     '(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+                // Prevent file:// URI access from WebView content.
+                allowFileAccess: false,
+                allowFileAccessFromFileURLs: false,
+                allowUniversalAccessFromFileURLs: false,
               ),
               // Inject intercept before any page script runs.
               initialUserScripts: handle != null
@@ -225,10 +230,18 @@ class _SimpleWebScreenState extends State<SimpleWebScreen> {
                   );
                 }
               },
-              onPermissionRequest: (_, request) async => PermissionResponse(
-                resources: request.resources,
-                action: PermissionResponseAction.GRANT,
-              ),
+              onPermissionRequest: (_, request) async {
+                // Grant camera only — deny microphone, geolocation, etc.
+                final granted = request.resources
+                    .where((r) => r == PermissionResourceType.CAMERA)
+                    .toList();
+                return PermissionResponse(
+                  resources: granted,
+                  action: granted.isNotEmpty
+                      ? PermissionResponseAction.GRANT
+                      : PermissionResponseAction.DENY,
+                );
+              },
               onLoadStart: (_, __) {
                 if (mounted) setState(() => _loading = true);
               },
@@ -239,10 +252,10 @@ class _SimpleWebScreenState extends State<SimpleWebScreen> {
                 if (mounted) setState(() => _loading = false);
               },
               onReceivedHttpError: (_, request, response) {
-                debugPrint('[VTryOn] HTTP ${response.statusCode}: ${request.url}');
+                if (kDebugMode) debugPrint('[VTryOn] HTTP ${response.statusCode}: ${request.url}');
               },
               onConsoleMessage: (_, msg) {
-                if (msg.message.contains('[VTryOn]')) {
+                if (kDebugMode && msg.message.contains('[VTryOn]')) {
                   debugPrint('[VTryOn][JS] ${msg.message}');
                 }
               },

@@ -561,7 +561,7 @@ class ShopifyService {
               '(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
         },
       ).timeout(const Duration(seconds: 5));
-      debugPrint('[VTryOn] account.json status=${res.statusCode}');
+      if (kDebugMode) debugPrint('[VTryOn] account.json status=${res.statusCode}');
       if (res.statusCode == 200) {
         final ct = res.headers['content-type'] ?? '';
         if (ct.contains('json')) {
@@ -569,13 +569,13 @@ class ShopifyService {
           final customer = data?['customer'] as Map<String, dynamic>?;
           final id = customer?['id']?.toString() ?? '';
           if (id.isNotEmpty && RegExp(r'^\d{8,}$').hasMatch(id)) {
-            debugPrint('[VTryOn] account.json customerId: $id');
+            if (kDebugMode) debugPrint('[VTryOn] account.json customerId: $id');
             return id;
           }
         }
       }
     } catch (e) {
-      debugPrint('[VTryOn] account.json err: $e');
+      if (kDebugMode) debugPrint('[VTryOn] account.json err: $e');
     }
     return null;
   }
@@ -593,7 +593,7 @@ class ShopifyService {
       String productTitle = '',
       String productType = ''}) async {
     if (imageUrl.isEmpty || customerId.isEmpty) {
-      debugPrint('[VTryOn] scrape: imageUrl or customerId empty — skipping');
+      if (kDebugMode) debugPrint('[VTryOn] scrape: imageUrl or customerId empty — skipping');
       return null;
     }
     final cdnUrl = vtryonCdnUrl(imageUrl);
@@ -624,7 +624,7 @@ class ShopifyService {
       final res = await http
           .post(Uri.parse(VTryOnConfig.tryOnApiUrl), headers: headers, body: body)
           .timeout(const Duration(seconds: 10));
-      debugPrint('[VTryOn] scrape POST: status=${res.statusCode} body=${res.body}');
+      if (kDebugMode) debugPrint('[VTryOn] scrape POST: status=${res.statusCode} body=${res.body}');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
         final sid = data['selectionId']?.toString() ??
@@ -632,7 +632,7 @@ class ShopifyService {
         if (sid != null && sid.isNotEmpty) return sid;
       }
     } catch (e) {
-      debugPrint('[VTryOn] scrape error: $e');
+      if (kDebugMode) debugPrint('[VTryOn] scrape error: $e');
     }
     return null;
   }

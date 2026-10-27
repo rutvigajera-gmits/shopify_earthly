@@ -34,6 +34,25 @@
 
 const https = require('https');
 
+// ── Rate limiter ─────────────────────────────────────────────────────────────
+// In-memory: max 20 requests per 15 minutes per IP (no extra dependency).
+const _rateMap = new Map();
+function _checkRate(ip) {
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000;
+  const max = 20;
+  let entry = _rateMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + windowMs };
+  }
+  entry.count++;
+  _rateMap.set(ip, entry);
+  return entry.count <= max;
+}
+
+// ── Allowed CORS origins ─────────────────────────────────────────────────────
+const _allowedOrigins = new Set(['https://earthlyjewels.co']);
+
 // ── Configuration ────────────────────────────────────────────────────────────
 
 const GOKWIK_API_BASE   = 'https://api.gokwik.co';
@@ -49,7 +68,7 @@ let app;
 try {
   const express = require('express');
   app = express();
-  app.use(express.json());
+  app.use(express.json({ limit: '10kb' }));
   app.post('/resolve-customer', handler);
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log(`[backend] listening on port ${port}`));
@@ -73,10 +92,23 @@ module.exports = handler;
 // ── Main handler ─────────────────────────────────────────────────────────────
 
 async function handler(req, res) {
-  // CORS — allow Flutter app to reach this endpoint.
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Rate limiting.
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+  if (!_checkRate(ip)) {
+    return res.status(429).json({ error: 'Too many requests' });
+  }
+
+  // CORS — restrict to known web origin; mobile Flutter clients send no Origin.
+  const origin = req.headers['origin'];
+  if (origin) {
+    if (!_allowedOrigins.has(origin)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Vary', 'Origin');
+  }
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });

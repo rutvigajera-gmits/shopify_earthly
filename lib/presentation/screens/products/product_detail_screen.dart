@@ -154,14 +154,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       backgroundColor: Colors.white,
       elevation: 0,
       scrolledUnderElevation: 0,
-      leading: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(Icons.arrow_back_ios_new,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new,
             size: 18, color: AppColors.textPrimary),
-      ).onTap(() => Navigator.of(context).pop()),
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.white,
+          shape: const CircleBorder(),
+        ),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
       title: Text('EARTHLY',
           style: AppTextStyles.button.copyWith(fontSize: 14, letterSpacing: 3)),
       centerTitle: true,

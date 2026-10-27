@@ -1,6 +1,6 @@
 {
-    "name": "demo_earthly",
-    "short_name": "demo_earthly",
+    "name": "Earthly Jewels",
+    "short_name": "Earthly Jewels",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -1,15 +1,18 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../component/loader_widget.dart';
 import '../../simple_web_screen.dart';
 import '../../../../core/config/api_config.dart';
 import '../../../../data/services/shopify_service.dart';
+import '../../../../data/services/secure_storage_service.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -54,7 +57,7 @@ class ProductInfoSection extends StatelessWidget {
             ],
             const Spacer(),
             GestureDetector(
-              onTap: () => _showBreakup(context, price),
+              onTap: () => _showBreakup(context),
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -120,9 +123,14 @@ class ProductInfoSection extends StatelessWidget {
 
           return GestureDetector(
             onTap: () async {
+              final auth = ctx.read<CustomerProvider>();
+              if (auth.customer == null) {
+                toast('Please sign in to use Virtual Try-On', bgColor: AppColors.textLight.withValues(alpha: 0.9));
+                return;
+              }
+
               // Read customer ID at tap time so it's always current.
-              final customerId =
-                  ctx.read<CustomerProvider>().customer?.id ?? '';
+              final customerId = auth.customer?.id ?? '';
               var numericId = customerId.contains('/')
                   ? customerId.split('/').last
                   : customerId;
@@ -137,7 +145,7 @@ class ProductInfoSection extends StatelessWidget {
                 selectionId =
                     prefs.getString(SimpleWebScreen.prefKey(product.handle)) ??
                         '';
-                if (selectionId.isNotEmpty) {
+                if (kDebugMode && selectionId.isNotEmpty) {
                   debugPrint('[VTryOn] selectionId from cache: $selectionId');
                 }
               }
@@ -145,7 +153,7 @@ class ProductInfoSection extends StatelessWidget {
               // Supplement numericId from the globally cached userId.
               // Only use if it's a Shopify numeric ID — reject stale GoKwik UUIDs.
               if (numericId.isEmpty) {
-                final cached = prefs.getString('vtryon_shopify_user_id') ?? '';
+                final cached = await SecureStorageService.instance.read('vtryon_shopify_user_id') ?? '';
                 if (RegExp(r'^\d{8,}$').hasMatch(cached)) numericId = cached;
               }
 
@@ -168,8 +176,8 @@ class ProductInfoSection extends StatelessWidget {
                       debugPrint('[VTryOn] kp_user_id raw="${val.isEmpty ? "(empty)" : val}"');
                       if (val.isNotEmpty && RegExp(r'^\d{8,}$').hasMatch(val)) {
                         numericId = val;
-                        await prefs.setString('vtryon_shopify_user_id', numericId);
-                        debugPrint('[VTryOn] numericId from kp_user_id: $numericId');
+                        await SecureStorageService.instance.write('vtryon_shopify_user_id', numericId);
+                        if (kDebugMode) debugPrint('[VTryOn] numericId from kp_user_id: $numericId');
                         break;
                       }
                     }
@@ -186,18 +194,19 @@ class ProductInfoSection extends StatelessWidget {
                       .fetchCustomerIdWithCookies(cookieHeader);
                   if (fetchedId != null && fetchedId.isNotEmpty) {
                     numericId = fetchedId;
-                    await prefs.setString('vtryon_shopify_user_id', numericId);
-                    debugPrint('[VTryOn] numericId from account.json: $numericId');
+                    await SecureStorageService.instance.write('vtryon_shopify_user_id', numericId);
+                    if (kDebugMode) debugPrint('[VTryOn] numericId from account.json: $numericId');
                   }
                 } catch (_) {}
               }
 
-              debugPrint(
-                  '[VTryOn] tap — handle=${product.handle} selectionId=$selectionId numericId=$numericId');
+              if (kDebugMode) {
+                debugPrint('[VTryOn] tap — handle=${product.handle} selectionId=$selectionId numericId=$numericId');
+              }
 
               final originalImageUrl = product.primaryImage?.url ?? '';
               final cdnUrl = ShopifyService.vtryonCdnUrl(originalImageUrl);
-              debugPrint('[VTryOn] imageUrl=$originalImageUrl cdnUrl=$cdnUrl');
+              if (kDebugMode) debugPrint('[VTryOn] imageUrl=$originalImageUrl cdnUrl=$cdnUrl');
 
               // Ensure OS-level camera permission before opening WebView.
               final status = await Permission.camera.request();
@@ -225,12 +234,13 @@ class ProductInfoSection extends StatelessWidget {
                   selectionId = sid;
                   await prefs.setString(
                       SimpleWebScreen.prefKey(product.handle), sid);
-                  debugPrint('[VTryOn] scrape found: $sid');
+                  if (kDebugMode) debugPrint('[VTryOn] scrape found: $sid');
                 }
               }
 
-              debugPrint(
-                  '[VTryOn] selectionId=$selectionId numericId=$numericId');
+              if (kDebugMode) {
+                debugPrint('[VTryOn] selectionId=$selectionId numericId=$numericId');
+              }
               // Confirmed URL format from live site DevTools inspection:
               // ?selectionId=UUID&variantSku=SKU&variantSlug=SLUG&variantCarat=CARAT
               //   &shop=y7srws-f4.myshopify.com&user_id=NUMERIC_ID
@@ -245,7 +255,7 @@ class ProductInfoSection extends StatelessWidget {
               final tryOnUrl = Uri.parse(VTryOnConfig.baseUrl)
                   .replace(queryParameters: params)
                   .toString();
-              debugPrint('[VTryOn] opening url   : $tryOnUrl');
+              if (kDebugMode) debugPrint('[VTryOn] opening url   : $tryOnUrl');
 
               if (!ctx.mounted) return;
               Navigator.of(ctx).push(MaterialPageRoute(
@@ -413,9 +423,8 @@ class ProductInfoSection extends StatelessWidget {
                 return null;
               }
               userDone = true; // synchronous guard before any await
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('vtryon_shopify_user_id', id);
-              debugPrint('[VTryOn] headless userId: $id');
+              await SecureStorageService.instance.write('vtryon_shopify_user_id', id);
+              if (kDebugMode) debugPrint('[VTryOn] headless userId: $id');
               try { if (!userCompleter.isCompleted) userCompleter.complete(id); } catch (_) {}
             }
             return null;
@@ -724,45 +733,365 @@ class ProductInfoSection extends StatelessWidget {
     return '';
   }
 
-  void _showBreakup(BuildContext context, String total) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(),
-      builder: (_) => Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Price Breakup', style: AppTextStyles.headlineSmall),
-            16.height,
-            _BreakupRow('Diamond Price', total),
-            const _BreakupRow('Making Charges', 'Included'),
-            const _BreakupRow('3% GST', 'Included'),
-            const Divider(),
-            _BreakupRow('Total', total, bold: true),
-            12.height,
-          ]).paddingAll(20),
+  // Guard against double-tap pushing duplicate routes.
+  static bool _breakupOpen = false;
+
+  void _showBreakup(BuildContext context) {
+    if (_breakupOpen) return;
+    _breakupOpen = true;
+    final numericVariantId = selectedVariant?.id.split('/').last ?? '';
+    final url = 'https://earthlyjewels.co/products/${product.handle}'
+        '${numericVariantId.isNotEmpty ? '?variant=$numericVariantId' : ''}';
+    // Use Navigator.push instead of showModalBottomSheet.
+    // showModalBottomSheet installs a drag gesture recognizer that intercepts
+    // vertical touch events before they reach the InAppWebView, breaking scroll.
+    Navigator.of(context).push(PageRouteBuilder<void>(
+      opaque: false,
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      pageBuilder: (_, __, ___) => _PriceBreakupSheet(url: url),
+      transitionsBuilder: (_, anim, __, child) => SlideTransition(
+        position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+            .animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+        child: child,
+      ),
+      transitionDuration: const Duration(milliseconds: 300),
+      reverseTransitionDuration: const Duration(milliseconds: 250),
+    )).whenComplete(() => _breakupOpen = false);
+  }
+}
+
+// Injected via evaluateJavascript in onLoadStop — AFTER Cloudflare challenge
+// has cleared and Shopify theme JS has fully initialised the page components.
+// The Flutter Opacity(0) overlay hides the WebView until DrawerReady fires.
+const String _kPriceBreakupScript = r'''
+(function() {
+  // Guard: only run once per page load.
+  if (window.__pbRunning) return;
+  window.__pbRunning = true;
+
+  console.log('[PB] eval url=' + location.href.substring(0,80) + ' title=' + document.title.substring(0,40));
+
+  // Hide body immediately so the raw page isn't visible when Flutter
+  // switches Opacity from 0→1 at DrawerReady.
+  document.body.style.setProperty('visibility','hidden','important');
+  document.documentElement.style.setProperty('visibility','hidden','important');
+
+  // ── Selectors ─────────────────────────────────────────────────────────────
+  var BTN_SELS = [
+    '.price-breakup-button',
+    '[aria-controls="PriceBreakupDrawer"]',
+    '.price-breakdown-button',
+    '[data-target="PriceBreakupDrawer"]',
+    '[data-modal-target="PriceBreakupDrawer"]',
+    '[data-drawer-target="PriceBreakupDrawer"]',
+    'button[id*="price-breakup"]',
+    'button[id*="price-breakdown"]',
+    '[class*="price-breakup"]',
+    '[class*="price_breakup"]',
+  ];
+  var DRAWER_SELS = [
+    '#PriceBreakupDrawer',
+    '#price-breakup-drawer',
+    '#PriceBreakdownDrawer',
+    '#price-breakdown-drawer',
+    '[id*="PriceBreakup"]',
+    '[id*="price_breakup"]',
+    '[id*="price-breakdown"]',
+    '.price-breakup-drawer',
+    '.price-breakdown-drawer',
+  ];
+
+  function findButton() {
+    for (var i = 0; i < BTN_SELS.length; i++) {
+      try { var b = document.querySelector(BTN_SELS[i]); if (b) { console.log('[PB] btn:' + BTN_SELS[i]); return b; } } catch(_) {}
+    }
+    // Text-content fallback — works for any theme.
+    try {
+      var all = document.querySelectorAll('button,a,summary,[role="button"]');
+      for (var j = 0; j < all.length; j++) {
+        var txt = (all[j].textContent || '').toLowerCase().trim();
+        if (txt.indexOf('price break') > -1) {
+          console.log('[PB] btn-txt:' + all[j].tagName + ' "' + txt.substring(0,30) + '"');
+          return all[j];
+        }
+      }
+    } catch(_) {}
+    return null;
+  }
+
+  function findOpenDrawer() {
+    for (var i = 0; i < DRAWER_SELS.length; i++) {
+      try {
+        var d = document.querySelector(DRAWER_SELS[i]);
+        if (!d) continue;
+        if (!d.hasAttribute('hidden') && d.getAttribute('aria-hidden') !== 'true' && d.style.display !== 'none') {
+          console.log('[PB] drawer:' + DRAWER_SELS[i]);
+          return d;
+        }
+      } catch(_) {}
+    }
+    // <details open> accordion fallback
+    try {
+      var dets = document.querySelectorAll('details[open]');
+      for (var di = 0; di < dets.length; di++) {
+        var t = (dets[di].textContent || '').toLowerCase();
+        if (t.indexOf('price') > -1 && (t.indexOf('metal') > -1 || t.indexOf('breakup') > -1 || t.indexOf('breakdown') > -1)) {
+          console.log('[PB] details-open');
+          return dets[di];
+        }
+      }
+    } catch(_) {}
+    return null;
+  }
+
+  function injectScrollCSS(sel) {
+    if (document.getElementById('_pb_fix')) return;
+    var s = document.createElement('style');
+    s.id = '_pb_fix';
+    s.textContent =
+      sel + '{overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;}' +
+      sel + ' *{-webkit-overflow-scrolling:touch!important;}' +
+      sel + ' [class*=inner],' + sel + ' [class*=content],' +
+      sel + ' [class*=body],' + sel + ' [class*=scroll]{overflow-y:auto!important;max-height:none!important;}' +
+      sel + ' button,' + sel + ' a,' + sel + ' [role=button],' + sel + ' summary{-webkit-tap-highlight-color:transparent!important;}';
+    (document.head || document.documentElement).appendChild(s);
+  }
+
+  function watchDrawerClose(drawer) {
+    var done = false;
+    function close() {
+      if (done) return; done = true; obs.disconnect();
+      try { window.flutter_inappwebview.callHandler('DrawerClosed'); } catch(_) {}
+    }
+    var obs = new MutationObserver(function(muts) {
+      for (var i = 0; i < muts.length; i++) {
+        var m = muts[i];
+        if (m.attributeName === 'hidden' && drawer.hasAttribute('hidden')) { close(); return; }
+        if (m.attributeName === 'aria-hidden' && drawer.getAttribute('aria-hidden') === 'true') { close(); return; }
+        if (m.attributeName === 'style' && drawer.style.display === 'none') { close(); return; }
+        if (m.attributeName === 'class') {
+          var cls = drawer.className || '';
+          if (cls.indexOf('is-closed') > -1 || cls.indexOf('--closed') > -1) { close(); return; }
+        }
+      }
+    });
+    obs.observe(drawer, { attributes: true, attributeFilter: ['hidden','aria-hidden','style','class'] });
+  }
+
+  function onDrawerOpen(drawer) {
+    var sel = drawer.id ? '#' + drawer.id : ('.' + (drawer.className || 'pb').split(' ')[0]);
+    injectScrollCSS(sel);
+    document.body.style.setProperty('background','white','important');
+    document.body.style.setProperty('visibility','hidden','important');
+    document.documentElement.style.setProperty('visibility','visible','important');
+    drawer.style.setProperty('visibility','visible','important');
+    watchDrawerClose(drawer);
+    setTimeout(function() {
+      try { window.flutter_inappwebview.callHandler('DrawerReady'); } catch(_) {}
+    }, 350);
+  }
+
+  // Page is already loaded — try button immediately first.
+  var btn = findButton();
+  if (btn) {
+    btn.click();
+  } else {
+    console.log('[PB] btn not found on load, will retry');
+  }
+
+  // Poll for open drawer (also handles async button click animation delay).
+  var tries = 0;
+  var btnRetries = 0;
+  var poll = setInterval(function() {
+    tries++;
+    var d = findOpenDrawer();
+    if (d) { clearInterval(poll); onDrawerOpen(d); return; }
+
+    // Retry button click every 500ms for up to 5s (handles lazy-rendered buttons)
+    if (!btn && tries % 5 === 0 && btnRetries < 10) {
+      btnRetries++;
+      btn = findButton();
+      if (btn) btn.click();
+    }
+
+    if (tries === 30) {
+      // 3s diagnostic
+      var els = document.querySelectorAll('[id*="price"],[class*="price"],[id*="drawer"],[class*="drawer"]');
+      var inf = [];
+      for (var k = 0; k < Math.min(els.length, 15); k++) {
+        inf.push(els[k].tagName + '#' + (els[k].id||'') + '.' + (els[k].className||'').split(' ')[0].substring(0,25));
+      }
+      console.log('[PB] 3s diag: ' + (inf.length ? inf.join('; ') : 'EMPTY'));
+      if (!inf.length) {
+        // Log ALL buttons with text to help identify the right selector
+        var btns = document.querySelectorAll('button,a,summary,[role="button"]');
+        var binfo = [];
+        for (var bi = 0; bi < Math.min(btns.length, 20); bi++) {
+          var txt2 = (btns[bi].textContent||'').trim().substring(0,25);
+          if (txt2) binfo.push(btns[bi].tagName + ':"' + txt2 + '"');
+        }
+        console.log('[PB] all-btns: ' + (binfo.length ? binfo.join('; ') : 'NONE'));
+      }
+    }
+
+    if (tries >= 100) {
+      clearInterval(poll);
+      console.log('[PB] timeout 10s title="' + document.title + '"');
+      try { window.flutter_inappwebview.callHandler('DrawerError'); } catch(_) {}
+    }
+  }, 100);
+})();
+''';
+
+class _PriceBreakupSheet extends StatefulWidget {
+  final String url;
+  const _PriceBreakupSheet({required this.url});
+
+  @override
+  State<_PriceBreakupSheet> createState() => _PriceBreakupSheetState();
+}
+
+class _PriceBreakupSheetState extends State<_PriceBreakupSheet> {
+  bool _ready = false;
+  bool _error = false;
+  InAppWebViewController? _wvc;
+
+  void _reload() {
+    if (!mounted) return;
+    setState(() { _ready = false; _error = false; });
+    _wvc?.reload();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sheetHeight = MediaQuery.of(context).size.height * 0.92;
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Material(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        clipBehavior: Clip.hardEdge,
+        child: SizedBox(
+          height: sheetHeight,
+          width: double.infinity,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // IgnorePointer prevents invisible WebView receiving taps while loading.
+              IgnorePointer(
+                ignoring: !_ready,
+                child: Opacity(
+                  opacity: _ready ? 1.0 : 0.0,
+                  child: InAppWebView(
+                    initialUrlRequest: URLRequest(url: WebUri(widget.url)),
+                    initialSettings: InAppWebViewSettings(
+                      javaScriptEnabled: true,
+                      domStorageEnabled: true,
+                      // Block only images (not JS/CSS) so onLoadStop fires as soon
+                      // as Shopify theme scripts finish — without waiting for images.
+                      blockNetworkImage: true,
+                      userAgent: 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
+                          '(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+                    ),
+                    // No initialUserScripts — injecting at AT_DOCUMENT_START runs
+                    // before Cloudflare's JS challenge can complete, which means our
+                    // script sees the empty challenge page instead of the real Shopify
+                    // product page.  We inject after onLoadStop instead.
+                    onWebViewCreated: (c) {
+                      _wvc = c;
+                      c.addJavaScriptHandler(
+                        handlerName: 'DrawerReady',
+                        callback: (_) {
+                          if (mounted) setState(() { _ready = true; _error = false; });
+                          return null;
+                        },
+                      );
+                      c.addJavaScriptHandler(
+                        handlerName: 'DrawerClosed',
+                        callback: (_) {
+                          if (mounted) Navigator.of(context).pop();
+                          return null;
+                        },
+                      );
+                      c.addJavaScriptHandler(
+                        handlerName: 'DrawerError',
+                        callback: (_) {
+                          if (mounted) setState(() => _error = true);
+                          return null;
+                        },
+                      );
+                    },
+                    onLoadStart: (_, url) {
+                      // Reset error on each new navigation (Cloudflare redirects,
+                      // manual retries) so we don't get stuck on a stale error state.
+                      if (mounted && !_ready) setState(() => _error = false);
+                      if (kDebugMode) debugPrint('[PriceBreakup] loadStart: $url');
+                    },
+                    onLoadStop: (c, url) async {
+                      // Page is fully loaded. Cloudflare challenge (if any) is done.
+                      // Shopify theme JS has run and registered all components.
+                      // Only inject on the product page — not on challenge redirects.
+                      final host = url?.host ?? '';
+                      if (!host.contains('earthlyjewels')) return;
+                      if (kDebugMode) debugPrint('[PriceBreakup] loadStop: $url');
+                      await c.evaluateJavascript(source: _kPriceBreakupScript);
+                    },
+                    onConsoleMessage: (_, msg) {
+                      if (kDebugMode) debugPrint('[PriceBreakup][JS] ${msg.message}');
+                    },
+                    onReceivedError: (_, request, __) {
+                      if (mounted && !_ready && (request.isForMainFrame ?? false)) {
+                        setState(() => _error = true);
+                      }
+                    },
+                    onReceivedHttpError: (_, req, res) {
+                      if (mounted && !_ready && (req.isForMainFrame ?? false) &&
+                          (res.statusCode ?? 0) >= 500) {
+                        setState(() => _error = true);
+                      }
+                    },
+                  ),
+                ),
+              ),
+              // Loading overlay
+              if (!_ready && !_error)
+                const Positioned.fill(
+                  child: ColoredBox(
+                    color: Colors.white,
+                    child: Center(child: LoaderWidget(size: 32)),
+                  ),
+                ),
+              // Error overlay with retry
+              if (_error)
+                Positioned.fill(
+                  child: ColoredBox(
+                    color: Colors.white,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.wifi_off_rounded,
+                            size: 48, color: Colors.black26),
+                        const SizedBox(height: 12),
+                        const Text('Could not load price breakdown',
+                            style: TextStyle(color: Colors.black54)),
+                        const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: _reload,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
 
-class _BreakupRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool bold;
-  const _BreakupRow(this.label, this.value, {this.bold = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final s = bold
-        ? AppTextStyles.labelLarge.copyWith(fontWeight: FontWeight.w700)
-        : AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary);
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: s),
-      Text(value, style: s),
-    ]).paddingSymmetric(vertical: 6);
-  }
-}
 
 class _TrustBadgesGrid extends StatelessWidget {
   const _TrustBadgesGrid();
