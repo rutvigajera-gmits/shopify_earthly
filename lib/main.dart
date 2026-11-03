@@ -1,11 +1,13 @@
 import 'package:demo_earthly/locale/base_language.dart';
 import 'package:demo_earthly/locale/language_en.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'core/config/api_config.dart';
 import 'core/theme/app_colors.dart';
+import 'data/services/notification_service.dart';
 import 'data/services/stripe_service.dart';
 import 'app.dart';
 
@@ -14,6 +16,7 @@ Languages languages = LanguageEn();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   await initialize();
 
   Stripe.publishableKey = ApiConfig.stripePublishableKey;

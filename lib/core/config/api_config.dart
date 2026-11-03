@@ -1,6 +1,5 @@
 import 'api_secrets.dart';
 
-const APP_NAME = 'Ubukule - Provider';
 const DEFAULT_LANGUAGE = 'en';
 
 class ApiConfig {

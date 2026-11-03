@@ -14,7 +14,6 @@ import '../../../../core/config/api_config.dart';
 import '../../../../data/services/shopify_service.dart';
 import '../../../../data/services/secure_storage_service.dart';
 import '../../../../core/constants/app_constants.dart';
-import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/format_utils.dart';
@@ -98,13 +97,14 @@ class ProductInfoSection extends StatelessWidget {
               6.width,
               GestureDetector(
                 onTap: () async {
-                  final uri = Uri.parse(AppStrings.reviewsUrl);
+                  final uri = Uri.parse(
+                      'https://earthlyjewels.co/products/${product.handle}#reviews');
                   if (await canLaunchUrl(uri)) {
                     launchUrl(uri, mode: LaunchMode.externalApplication);
                   }
                 },
                 child: Text(
-                  '${summary.averageRating.toStringAsFixed(1)} / 5  (Google Reviews)',
+                  '${summary.averageRating.toStringAsFixed(1)} / 5  (${summary.totalCount} Reviews)',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.teal,
                     decoration: TextDecoration.underline,

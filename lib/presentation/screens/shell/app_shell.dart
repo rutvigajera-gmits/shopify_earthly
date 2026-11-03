@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../data/services/notification_service.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/wishlist_provider.dart';
@@ -22,15 +25,47 @@ class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
   bool _tabFading = false;
   int _tabFadeKey = 0;
+  StreamSubscription? _notifTapSub;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CustomerProvider>().init();
-      context.read<WishlistProvider>().init();
-      context.read<CartProvider>().init();
+    _notifTapSub = NotificationService.instance.onNotificationTap.listen((_) {
+      if (mounted) _navigate(4); // Account tab
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final customerProvider = context.read<CustomerProvider>();
+      final cartProvider = context.read<CartProvider>();
+      // Init customer first so the token is available before cart association.
+      await customerProvider.init();
+      if (!mounted) return;
+      context.read<WishlistProvider>().init();
+      await cartProvider.init();
+      // If the user was already logged in (token restored from secure storage)
+      // and has a saved cart, associate them immediately so Shopify links the
+      // cart to the customer account for website cart reconciliation.
+      if (!mounted) return;
+      final token = customerProvider.accessToken;
+      if (token != null && token.isNotEmpty) {
+        cartProvider.associateWithCustomer(token);
+      }
+      // Bidirectional cart sync on startup:
+      // syncFromWebCart: web → app (only if app cart is empty)
+      // syncToWebCart:   app → web (only if app cart has items)
+      if (customerProvider.isLoggedIn) {
+        cartProvider.syncFromWebCart();
+        cartProvider.syncToWebCart();
+      }
+      // Init push notifications (requests permission + gets FCM token).
+      NotificationService.instance.init();
+    });
+  }
+
+  @override
+  void dispose() {
+    _notifTapSub?.cancel();
+    super.dispose();
   }
 
   void _navigate(int index) {

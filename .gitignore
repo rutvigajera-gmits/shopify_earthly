@@ -1,5 +1,10 @@
 # Secret keys — never commit
 lib/core/config/api_secrets.dart
+functions/service-account.json
+
+# Node / Cloud Functions
+functions/node_modules/
+devtools_options.yaml
 
 # Miscellaneous
 *.class

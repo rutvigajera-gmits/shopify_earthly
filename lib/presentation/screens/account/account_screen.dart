@@ -284,10 +284,16 @@ class AccountScreen extends StatelessWidget {
                       _MenuItem(
                         icon: Icons.login,
                         label: 'Sign In',
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => const KwikPassScreen()),
-                        ),
+                        onTap: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const KwikPassScreen()),
+                          );
+                          if (!context.mounted) return;
+                          final cart = context.read<CartProvider>();
+                          cart.syncFromWebCart();
+                          cart.syncToWebCart();
+                        },
                       ),
 
                     const SizedBox(height: 24),
@@ -411,9 +417,16 @@ class _GuestHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 GestureDetector(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const KwikPassScreen()),
-                  ),
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (_) => const KwikPassScreen()),
+                    );
+                    if (!context.mounted) return;
+                    final cart = context.read<CartProvider>();
+                    cart.syncFromWebCart();
+                    cart.syncToWebCart();
+                  },
                   child: Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 20, vertical: 8),

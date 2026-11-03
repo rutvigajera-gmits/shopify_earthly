@@ -2,11 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../providers/customer_provider.dart';
+import '../../../data/models/cart_model.dart';
 import 'kwik_pass_screen.dart';
 
 /// WebView screen for authenticated Shopify account pages (My Orders,
@@ -30,10 +29,15 @@ class AccountWebViewScreen extends StatefulWidget {
   final String title;
   final String url;
 
+  /// When provided, these cart items are synced to the website cart via
+  /// `/cart/clear.js` + `/cart/add.js` on the first successful page load.
+  final List<CartLineItem>? syncCartItems;
+
   const AccountWebViewScreen({
     super.key,
     required this.title,
     required this.url,
+    this.syncCartItems,
   });
 
   @override
@@ -54,6 +58,13 @@ class _AccountWebViewScreenState extends State<AccountWebViewScreen> {
   // Fallback timer: if GoKwik hasn't navigated away from /account/login
   // within 6 seconds, its own session has also expired → full OTP flow.
   Timer? _silentAuthTimer;
+
+  // Prevents concurrent calls to _handleSessionExpiry (e.g. background WebView
+  // navigating to /account while KwikPassScreen is already showing).
+  bool _handlingExpiry = false;
+
+  // Cart sync fires once per screen instance after the first successful load.
+  bool _cartSynced = false;
 
   @override
   void dispose() {
@@ -76,12 +87,46 @@ class _AccountWebViewScreenState extends State<AccountWebViewScreen> {
 
   // Allow all /account/* paths (covers GoKwik session-restore redirects
   // such as /account/login/multipass/...) plus Shopify's Customer Account
-  // OAuth host. Everything outside /account opens in the system browser.
+  // OAuth host. Also allows the initial URL's path (e.g. /cart for cart sync).
+  // Everything else opens in the system browser.
   bool _isAllowedNavigation(WebUri uri) {
     if (uri.host == 'accounts.shopify.com') return true;
     if (!_isEarthlyjewelsDomain(uri)) return false;
     if (uri.path.startsWith('/account')) return true;
+    final initialPath = Uri.parse(widget.url).path;
+    if (initialPath.isNotEmpty && uri.path.startsWith(initialPath)) return true;
     return false;
+  }
+
+  /// Injects JS to mirror the Flutter cart into the website cart via
+  /// /cart/clear.js + /cart/add.js. Runs at most once per screen instance.
+  Future<void> _syncCartIfNeeded() async {
+    final items = widget.syncCartItems;
+    if (items == null || items.isEmpty || _cartSynced || _controller == null) {
+      return;
+    }
+    _cartSynced = true;
+
+    final itemsJson = items.map((item) {
+      final numericId = item.variantId.split('/').last;
+      return '{"id":$numericId,"quantity":${item.quantity}}';
+    }).join(',');
+
+    await _controller!.evaluateJavascript(source: '''
+      (function() {
+        var items = [$itemsJson];
+        fetch('/cart/clear.js', {method: 'POST'})
+          .then(function() {
+            return fetch('/cart/add.js', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({items: items})
+            });
+          })
+          .then(function() { window.location.reload(); })
+          .catch(function(e) { console.error('[EJ] cart sync failed:', e); });
+      })();
+    ''');
   }
 
   void _startSilentAuthTimer() {
@@ -89,7 +134,7 @@ class _AccountWebViewScreenState extends State<AccountWebViewScreen> {
     _silentAuthTimer = Timer(const Duration(seconds: 6), () {
       if (mounted && _silentAuthInProgress) {
         // GoKwik's session is also expired — fall back to full OTP.
-        setState(() => _silentAuthInProgress = false);
+        // Overlay stays visible so KwikPassScreen slides in with no login-page flash.
         _handleSessionExpiry();
       }
     });
@@ -97,8 +142,9 @@ class _AccountWebViewScreenState extends State<AccountWebViewScreen> {
 
   void _onSilentAuthSuccess() {
     _silentAuthTimer?.cancel();
+    // Keep overlay visible until the reloaded page finishes loading.
+    // onLoadStop clears _silentAuthInProgress when a non-login page loads.
     setState(() {
-      _silentAuthInProgress = false;
       _sessionExpiredHandled = false;
       _progress = 0;
     });
@@ -166,13 +212,25 @@ class _AccountWebViewScreenState extends State<AccountWebViewScreen> {
                 // GoKwik silently authenticated — navigated to /account or /.
                 if (_silentAuthInProgress && _isPostLoginPath(uri)) {
                   _onSilentAuthSuccess();
+                  return;
+                }
+
+                // A real page loaded successfully — clear the auth overlay if still up.
+                if (_silentAuthInProgress) {
+                  setState(() => _silentAuthInProgress = false);
+                }
+
+                // Sync Flutter cart to website on first successful page load.
+                if (_isEarthlyjewelsDomain(uri)) {
+                  _syncCartIfNeeded();
                 }
               },
               shouldOverrideUrlLoading: (_, action) async {
                 final uri = action.request.url;
                 if (uri == null) return NavigationActionPolicy.CANCEL;
-                if (_isAllowedNavigation(uri))
+                if (_isAllowedNavigation(uri)) {
                   return NavigationActionPolicy.ALLOW;
+                }
                 launchUrl(uri, mode: LaunchMode.externalApplication);
                 return NavigationActionPolicy.CANCEL;
               },
@@ -212,21 +270,45 @@ class _AccountWebViewScreenState extends State<AccountWebViewScreen> {
   // Fallback: GoKwik's own session expired. Push KwikPassScreen for full OTP.
   // After OTP, reload the original URL directly.
   // If the user cancels OTP, pop this screen back to Account.
+  //
+  // The overlay (_silentAuthInProgress) is kept visible throughout so the user
+  // never sees the Shopify /account/login page — not on entry to KwikPassScreen
+  // and not when they press back from it without completing OTP.
+  //
+  // _handlingExpiry prevents a second concurrent call triggered by GoKwik's JS
+  // navigating the background WebView while KwikPassScreen is already showing.
   Future<void> _handleSessionExpiry() async {
-    if (!mounted) return;
+    if (!mounted || _handlingExpiry) return;
+    _handlingExpiry = true;
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const KwikPassScreen()),
     );
-    if (!mounted) return;
-    final isLoggedIn = context.read<CustomerProvider>().isLoggedIn;
-    if (isLoggedIn) {
+    if (!mounted) {
+      _handlingExpiry = false;
+      return;
+    }
+
+    bool hasSession = false;
+    try {
+      final cookies = await CookieManager.instance()
+          .getCookies(url: WebUri('https://earthlyjewels.co'));
+      hasSession = cookies.any(
+        (c) => c.name == '_shopify_s' || c.name == 'KWIKSESSIONTOKEN',
+      );
+    } catch (_) {}
+
+    _handlingExpiry = false;
+
+    if (hasSession) {
       setState(() {
         _sessionExpiredHandled = false;
         _progress = 0;
+        // Keep _silentAuthInProgress = true — overlay stays until the reload lands.
       });
       _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(widget.url)));
     } else {
-      Navigator.of(context).pop();
+      // Pop with overlay still covering the login page — no flash.
+      if (mounted) Navigator.of(context).pop();
     }
   }
 }

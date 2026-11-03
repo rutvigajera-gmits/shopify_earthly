@@ -19,4 +19,8 @@ class CartRepository {
 
   Future<Cart> removeItem(String cartId, String lineId) =>
       _service.removeFromCart(cartId, lineId);
+
+  Future<Cart> associateWithCustomer(
+          String cartId, String customerAccessToken) =>
+      _service.associateCartWithCustomer(cartId, customerAccessToken);
 }

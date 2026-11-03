@@ -2,6 +2,7 @@ import 'package:demo_earthly/component/empty_error_state_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:nb_utils/nb_utils.dart';
+import '../../../component/cached_image_widget.dart';
 import '../../../component/loader_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
@@ -108,31 +109,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (variant == null) return;
 
     if (product.variants.length > 1 && !_variantExplicitlySelected) {
-      final optionSummary = _selectedOptions.entries
-          .map((e) => '${e.key}: ${e.value}')
-          .join('\n');
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (_) => AlertDialog(
-          title: Text('Confirm Selection', style: AppTextStyles.headlineSmall),
-          content: Text(
-            'Adding to cart with:\n$optionSummary',
-            style: AppTextStyles.bodyMedium,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text('Change', style: AppTextStyles.bodyMedium),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(
-                'Add to Cart',
-                style: AppTextStyles.bodyMedium
-                    .copyWith(color: AppColors.textPrimary),
-              ),
-            ),
-          ],
+        barrierColor: Colors.black54,
+        builder: (_) => _ConfirmAddToCartDialog(
+          product: product,
+          variant: variant,
+          selectedOptions: _selectedOptions,
         ),
       );
       if (confirmed != true || !mounted) return;
@@ -141,9 +124,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     setState(() => _addingToCart = true);
     try {
       await context.read<CartProvider>().addItem(variant.id, 1);
-      if (mounted) {
-        Navigator.of(context).pushNamed(AppRoutes.cart);
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Item added to your bag',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+          ),
+          backgroundColor: AppColors.textPrimary,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          action: SnackBarAction(
+            label: 'VIEW BAG',
+            textColor: AppColors.teal,
+            onPressed: () => Navigator.of(context).pushNamed(AppRoutes.cart),
+          ),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _addingToCart = false);
     }
@@ -464,11 +462,13 @@ class _StickyBottomBar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(product.title,
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(fontWeight: FontWeight.w600),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
+                Marquee(
+                  directionMarguee: DirectionMarguee.oneDirection,
+                  child: Text(product.title,
+                      style: AppTextStyles.bodyMedium
+                          .copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
                 if (optStr.isNotEmpty)
                   Text(optStr,
                       style: AppTextStyles.labelSmall
@@ -480,21 +480,200 @@ class _StickyBottomBar extends StatelessWidget {
             ),
           ),
           12.width,
-          GestureDetector(
-            onTap: addingToCart ? null : onAddToCart,
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: const BoxDecoration(
-                  color: AppColors.teal, shape: BoxShape.circle),
-              alignment: Alignment.center,
-              child: addingToCart
-                  ? const LoaderWidget(size: 22, color: Colors.white)
-                  : const Icon(Icons.shopping_cart_outlined,
-                      color: Colors.white, size: 22),
+          ElevatedButton(
+            onPressed: addingToCart ? null : onAddToCart,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.teal,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor:
+                  AppColors.teal.withValues(alpha: 0.5),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 20, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+              elevation: 0,
             ),
+            child: addingToCart
+                ? const LoaderWidget(size: 20, color: Colors.white)
+                : const Text(
+                    'ADD TO CART',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      letterSpacing: 0.5,
+                      color: Colors.white,
+                    ),
+                  ),
           ),
         ]),
+      ),
+    );
+  }
+}
+
+// ─── Confirm Add-to-Cart Dialog ───────────────────────────────────────────────
+
+class _ConfirmAddToCartDialog extends StatelessWidget {
+  final Product product;
+  final ProductVariant variant;
+  final Map<String, String> selectedOptions;
+
+  const _ConfirmAddToCartDialog({
+    required this.product,
+    required this.variant,
+    required this.selectedOptions,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = product.primaryImage?.url ?? '';
+    final price = FormatUtils.formatRsPrice(variant.price);
+    final options =
+        selectedOptions.entries.where((e) => e.value.isNotEmpty).toList();
+
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      insetPadding:
+          const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Title row ──────────────────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Confirm Selection',
+                      style: AppTextStyles.headlineSmall),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(false),
+                  child: const Icon(Icons.close,
+                      size: 20, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // ── Product snapshot ────────────────────────────────────────
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (imageUrl.isNotEmpty) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: CachedImageWidget(
+                      url: imageUrl,
+                      height: 72,
+                      width: 72,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.title,
+                        style: AppTextStyles.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(price,
+                          style: AppTextStyles.priceText
+                              .copyWith(color: AppColors.teal)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+            const Divider(height: 1, color: AppColors.border),
+            const SizedBox(height: 14),
+
+            // ── Selected options ────────────────────────────────────────
+            Text(
+              'YOUR SELECTION',
+              style: AppTextStyles.labelSmall.copyWith(
+                  color: AppColors.textSecondary, letterSpacing: 0.8),
+            ),
+            const SizedBox(height: 10),
+
+            ...options.map((e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 96,
+                        child: Text(e.key,
+                            style: AppTextStyles.bodySmall
+                                .copyWith(color: AppColors.textSecondary)),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.border),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          e.value,
+                          style: AppTextStyles.bodySmall.copyWith(
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPrimary),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+
+            const SizedBox(height: 16),
+
+            // ── Buttons ─────────────────────────────────────────────────
+            // SizedBox(
+            //   width: double.infinity,
+            //   child: OutlinedButton(
+            //     onPressed: () => Navigator.of(context).pop(false),
+            //     style: OutlinedButton.styleFrom(
+            //       foregroundColor: AppColors.textPrimary,
+            //       side: const BorderSide(color: AppColors.textPrimary),
+            //       padding: const EdgeInsets.symmetric(vertical: 14),
+            //       shape: const RoundedRectangleBorder(),
+            //       elevation: 0,
+            //     ),
+            //     child: Text('CHANGE SELECTION',
+            //         style: AppTextStyles.button),
+            //   ),
+            // ),
+            // const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.teal,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  elevation: 0,
+                ),
+                child: Text(
+                  'ADD TO CART',
+                  style: AppTextStyles.button.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -788,6 +788,30 @@ class ShopifyService {
     return Cart.fromStorefrontJson(data['cartCreate'] as Map<String, dynamic>);
   }
 
+  /// Associates an existing anonymous cart with a logged-in customer.
+  /// Call this after login so Shopify links the cart to the customer account —
+  /// enabling cart reconciliation when the customer logs in on the website.
+  Future<Cart> associateCartWithCustomer(
+      String cartId, String customerAccessToken) async {
+    final data = await _queryWithVars('''
+      mutation associateCart(\$cartId: ID!, \$buyerIdentity: CartBuyerIdentityInput!) {
+        cartBuyerIdentityUpdate(cartId: \$cartId, buyerIdentity: \$buyerIdentity) {
+          cart {
+            id checkoutUrl
+            estimatedCost { subtotalAmount { amount currencyCode } }
+            lines(first: 50) { edges { node { ${_cartLineFragment()} } } }
+          }
+          userErrors { code field message }
+        }
+      }
+    ''', {
+      'cartId': cartId,
+      'buyerIdentity': {'customerAccessToken': customerAccessToken},
+    });
+    return Cart.fromStorefrontJson(
+        data['cartBuyerIdentityUpdate'] as Map<String, dynamic>);
+  }
+
   Future<Cart> addToCart(String cartId, String variantId, int quantity) async {
     final data = await _query('''
       mutation {

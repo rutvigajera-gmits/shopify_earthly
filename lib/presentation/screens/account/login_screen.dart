@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../component/loader_widget.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../providers/cart_provider.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/shop_provider.dart';
 import '../../common/widgets/app_header.dart';
@@ -104,6 +105,10 @@ class _SignInFormState extends State<_SignInForm> {
 
     if (!mounted) return;
     if (provider.isLoggedIn) {
+      final token = provider.accessToken;
+      if (token != null && token.isNotEmpty) {
+        context.read<CartProvider>().associateWithCustomer(token);
+      }
       Navigator.of(context).pop();
     }
   }
@@ -227,6 +232,10 @@ class _RegisterFormState extends State<_RegisterForm> {
 
     if (!mounted) return;
     if (provider.isLoggedIn) {
+      final token = provider.accessToken;
+      if (token != null && token.isNotEmpty) {
+        context.read<CartProvider>().associateWithCustomer(token);
+      }
       Navigator.of(context).pop();
     }
   }

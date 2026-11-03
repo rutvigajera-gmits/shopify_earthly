@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "111000235210",
+    "project_id": "earthly-jewels",
+    "storage_bucket": "earthly-jewels.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:111000235210:android:47eb5322f127bc5df2d833",
+        "android_client_info": {
+          "package_name": "com.earthly.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBj6jo6Uj8JGSmfVkLasKpqdKtpY37ORLk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

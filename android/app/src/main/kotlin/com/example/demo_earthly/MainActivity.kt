@@ -1,4 +1,4 @@
-package com.example.demo_earthly
+package com.earthly.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

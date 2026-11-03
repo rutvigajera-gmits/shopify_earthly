@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/customer_model.dart';
 import '../../data/repositories/customer_repository.dart';
 import '../../data/services/local_order_service.dart';
+import '../../data/services/notification_service.dart';
 import '../../data/services/secure_storage_service.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/format_utils.dart';
@@ -116,6 +117,7 @@ class CustomerProvider extends BaseProvider {
         await ss.write('vtryon_shopify_user_id', numericId);
       }
       setLoaded();
+      NotificationService.instance.uploadToken(email);
     } catch (e) {
       setError(FormatUtils.trimException(e));
     }
@@ -182,6 +184,9 @@ class CustomerProvider extends BaseProvider {
         await ss.write('vtryon_shopify_user_id', numericId);
       }
       setLoaded();
+      if (_customer?.email != null) {
+        NotificationService.instance.uploadToken(_customer!.email);
+      }
     } catch (e) {
       setError(FormatUtils.trimException(e));
     }
