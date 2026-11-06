@@ -1,9 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../../../../core/routes/app_routes.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/utils/format_utils.dart';
-import '../../../../../data/models/product_model.dart';
+import '../../../../core/routes/app_routes.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/format_utils.dart';
+import '../../../../data/models/product_model.dart';
 
 class ProductCarouselMsg extends StatelessWidget {
   final List<Product> products;

@@ -92,7 +92,15 @@ class _OrderCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(order.name, style: AppTextStyles.labelLarge),
+                    Flexible(
+                      child: Text(
+                        order.name.isNotEmpty
+                            ? order.name
+                            : '#${order.orderNumber}',
+                        style: AppTextStyles.labelLarge,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     Text(order.formattedTotal, style: AppTextStyles.labelLarge),
                   ],
                 ),
@@ -176,7 +184,7 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         order.displayFulfillmentStatus,
-        style: AppTextStyles.labelSmall.copyWith(color: _color),
+        style: AppTextStyles.labelSmall.copyWith(color: _color, fontSize: 11),
       ),
     );
   }

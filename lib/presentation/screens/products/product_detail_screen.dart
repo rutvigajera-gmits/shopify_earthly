@@ -1,8 +1,6 @@
 import 'package:demo_earthly/component/empty_error_state_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:nb_utils/nb_utils.dart';
-import '../../../component/cached_image_widget.dart';
 import '../../../component/loader_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
@@ -14,6 +12,7 @@ import '../../../data/models/product_model.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/review_provider.dart';
+import '../../providers/wishlist_provider.dart';
 import '../../../data/services/recently_viewed_service.dart';
 import '../../../data/services/shopify_service.dart';
 import '../../common/widgets/product_card.dart';
@@ -37,13 +36,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _imageIndex = 0;
   Map<String, String> _selectedOptions = {};
   ProductVariant? _selectedVariant;
-  bool _variantExplicitlySelected = false;
   bool _addingToCart = false;
   List<Product> _relatedProducts = [];
 
   @override
   void initState() {
     super.initState();
+    debugPrint('[PDS] initState handle=${widget.handle}');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductProvider>().loadProductByHandle(widget.handle);
       context.read<ReviewProvider>().loadProductReviews(widget.handle);
@@ -67,6 +66,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   void dispose() {
+    debugPrint('[PDS] dispose handle=${widget.handle}');
     _pageController.dispose();
     _pincodeController.dispose();
     super.dispose();
@@ -75,7 +75,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void _onOptionChanged(
       String name, String value, List<ProductVariant> variants) {
     setState(() {
-      _variantExplicitlySelected = true;
       _selectedOptions = {..._selectedOptions, name: value};
       final isUiOnly =
           variants.every((v) => !v.selectedOptions.containsKey(name));
@@ -107,24 +106,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Future<void> _addToCart(Product product) async {
     final variant = _selectedVariant ?? product.variants.firstOrNull;
     if (variant == null) return;
-
-    if (product.variants.length > 1 && !_variantExplicitlySelected) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        barrierColor: Colors.black54,
-        builder: (_) => _ConfirmAddToCartDialog(
-          product: product,
-          variant: variant,
-          selectedOptions: _selectedOptions,
-        ),
-      );
-      if (confirmed != true || !mounted) return;
-    }
-
+    debugPrint('[PDS] _addToCart start variant=${variant.id}');
     setState(() => _addingToCart = true);
     try {
       await context.read<CartProvider>().addItem(variant.id, 1);
       if (!mounted) return;
+      final cartProvider = context.read<CartProvider>();
+      debugPrint('[PDS] addItem done, hasError=${cartProvider.hasError}');
+      if (cartProvider.hasError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              cartProvider.errorMessage ?? 'Failed to add item to cart',
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
@@ -132,14 +135,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
           ),
           backgroundColor: AppColors.textPrimary,
-          duration: const Duration(seconds: 3),
+          duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          action: SnackBarAction(
-            label: 'VIEW BAG',
-            textColor: AppColors.teal,
-            onPressed: () => Navigator.of(context).pushNamed(AppRoutes.cart),
-          ),
         ),
       );
     } finally {
@@ -165,10 +163,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           style: AppTextStyles.button.copyWith(fontSize: 14, letterSpacing: 3)),
       centerTitle: true,
       actions: [
-        IconButton(
-          icon: const Icon(Icons.favorite_border,
-              size: 22, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pushNamed(AppRoutes.wishlist),
+        Consumer<WishlistProvider>(
+          builder: (ctx, wishlist, _) {
+            final handle =
+                ctx.read<ProductProvider>().selectedProduct?.handle ?? '';
+            final saved = handle.isNotEmpty && wishlist.contains(handle);
+            return IconButton(
+              icon: Icon(
+                saved ? Icons.favorite : Icons.favorite_border,
+                size: 22,
+                color: saved ? AppColors.badge : AppColors.textPrimary,
+              ),
+              onPressed: () {
+                if (handle.isNotEmpty) wishlist.toggle(handle);
+              },
+            );
+          },
         ),
         Consumer<CartProvider>(
           builder: (context, cart, _) => Stack(
@@ -223,6 +233,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     return Consumer<ProductProvider>(
       builder: (context, provider, _) {
+        debugPrint('[PDS] Consumer rebuild: loading=${provider.loadingProduct} hasProduct=${provider.selectedProduct != null} addingToCart=$_addingToCart');
         if (provider.loadingProduct) {
           return Scaffold(appBar: _buildAppBar(), body: const LoaderWidget());
         }
@@ -257,11 +268,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             selectedVariant: _selectedVariant,
             addingToCart: _addingToCart,
             onAddToCart: () => _addToCart(product),
-          )
-              .animate(delay: 180.ms)
-              .fadeIn(duration: 350.ms, curve: Curves.easeOut)
-              .slideY(
-                  begin: 0.4, end: 0, duration: 350.ms, curve: Curves.easeOut),
+          ),
           body: CustomScrollView(
             key: ValueKey(product.id),
             slivers: [
@@ -271,20 +278,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   currentIndex: _imageIndex,
                   controller: _pageController,
                   onChanged: (i) => setState(() => _imageIndex = i),
-                ).animate().fadeIn(duration: 320.ms, curve: Curves.easeOut),
+                ),
               ),
               SliverToBoxAdapter(
                 child: ProductInfoSection(
                   product: product,
                   selectedVariant: _selectedVariant,
-                )
-                    .animate(delay: 80.ms)
-                    .fadeIn(duration: 360.ms, curve: Curves.easeOut)
-                    .slideY(
-                        begin: 0.05,
-                        end: 0,
-                        duration: 360.ms,
-                        curve: Curves.easeOut),
+                ),
               ),
               SliverToBoxAdapter(
                 child: ProductCustomizeSection(
@@ -292,58 +292,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   selectedOptions: _selectedOptions,
                   onOptionChanged: (name, val) =>
                       _onOptionChanged(name, val, product.variants),
-                )
-                    .animate(delay: 150.ms)
-                    .fadeIn(duration: 360.ms, curve: Curves.easeOut)
-                    .slideY(
-                        begin: 0.05,
-                        end: 0,
-                        duration: 360.ms,
-                        curve: Curves.easeOut),
+                ),
               ),
-              // SliverToBoxAdapter(
-              //   child: ProductActionButtons(
-              //     onBeginOrder: () => _addToCart(product),
-              //     addingToCart: _addingToCart,
-              //   )
-              //       .animate(delay: 210.ms)
-              //       .fadeIn(duration: 360.ms, curve: Curves.easeOut)
-              //       .slideY(begin: 0.05, end: 0, duration: 360.ms, curve: Curves.easeOut),
-              // ),
               SliverToBoxAdapter(
                 child: ProductDeliverySection(
                   pincodeController: _pincodeController,
-                )
-                    .animate(delay: 270.ms)
-                    .fadeIn(duration: 360.ms, curve: Curves.easeOut)
-                    .slideY(
-                        begin: 0.05,
-                        end: 0,
-                        duration: 360.ms,
-                        curve: Curves.easeOut),
+                ),
               ),
-              // SliverToBoxAdapter(
-              //   child: const ProductConsultationBanner()
-              //       .animate(delay: 320.ms)
-              //       .fadeIn(duration: 360.ms, curve: Curves.easeOut),
-              // ),
-              // SliverToBoxAdapter(
-              //   child: const ProductPickDiamondCard()
-              //       .animate(delay: 370.ms)
-              //       .fadeIn(duration: 360.ms, curve: Curves.easeOut),
-              // ),
-              // SliverToBoxAdapter(
-              //   child: const ProductRatingsGrid()
-              //       .animate(delay: 420.ms)
-              //       .fadeIn(duration: 360.ms, curve: Curves.easeOut),
-              // ),
               SliverToBoxAdapter(
                 child: ProductAccordionsSection(
                   product: product,
                   sku: _buildSku(product),
-                )
-                    .animate(delay: 460.ms)
-                    .fadeIn(duration: 360.ms, curve: Curves.easeOut),
+                ),
               ),
               if (_relatedProducts.isNotEmpty)
                 SliverToBoxAdapter(
@@ -351,14 +311,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     products: _relatedProducts,
                     onTap: (h) => Navigator.of(context)
                         .pushNamed(AppRoutes.product, arguments: h),
-                  )
-                      .animate(delay: 500.ms)
-                      .fadeIn(duration: 360.ms, curve: Curves.easeOut)
-                      .slideY(
-                          begin: 0.04,
-                          end: 0,
-                          duration: 360.ms,
-                          curve: Curves.easeOut),
+                  ),
                 ),
               SliverToBoxAdapter(child: 24.height),
             ],
@@ -436,38 +389,40 @@ class _StickyBottomBar extends StatelessWidget {
         .map((e) => e.value)
         .join(' / ');
 
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 20,
-              spreadRadius: 0,
-              offset: const Offset(0, -4),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 6,
-              spreadRadius: 0,
-              offset: const Offset(0, -1),
-            ),
-          ],
-        ),
-        child: Row(children: [
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, -4),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            spreadRadius: 0,
+            offset: const Offset(0, -1),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + bottomPad),
+      child: SizedBox(
+        height: 52,
+        child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Marquee(
-                  directionMarguee: DirectionMarguee.oneDirection,
-                  child: Text(product.title,
-                      style: AppTextStyles.bodyMedium
-                          .copyWith(fontWeight: FontWeight.w600),
-                  ),
+                Text(
+                  product.title,
+                  style: AppTextStyles.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
                 if (optStr.isNotEmpty)
                   Text(optStr,
@@ -480,200 +435,35 @@ class _StickyBottomBar extends StatelessWidget {
             ),
           ),
           12.width,
-          ElevatedButton(
-            onPressed: addingToCart ? null : onAddToCart,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.teal,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor:
-                  AppColors.teal.withValues(alpha: 0.5),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+          SizedBox(
+            width: 140,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: addingToCart ? null : onAddToCart,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.teal,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: AppColors.teal,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                elevation: 0,
               ),
-              elevation: 0,
-            ),
-            child: addingToCart
-                ? const LoaderWidget(size: 20, color: Colors.white)
-                : const Text(
-                    'ADD TO CART',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                      letterSpacing: 0.5,
-                      color: Colors.white,
+              child: addingToCart
+                  ? const LoaderWidget(size: 20, color: Colors.white)
+                  : const Text(
+                      'ADD TO CART',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        letterSpacing: 0.5,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
+            ),
           ),
         ]),
-      ),
-    );
-  }
-}
-
-// ─── Confirm Add-to-Cart Dialog ───────────────────────────────────────────────
-
-class _ConfirmAddToCartDialog extends StatelessWidget {
-  final Product product;
-  final ProductVariant variant;
-  final Map<String, String> selectedOptions;
-
-  const _ConfirmAddToCartDialog({
-    required this.product,
-    required this.variant,
-    required this.selectedOptions,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final imageUrl = product.primaryImage?.url ?? '';
-    final price = FormatUtils.formatRsPrice(variant.price);
-    final options =
-        selectedOptions.entries.where((e) => e.value.isNotEmpty).toList();
-
-    return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      insetPadding:
-          const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Title row ──────────────────────────────────────────────
-            Row(
-              children: [
-                Expanded(
-                  child: Text('Confirm Selection',
-                      style: AppTextStyles.headlineSmall),
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(false),
-                  child: const Icon(Icons.close,
-                      size: 20, color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-
-            // ── Product snapshot ────────────────────────────────────────
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (imageUrl.isNotEmpty) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: CachedImageWidget(
-                      url: imageUrl,
-                      height: 72,
-                      width: 72,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                ],
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.title,
-                        style: AppTextStyles.bodyMedium
-                            .copyWith(fontWeight: FontWeight.w600),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(price,
-                          style: AppTextStyles.priceText
-                              .copyWith(color: AppColors.teal)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-            const Divider(height: 1, color: AppColors.border),
-            const SizedBox(height: 14),
-
-            // ── Selected options ────────────────────────────────────────
-            Text(
-              'YOUR SELECTION',
-              style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.textSecondary, letterSpacing: 0.8),
-            ),
-            const SizedBox(height: 10),
-
-            ...options.map((e) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 96,
-                        child: Text(e.key,
-                            style: AppTextStyles.bodySmall
-                                .copyWith(color: AppColors.textSecondary)),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.border),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          e.value,
-                          style: AppTextStyles.bodySmall.copyWith(
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textPrimary),
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
-
-            const SizedBox(height: 16),
-
-            // ── Buttons ─────────────────────────────────────────────────
-            // SizedBox(
-            //   width: double.infinity,
-            //   child: OutlinedButton(
-            //     onPressed: () => Navigator.of(context).pop(false),
-            //     style: OutlinedButton.styleFrom(
-            //       foregroundColor: AppColors.textPrimary,
-            //       side: const BorderSide(color: AppColors.textPrimary),
-            //       padding: const EdgeInsets.symmetric(vertical: 14),
-            //       shape: const RoundedRectangleBorder(),
-            //       elevation: 0,
-            //     ),
-            //     child: Text('CHANGE SELECTION',
-            //         style: AppTextStyles.button),
-            //   ),
-            // ),
-            // const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.teal,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  elevation: 0,
-                ),
-                child: Text(
-                  'ADD TO CART',
-                  style: AppTextStyles.button.copyWith(color: Colors.white),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

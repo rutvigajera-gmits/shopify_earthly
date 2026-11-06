@@ -497,6 +497,45 @@ class ShopifyService {
         .toList();
   }
 
+  // Fetches ALL products visible to this storefront token with no limit.
+  Future<List<Product>> fetchAllProducts() async {
+    const pf = '''
+      id handle title description vendor availableForSale tags
+      images(first: 3) { edges { node { url altText } } }
+      variants(first: 5) {
+        edges {
+          node {
+            id title availableForSale
+            priceV2 { amount currencyCode }
+            compareAtPriceV2 { amount currencyCode }
+            selectedOptions { name value }
+          }
+        }
+      }
+    ''';
+    final allEdges = <dynamic>[];
+    String? cursor;
+    bool hasNext = true;
+    while (hasNext) {
+      final after = cursor != null ? ', after: "$cursor"' : '';
+      final data = await _query('''
+        {
+          products(first: 250$after) {
+            pageInfo { hasNextPage endCursor }
+            edges { node { $pf } }
+          }
+        }
+      ''');
+      final page = data['products'];
+      allEdges.addAll((page?['edges'] as List?) ?? []);
+      hasNext = page?['pageInfo']?['hasNextPage'] == true;
+      cursor = page?['pageInfo']?['endCursor'] as String?;
+    }
+    return allEdges
+        .map((e) => Product.fromStorefrontJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<Product?> fetchProductByHandle(String handle) async {
     final data = await _query('''
       {
@@ -692,14 +731,16 @@ class ShopifyService {
 
   Future<Collection?> fetchCollectionByHandle(
     String handle, {
-    int productCount = 24,
+    int productCount = 250,
   }) async {
+    // First page — also fetches collection metadata.
     final data = await _query('''
       {
         collectionByHandle(handle: "$handle") {
           id handle title description
           image { url altText }
-          products(first: $productCount) {
+          products(first: 250) {
+            pageInfo { hasNextPage endCursor }
             edges {
               node {
                 id handle title availableForSale tags
@@ -721,8 +762,49 @@ class ShopifyService {
       }
     ''');
     if (data['collectionByHandle'] == null) return null;
-    return Collection.fromStorefrontJson(
-        data['collectionByHandle'] as Map<String, dynamic>);
+
+    final colJson = data['collectionByHandle'] as Map<String, dynamic>;
+    final allEdges = List<dynamic>.from(
+        (colJson['products']?['edges'] as List?) ?? []);
+
+    // Paginate until all products are fetched.
+    var pageInfo = colJson['products']?['pageInfo'] as Map?;
+    while (pageInfo?['hasNextPage'] == true) {
+      final cursor = pageInfo!['endCursor'] as String;
+      final more = await _query('''
+        {
+          collectionByHandle(handle: "$handle") {
+            products(first: 250, after: "$cursor") {
+              pageInfo { hasNextPage endCursor }
+              edges {
+                node {
+                  id handle title availableForSale tags
+                  images(first: 2) { edges { node { url altText } } }
+                  variants(first: 3) {
+                    edges {
+                      node {
+                        id title availableForSale
+                        priceV2 { amount currencyCode }
+                        compareAtPriceV2 { amount currencyCode }
+                        selectedOptions { name value }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ''');
+      final moreProducts = more['collectionByHandle']?['products'];
+      allEdges.addAll((moreProducts?['edges'] as List?) ?? []);
+      pageInfo = moreProducts?['pageInfo'] as Map?;
+    }
+
+    // Rebuild the json with all accumulated edges so fromStorefrontJson works normally.
+    final merged = Map<String, dynamic>.from(colJson);
+    merged['products'] = {'edges': allEdges};
+    return Collection.fromStorefrontJson(merged);
   }
 
   // Fetches multiple collections by handle in a single batched query.
@@ -1362,7 +1444,7 @@ class ShopifyService {
   Future<List<Product>> fetchShapeProducts({
     required String shapeName,
     String collectionHandle = '',
-    int productCount = 48,
+    int productCount = 250,
   }) async {
     final tag = '$shapeName-Diamond';
     final productFragment = '''
@@ -1380,23 +1462,32 @@ class ShopifyService {
       }
     ''';
 
-    // Strategy 1 — main rings collection filtered by shape tag
+    // Strategy 1 — main rings collection filtered by shape tag (paginated)
     try {
-      final data = await _query('''
-        {
-          collectionByHandle(handle: "lab-grown-diamond-rings") {
-            products(first: $productCount, filters: [{tag: "$tag"}]) {
-              edges { node { $productFragment } }
+      final allEdges = <dynamic>[];
+      String? cursor;
+      bool hasNext = true;
+      while (hasNext) {
+        final afterClause = cursor != null ? ', after: "$cursor"' : '';
+        final data = await _query('''
+          {
+            collectionByHandle(handle: "lab-grown-diamond-rings") {
+              products(first: 250$afterClause, filters: [{tag: "$tag"}]) {
+                pageInfo { hasNextPage endCursor }
+                edges { node { $productFragment } }
+              }
             }
           }
-        }
-      ''');
-      final edges =
-          (data['collectionByHandle']?['products']?['edges'] as List?) ?? [];
-      if (edges.isNotEmpty) {
+        ''');
+        final products = data['collectionByHandle']?['products'];
+        allEdges.addAll((products?['edges'] as List?) ?? []);
+        hasNext = products?['pageInfo']?['hasNextPage'] == true;
+        cursor = products?['pageInfo']?['endCursor'] as String?;
+      }
+      if (allEdges.isNotEmpty) {
         debugPrint(
-            '[Shopify] fetchShapeProducts tag="$tag" → ${edges.length} products');
-        return edges
+            '[Shopify] fetchShapeProducts tag="$tag" → ${allEdges.length} products');
+        return allEdges
             .map((e) => Product.fromStorefrontJson(e as Map<String, dynamic>))
             .toList();
       }
@@ -1404,11 +1495,10 @@ class ShopifyService {
       debugPrint('[Shopify] fetchShapeProducts strategy1 error: $e');
     }
 
-    // Strategy 2 — shape-specific collection handle
+    // Strategy 2 — shape-specific collection handle (already paginated)
     if (collectionHandle.isNotEmpty) {
       try {
-        final col = await fetchCollectionByHandle(collectionHandle,
-            productCount: productCount);
+        final col = await fetchCollectionByHandle(collectionHandle);
         if (col != null && col.products.isNotEmpty) {
           debugPrint(
               '[Shopify] fetchShapeProducts handle="$collectionHandle" → ${col.products.length} products');
@@ -1422,7 +1512,7 @@ class ShopifyService {
     // Strategy 3 — generic tag query
     try {
       final products =
-          await fetchProducts(first: productCount, query: 'tag:$tag');
+          await fetchProducts(first: 250, query: 'tag:$tag');
       debugPrint(
           '[Shopify] fetchShapeProducts tag-query "$tag" → ${products.length} products');
       return products;

@@ -33,6 +33,9 @@ class CartScreen extends StatelessWidget {
       ),
       body: Consumer<CartProvider>(
         builder: (context, cart, _) {
+          if (cart.isLoading && cart.cart.lines.isEmpty) {
+            return const Center(child: LoaderWidget(size: 32));
+          }
           if (cart.cart.lines.isEmpty) {
             return const _EmptyCart();
           }

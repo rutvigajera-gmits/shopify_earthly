@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
@@ -83,15 +82,7 @@ class ProductGallerySection extends StatelessWidget {
         fit: BoxFit.cover,
         placeholder: (_, __) => Container(color: AppColors.surfaceCream),
         errorWidget: (_, __, ___) => Container(color: AppColors.cardBackground),
-      )
-          .animate(key: ValueKey('gallery-img-$i'))
-          .fadeIn(duration: 280.ms, curve: Curves.easeOut)
-          .scale(
-            begin: const Offset(1.03, 1.03),
-            end: const Offset(1.0, 1.0),
-            duration: 280.ms,
-            curve: Curves.easeOut,
-          ),
+      ),
     );
   }
 
@@ -141,18 +132,7 @@ class ProductGallerySection extends StatelessWidget {
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
                 ),
-              )
-                  .animate(
-                    key: ValueKey('thumb-$i'),
-                    delay: Duration(milliseconds: 80 + i * 55),
-                  )
-                  .fadeIn(duration: 240.ms, curve: Curves.easeOut)
-                  .slideX(
-                    begin: 0.35,
-                    end: 0,
-                    duration: 240.ms,
-                    curve: Curves.easeOut,
-                  ),
+              ),
             ),
           ),
       ],

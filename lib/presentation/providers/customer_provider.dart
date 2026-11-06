@@ -223,7 +223,9 @@ class CustomerProvider extends BaseProvider {
   }
 
   Future<void> logout() async {
-    if (_accessToken != null) await _repo.logout(_accessToken!);
+    try {
+      if (_accessToken != null) await _repo.logout(_accessToken!);
+    } catch (_) {}
     _customer = null;
     _accessToken = null;
     _orders = [];

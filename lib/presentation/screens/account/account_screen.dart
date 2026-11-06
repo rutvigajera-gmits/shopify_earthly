@@ -12,6 +12,7 @@ import '../../providers/cart_provider.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/shop_provider.dart';
 import '../../providers/wishlist_provider.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../common/widgets/app_header.dart';
 import 'account_webview_screen.dart';
 import 'kwik_pass_screen.dart';
@@ -139,6 +140,7 @@ class AccountScreen extends StatelessWidget {
         title: context.watch<ShopProvider>().brand?.storeName ?? 'Account',
         showBack: true,
         onBackTap: onBackTap,
+        onCartTap: () => Navigator.of(context).pushNamed(AppRoutes.cart),
       ),
       body: SafeArea(
         top: false,
@@ -163,19 +165,20 @@ class AccountScreen extends StatelessWidget {
                             ? () => Navigator.of(context).push(
                                 MaterialPageRoute(
                                     builder: (_) => const OrdersScreen()))
-                            : () =>
+                            : () {
+                                final cartLines = context
+                                    .read<CartProvider>()
+                                    .cart
+                                    .lines;
                                 Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (_) => const AccountWebViewScreen(
+                                    builder: (_) => AccountWebViewScreen(
                                           title: 'My Orders',
-                                          url:
-                                              'https://earthlyjewels.co/account/orders',
-                                        ))),
-                      ),
-                      _MenuItem(
-                        icon: Icons.favorite_border,
-                        label: 'Wishlist',
-                        onTap: () =>
-                            Navigator.of(context).pushNamed('/wishlist'),
+                                          url: 'https://earthlyjewels.co/account/orders',
+                                          syncCartItems: cartLines.isEmpty
+                                              ? null
+                                              : cartLines,
+                                        )));
+                              },
                       ),
                       _MenuItem(
                         icon: Icons.location_on_outlined,
@@ -183,13 +186,20 @@ class AccountScreen extends StatelessWidget {
                         onTap: auth.hasApiToken
                             ? () =>
                                 Navigator.of(context).pushNamed('/addresses')
-                            : () =>
+                            : () {
+                                final cartLines = context
+                                    .read<CartProvider>()
+                                    .cart
+                                    .lines;
                                 Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (_) => const AccountWebViewScreen(
+                                    builder: (_) => AccountWebViewScreen(
                                           title: 'Saved Addresses',
-                                          url:
-                                              'https://earthlyjewels.co/account/addresses',
-                                        ))),
+                                          url: 'https://earthlyjewels.co/account/addresses',
+                                          syncCartItems: cartLines.isEmpty
+                                              ? null
+                                              : cartLines,
+                                        )));
+                              },
                       ),
                       // _MenuItem(
                       //   icon: Icons.workspace_premium_outlined,
@@ -271,13 +281,14 @@ class AccountScreen extends StatelessWidget {
                         onTap: () async {
                           final confirm = await _showSignOutSheet(context);
                           if (confirm != true || !context.mounted) return;
+                          await context.read<CustomerProvider>().logout();
+                          if (!context.mounted) return;
                           await Future.wait([
-                            context.read<CustomerProvider>().logout(),
                             context.read<CartProvider>().clearCart(),
                             context.read<WishlistProvider>().clear(),
                             CookieManager.instance().deleteAllCookies(),
                             WebStorageManager.instance().deleteAllData(),
-                          ]);
+                          ]).catchError((_) async => <void>[]);
                         },
                       )
                     else
@@ -370,15 +381,14 @@ class _LoggedInHeader extends StatelessWidget {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: () => Navigator.of(context).push(
+          IconButton(
+            onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const EditProfileScreen()),
             ),
-            child: const Padding(
-              padding: EdgeInsets.all(4),
-              child: Icon(Icons.edit_outlined,
-                  size: 20, color: AppColors.textSecondary),
-            ),
+            icon: const Icon(Icons.edit_outlined,
+                size: 20, color: AppColors.textSecondary),
+            padding: const EdgeInsets.all(12),
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           ),
         ],
       ),

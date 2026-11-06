@@ -442,109 +442,129 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipPath(
-      clipper: _WaveClipper(),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(20, 36, 20, 68),
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.primary, Color(0xFF002B30)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Column(
+    // ClipPath clips both painting AND hit-testing, so a GestureDetector inside
+    // it can silently lose taps on some devices. Place the tap target in an outer
+    // Stack instead — completely outside the ClipPath's hit-test clip boundary.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final avatarLeft = (constraints.maxWidth - 92) / 2;
+        return Stack(
           children: [
-            // Avatar
-            GestureDetector(
-              onTap: onEditPhoto,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 92,
-                    height: 92,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.15),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.40),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.18),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
+            // Visual: wave-clipped gradient background
+            ClipPath(
+              clipper: _WaveClipper(),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(20, 36, 20, 68),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primary, Color(0xFF002B30)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 92,
+                          height: 92,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.15),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.40),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.18),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: profileImage != null
+                              ? ClipOval(
+                                  child: Image.file(
+                                    profileImage!,
+                                    fit: BoxFit.cover,
+                                    width: 92,
+                                    height: 92,
+                                  ),
+                                )
+                              : Center(
+                                  child: Text(
+                                    customer.initials,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                ),
+                        ),
+                        // Edit badge
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.12),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.edit,
+                                size: 14, color: AppColors.teal),
+                          ),
                         ),
                       ],
                     ),
-                    child: profileImage != null
-                        ? ClipOval(
-                            child: Image.file(
-                              profileImage!,
-                              fit: BoxFit.cover,
-                              width: 92,
-                              height: 92,
-                            ),
-                          )
-                        : Center(
-                            child: Text(
-                              customer.initials,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 30,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ),
-                  ),
-                  // Edit badge
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
+                    const SizedBox(height: 14),
+                    Text(
+                      customer.displayName,
+                      style: AppTextStyles.headlineMedium.copyWith(
                         color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.12),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        fontWeight: FontWeight.w600,
                       ),
-                      alignment: Alignment.center,
-                      child: const Icon(Icons.edit,
-                          size: 14, color: AppColors.teal),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      customer.email,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: Colors.white.withValues(alpha: 0.65),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 14),
-            Text(
-              customer.displayName,
-              style: AppTextStyles.headlineMedium.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              customer.email,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: Colors.white.withValues(alpha: 0.65),
+            // Tap target over avatar — sits OUTSIDE ClipPath's hit-test clip
+            Positioned(
+              top: 36,
+              left: avatarLeft,
+              width: 92,
+              height: 92,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onEditPhoto,
               ),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }

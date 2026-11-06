@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/routes/app_routes.dart';
@@ -12,6 +13,21 @@ import 'presentation/providers/order_provider.dart';
 import 'presentation/providers/wishlist_provider.dart';
 import 'presentation/providers/chatbot_provider.dart';
 import 'presentation/screens/splash/splash_screen.dart';
+
+class _NavLogger extends NavigatorObserver {
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    if (kDebugMode) debugPrint('[NAV] PUSH ${route.settings.name ?? route.runtimeType} (from ${previousRoute?.settings.name ?? previousRoute?.runtimeType})');
+  }
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    if (kDebugMode) debugPrint('[NAV] POP  ${route.settings.name ?? route.runtimeType} (to ${previousRoute?.settings.name ?? previousRoute?.runtimeType})');
+  }
+  @override
+  void didReplace({Route? newRoute, Route? oldRoute}) {
+    if (kDebugMode) debugPrint('[NAV] REPLACE ${oldRoute?.settings.name} → ${newRoute?.settings.name}');
+  }
+}
 
 class EarthlyApp extends StatelessWidget {
   const EarthlyApp({super.key});
@@ -35,6 +51,7 @@ class EarthlyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         onGenerateRoute: AppRoutes.onGenerateRoute,
+        navigatorObservers: [_NavLogger()],
         home: const SplashScreen(),
       ),
     );

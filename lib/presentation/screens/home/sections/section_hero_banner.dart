@@ -152,6 +152,7 @@ class _HeroBannerSlideState extends State<_HeroBannerSlide>
       );
 
   void _activate() {
+    if (!mounted) return;
     _kb.forward(from: 0);
     _content.forward(from: 0);
   }

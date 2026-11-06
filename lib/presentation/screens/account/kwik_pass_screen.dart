@@ -95,36 +95,45 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
     try { ssPhone = sessionStorage.getItem('_gk_phone') || ''; } catch(_) {}
     console.log('[KwikPass] ssPhone=' + ssPhone);
 
-    // 1. window.Shopify.customer — only shortcut when id is present;
-    //    if id is missing, fall through to /account.json to get it.
+    // 1. window.Shopify.customer — only shortcut when id, phone AND names are
+    //    present; if names are missing fall through to /account.json which
+    //    always has the full customer record including first_name/last_name.
     try {
       var sc = window.Shopify && window.Shopify.customer;
       if (sc && sc.id) {
-        send({ email:sc.email||'', firstName:sc.first_name||'',
-               lastName:sc.last_name||'', phone:sc.phone||ssPhone||'', id:String(sc.id) });
-        return;
+        var ph1 = sc.phone || ssPhone || '';
+        if (ph1 && (sc.first_name || sc.last_name)) {
+          send({ email:sc.email||'', firstName:sc.first_name||'',
+                 lastName:sc.last_name||'', phone:ph1, id:String(sc.id) });
+          return;
+        }
+        // Phone or names missing — fall through to /account.json
       }
     } catch(_) {}
 
     // 2. GoKwik / KwikPass global objects — GoKwik's id is a UUID, not the
     //    Shopify numeric customer id; supplement from analytics globals.
+    //    Only shortcut when email AND names are present — GoKwik may have an
+    //    ID + email but empty names; /account.json always has the full record.
     try {
       var gk = window.GoKwik || window.gokwik || window.KwikPass
                || window.kwikpass || window._gokwik || window.GK;
       if (gk) {
         var cu = gk.customer || gk.customerData || gk.userData || gk.user;
         var gkId = cu ? String(cu.id || cu.customer_id || '') : '';
-        if (cu && gkId) {
+        if (cu && gkId && cu.email && (cu.first_name || cu.firstName || cu.last_name || cu.lastName)) {
           var useId2 = /^\d{8,}$/.test(gkId) ? gkId : getAnalyticsId();
-          send({ email:cu.email||'', firstName:cu.first_name||cu.firstName||'',
+          send({ email:cu.email, firstName:cu.first_name||cu.firstName||'',
                  lastName:cu.last_name||cu.lastName||'', phone:cu.phone||ssPhone||'',
                  id:useId2 });
           return;
         }
+        // id/email found but names missing — fall through to /account.json
       }
     } catch(_) {}
 
-    // 3. localStorage — supplement numeric id from analytics if missing
+    // 3. localStorage — only shortcut when email AND names are present (same
+    //    reason as above; /account.json always has the complete record).
     var lsKeys = ['kwikpass_customer','gk_customer_data','gokwik_customer',
                   'kwikpass_identity','kp_user_info','shopify_customer',
                   'customer_identity','kwik_customer','kp_customer'];
@@ -135,13 +144,14 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
         try {
           var p = JSON.parse(raw);
           var lsId = p ? String(p.id || p.customer_id || '') : '';
-          if (p && lsId) {
+          if (p && lsId && p.email && (p.first_name || p.firstName || p.last_name || p.lastName)) {
             var useId3 = /^\d{8,}$/.test(lsId) ? lsId : getAnalyticsId();
-            send({ email:p.email||'', firstName:p.first_name||p.firstName||'',
+            send({ email:p.email, firstName:p.first_name||p.firstName||'',
                    lastName:p.last_name||p.lastName||'', phone:p.phone||ssPhone||'',
                    id:useId3 });
             return;
           }
+          // id/email found but names missing — fall through to /account.json
         } catch(_) {}
       }
     } catch(_) {}
@@ -216,9 +226,11 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
     try {
       var d = (typeof evt.data === 'string') ? JSON.parse(evt.data) : evt.data;
       if (!d) return;
-      var ph = d.phone || d.mobile || d.phoneNumber
-            || (d.data  && (d.data.phone  || d.data.mobile))
-            || (d.user  && (d.user.phone  || d.user.mobile))
+      var ph = d.phone || d.mobile || d.phoneNumber || d.phoneNo
+            || d.mobileNumber || d.contactNumber || d.customerPhone
+            || (d.data  && (d.data.phone  || d.data.mobile || d.data.phoneNumber))
+            || (d.user  && (d.user.phone  || d.user.mobile || d.user.phoneNumber))
+            || (d.customer && (d.customer.phone || d.customer.mobile))
             || '';
       if (ph && /^\+?\d{7,15}$/.test(ph.replace(/[\s\-]/g,''))) {
         sessionStorage.setItem('_gk_phone', ph);
@@ -285,7 +297,7 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
         try {
           var url = typeof input === 'string' ? input
                   : (input && input.url) ? String(input.url) : '';
-          if (/gokwik|kwikpass|kwik\.in/i.test(url)) {
+          if (/gokwik|kwikpass|kwik\./i.test(url)) {
             var body = init && init.body;
             if (body) {
               try {
@@ -316,7 +328,7 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
     };
     XMLHttpRequest.prototype.send = function(body) {
       try {
-        if (/gokwik|kwikpass|kwik\.in/i.test(this._gkUrl || '')) {
+        if (/gokwik|kwikpass|kwik\./i.test(this._gkUrl || '')) {
           if (body) {
             try {
               var obj = JSON.parse(typeof body === 'string' ? body : String(body));
@@ -530,7 +542,7 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
     final phone = payload['phone'] as String? ?? '';
     final id = payload['id'] as String? ?? '';
 
-    debugPrint('[KwikPass] Identity received — email: $email  phone: $phone  id: $id');
+    debugPrint('[KwikPass] Identity received — email: $email  firstName: "$firstName"  lastName: "$lastName"  phone: $phone  id: $id');
 
     if (email.isEmpty && phone.isEmpty) {
       debugPrint('[KwikPass] No identity data in account.json response.');
@@ -627,8 +639,19 @@ class _KwikPassScreenState extends State<KwikPassScreen> {
       payload = payload.replaceAll('-', '+').replaceAll('_', '/');
       final decoded = utf8.decode(base64Decode(payload));
       final json = jsonDecode(decoded) as Map<String, dynamic>;
-      final ph = json['phone'] ?? json['mobile'] ?? json['phoneNumber'] ??
-                 json['mobileNumber'] ?? json['phone_number'] ?? '';
+      String? asPhone(dynamic v) => v is String && v.isNotEmpty ? v : null;
+      final ph = asPhone(json['phone']) ??
+          asPhone(json['mobile']) ??
+          asPhone(json['phoneNumber']) ??
+          asPhone(json['mobileNumber']) ??
+          asPhone(json['phone_number']) ??
+          asPhone(json['phoneNo']) ??
+          asPhone(json['contactNumber']) ??
+          asPhone(json['msisdn']) ??
+          (json['user'] is Map ? asPhone((json['user'] as Map)['phone']) ?? asPhone((json['user'] as Map)['mobile']) : null) ??
+          (json['data'] is Map ? asPhone((json['data'] as Map)['phone']) ?? asPhone((json['data'] as Map)['mobile']) : null) ??
+          (json['customer'] is Map ? asPhone((json['customer'] as Map)['phone']) : null) ??
+          '';
       final phStr = ph.toString().replaceAll(RegExp(r'[\s\-\(\)]'), '');
       if (RegExp(r'^\+?\d{7,15}$').hasMatch(phStr)) return phStr;
     } catch (_) {}

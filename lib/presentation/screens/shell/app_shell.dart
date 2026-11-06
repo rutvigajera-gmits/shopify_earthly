@@ -96,8 +96,6 @@ class _AppShellState extends State<AppShell> {
                 HomeScreen(
                   onSearchTap: _openSearch,
                   onCartTap: _openCart,
-                  onWishlistTap: () =>
-                      Navigator.of(context).pushNamed(AppRoutes.wishlist),
                   onProfileTap: () => _navigate(4),
                   onNavTap: _navigate,
                 ),

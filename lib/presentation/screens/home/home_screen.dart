@@ -21,7 +21,6 @@ import 'sections/section_oriole_exclusive.dart';
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onSearchTap;
   final VoidCallback? onCartTap;
-  final VoidCallback? onWishlistTap;
   final VoidCallback? onProfileTap;
   final ValueChanged<int>? onNavTap;
 
@@ -29,7 +28,6 @@ class HomeScreen extends StatefulWidget {
     super.key,
     this.onSearchTap,
     this.onCartTap,
-    this.onWishlistTap,
     this.onProfileTap,
     this.onNavTap,
   });
@@ -66,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       showSearchBar: true,
                       onSearchTap: widget.onSearchTap,
                       onCartTap: widget.onCartTap,
-                      onWishlistTap: widget.onWishlistTap,
+
                       onProfileTap: widget.onProfileTap,
                     ),
                     const Divider(height: 1, color: AppColors.neutral200),

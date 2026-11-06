@@ -244,8 +244,8 @@ class StorefrontHomeService {
 
   HomeSection? _buildShopByCategory(Map<String, dynamic> cols, int order) {
     final tiles = <Map<String, dynamic>>[];
-    // c0=rings (featured hero), c1=earrings, c2=necklace, c3=bracelets, c4=mens-ring
-    for (final idx in [0, 1, 2, 3, 4]) {
+    // c0=rings, c1=earrings, c2=necklace, c3=bracelets, c4=mens-ring, c15=pendants, c16=mangalsutra
+    for (final idx in [0, 1, 2, 3, 15, 16, 4]) {
       final col = cols['c$idx'] as Map<String, dynamic>?;
       final imageUrl = (col?['image'] as Map?)?['url'] as String? ?? '';
       if (imageUrl.isEmpty) continue;
@@ -558,6 +558,8 @@ class StorefrontHomeService {
       c12: collectionByHandle(handle: "lab-grown-diamond-engagement-rings") { title handle description image { url } }
       c13: collectionByHandle(handle: "oriole")                             { title handle description image { url } }
       c14: collectionByHandle(handle: "stackable-diamond-bands")            { title handle description image { url } }
+      c15: collectionByHandle(handle: "lab-grown-diamond-pendants")         { title handle description image { url } }
+      c16: collectionByHandle(handle: "mangalsutra")                        { title handle description image { url } }
     }
   ''');
 

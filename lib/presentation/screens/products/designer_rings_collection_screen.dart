@@ -67,7 +67,6 @@ class _DesignerRingsCollectionScreenState
     try {
       final col = await ShopifyService.instance.fetchCollectionByHandle(
         widget.collectionHandle,
-        productCount: 60,
       );
       if (mounted) {
         setState(() {

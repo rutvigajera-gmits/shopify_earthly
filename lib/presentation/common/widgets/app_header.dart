@@ -15,7 +15,6 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
   final VoidCallback? onSearchTap;
   final VoidCallback? onCartTap;
-  final VoidCallback? onWishlistTap;
   final VoidCallback? onProfileTap;
   final bool showSearchBar;
 
@@ -27,7 +26,6 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.title,
     this.onSearchTap,
     this.onCartTap,
-    this.onWishlistTap,
     this.onProfileTap,
     this.showSearchBar = false,
   });
@@ -78,18 +76,10 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 ),
                 SizedBox(
-                  width: 96,
+                  width: 48,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.favorite_border, size: 20),
-                        onPressed: onWishlistTap,
-                        color: AppColors.textPrimary,
-                        padding: EdgeInsets.zero,
-                        constraints:
-                            const BoxConstraints(minWidth: 40, minHeight: 40),
-                      ),
                       _CartIcon(onTap: onCartTap),
                     ],
                   ),

@@ -8,8 +8,10 @@ class ProductProvider extends BaseProvider {
   final _repo = ProductRepository.instance;
 
   List<Product> _featuredProducts = [];
-  List<Product> _collectionProducts = [];
-  String _loadedCollectionHandle = '';
+  List<Product> _allProducts = [];
+  bool _loadingAll = false;
+  final Map<String, List<Product>> _collectionCache = {};
+  String _currentCollectionHandle = '';
   List<Collection> _collections = [];
   List<Product> _searchResults = [];
   Product? _selectedProduct;
@@ -22,13 +24,19 @@ class ProductProvider extends BaseProvider {
   String? _productError;
 
   List<Product> get featuredProducts => _featuredProducts;
-  List<Product> get collectionProducts => _collectionProducts;
-  String get loadedCollectionHandle => _loadedCollectionHandle;
+  List<Product> get allProducts => _allProducts;
+  List<Product> get collectionProducts =>
+      _collectionCache[_currentCollectionHandle] ?? const [];
+  String get loadedCollectionHandle => _currentCollectionHandle;
   List<Collection> get collections => _collections;
   List<Product> get searchResults => _searchResults;
   Product? get selectedProduct => _selectedProduct;
 
+  List<Product> collectionProductsFor(String handle) =>
+      _collectionCache[handle] ?? const [];
+
   bool get loadingFeatured => _loadingFeatured;
+  bool get loadingAll => _loadingAll;
   bool get loadingCollection => _loadingCollection;
   bool get loadingCollections => _loadingCollections;
   bool get loadingSearch => _loadingSearch;
@@ -36,7 +44,7 @@ class ProductProvider extends BaseProvider {
   String? get productError => _productError;
 
   Future<void> loadFeaturedProducts() async {
-    if (_loadingFeatured) return;
+    if (_loadingFeatured || _featuredProducts.isNotEmpty) return;
     _loadingFeatured = true;
     notifyListeners();
     try {
@@ -49,18 +57,34 @@ class ProductProvider extends BaseProvider {
     }
   }
 
+  Future<void> loadAllProducts() async {
+    if (_loadingAll || _allProducts.isNotEmpty) return;
+    _loadingAll = true;
+    notifyListeners();
+    try {
+      _allProducts = await _repo.fetchAll();
+    } catch (e) {
+      setError(e.toString());
+    } finally {
+      _loadingAll = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> loadCollectionProducts(String handle) async {
     if (_loadingCollection) return;
-    if (_loadedCollectionHandle == handle && _collectionProducts.isNotEmpty)
+    _currentCollectionHandle = handle;
+    if (_collectionCache.containsKey(handle)) {
+      notifyListeners();
       return;
+    }
     _loadingCollection = true;
     notifyListeners();
     try {
-      _collectionProducts = await _repo.fetchByCollection(handle, count: 24);
-      _loadedCollectionHandle = handle;
+      _collectionCache[handle] = await _repo.fetchByCollection(handle);
     } catch (e) {
       setError(e.toString());
-      _collectionProducts = [];
+      _collectionCache[handle] = [];
     } finally {
       _loadingCollection = false;
       notifyListeners();
@@ -68,7 +92,7 @@ class ProductProvider extends BaseProvider {
   }
 
   Future<void> loadCollections() async {
-    if (_loadingCollections) return;
+    if (_loadingCollections || _collections.isNotEmpty) return;
     _loadingCollections = true;
     notifyListeners();
     try {

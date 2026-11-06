@@ -757,25 +757,25 @@ class ProductInfoSection extends StatelessWidget {
       ),
       transitionDuration: const Duration(milliseconds: 300),
       reverseTransitionDuration: const Duration(milliseconds: 250),
-    )).whenComplete(() => _breakupOpen = false);
+    )).whenComplete(() {
+      // Wait for close animation (250ms) to finish before allowing a new sheet.
+      Future.delayed(const Duration(milliseconds: 300), () {
+        _breakupOpen = false;
+      });
+    });
   }
 }
 
-// Injected via evaluateJavascript in onLoadStop — AFTER Cloudflare challenge
-// has cleared and Shopify theme JS has fully initialised the page components.
+// Injected early (3s after loadStart) and again at loadStop as backup.
 // The Flutter Opacity(0) overlay hides the WebView until DrawerReady fires.
+// Guard window.__earthly_pb prevents double-injection and avoids conflicting
+// with Shopify's own "Price Breakup" app which uses window.__pbRunning.
 const String _kPriceBreakupScript = r'''
 (function() {
-  // Guard: only run once per page load.
-  if (window.__pbRunning) return;
-  window.__pbRunning = true;
+  if (window.__earthly_pb) return;
+  window.__earthly_pb = true;
 
-  console.log('[PB] eval url=' + location.href.substring(0,80) + ' title=' + document.title.substring(0,40));
-
-  // Hide body immediately so the raw page isn't visible when Flutter
-  // switches Opacity from 0→1 at DrawerReady.
-  document.body.style.setProperty('visibility','hidden','important');
-  document.documentElement.style.setProperty('visibility','hidden','important');
+  console.log('[PB] eval url=' + location.href.substring(0,80));
 
   // ── Selectors ─────────────────────────────────────────────────────────────
   var BTN_SELS = [
@@ -800,6 +800,9 @@ const String _kPriceBreakupScript = r'''
     '[id*="price-breakdown"]',
     '.price-breakup-drawer',
     '.price-breakdown-drawer',
+    // GoKwik overlay iframe confirmed from device diagnostic:
+    // IFRAME#iframe-kp.hidden — GoKwik toggles the 'hidden' class to open/close it
+    '#iframe-kp',
   ];
 
   function findButton() {
@@ -825,7 +828,9 @@ const String _kPriceBreakupScript = r'''
       try {
         var d = document.querySelector(DRAWER_SELS[i]);
         if (!d) continue;
-        if (!d.hasAttribute('hidden') && d.getAttribute('aria-hidden') !== 'true' && d.style.display !== 'none') {
+        // Use computed style — GoKwik toggles visibility via CSS class (not inline style)
+        var cs = window.getComputedStyle(d);
+        if (cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity || '1') > 0) {
           console.log('[PB] drawer:' + DRAWER_SELS[i]);
           return d;
         }
@@ -860,84 +865,150 @@ const String _kPriceBreakupScript = r'''
 
   function watchDrawerClose(drawer) {
     var done = false;
+    var pollTimer, safetyTimer;
     function close() {
-      if (done) return; done = true; obs.disconnect();
+      if (done) return; done = true;
+      clearInterval(pollTimer);
+      clearTimeout(safetyTimer);
+      try { obs.disconnect(); } catch(_) {}
       try { window.flutter_inappwebview.callHandler('DrawerClosed'); } catch(_) {}
     }
-    var obs = new MutationObserver(function(muts) {
-      for (var i = 0; i < muts.length; i++) {
-        var m = muts[i];
-        if (m.attributeName === 'hidden' && drawer.hasAttribute('hidden')) { close(); return; }
-        if (m.attributeName === 'aria-hidden' && drawer.getAttribute('aria-hidden') === 'true') { close(); return; }
-        if (m.attributeName === 'style' && drawer.style.display === 'none') { close(); return; }
-        if (m.attributeName === 'class') {
-          var cls = drawer.className || '';
-          if (cls.indexOf('is-closed') > -1 || cls.indexOf('--closed') > -1) { close(); return; }
-        }
+    function isVisuallyHidden() {
+      // DOM removal (or ancestor removal) is the most reliable signal.
+      if (!document.body.contains(drawer)) return true;
+      var s = drawer.style;
+      // Inline style checks.
+      if (s.display === 'none') return true;
+      if (s.visibility === 'hidden') return true;
+      if (s.opacity === '0' || parseFloat(s.opacity || '1') === 0) return true;
+      // Computed style catches class-based display:none / opacity:0.
+      // We don't set display/opacity on the drawer ourselves, so getComputedStyle
+      // reflects GoKwik's CSS without our !important interference.
+      try {
+        var cs = window.getComputedStyle(drawer);
+        if (cs.display === 'none') return true;
+        if (parseFloat(cs.opacity) === 0) return true;
+      } catch(_) {}
+      // Transform off-screen in any direction (inline style only — class-based
+      // transforms are caught later when GoKwik adds a closed class).
+      var t = (s.transform || s.webkitTransform || '').replace(/\s/g,'');
+      if (t) {
+        if (t.indexOf('translateY(100%') > -1 || t.indexOf('translateX(100%') > -1) return true;
+        if (t.indexOf('translateY(-100%') > -1 || t.indexOf('translateX(-100%') > -1) return true;
+        if (t.indexOf('scale(0') > -1) return true;
       }
-    });
-    obs.observe(drawer, { attributes: true, attributeFilter: ['hidden','aria-hidden','style','class'] });
+      // Class / attribute signals from GoKwik.
+      var cls = drawer.className || '';
+      if (cls.indexOf('is-closed') > -1 || cls.indexOf('--closed') > -1 ||
+          cls.indexOf(' closed') > -1 || cls.indexOf('hidden') > -1 ||
+          cls.indexOf('closing') > -1 || cls.indexOf('dismiss') > -1) return true;
+      if (drawer.hasAttribute('hidden')) return true;
+      if (drawer.getAttribute('aria-hidden') === 'true') return true;
+      if (drawer.getAttribute('data-open') === 'false') return true;
+      if (drawer.getAttribute('data-visible') === 'false') return true;
+      return false;
+    }
+    var obs = new MutationObserver(function() { if (isVisuallyHidden()) close(); });
+    obs.observe(drawer, { attributes: true, attributeFilter: ['hidden','aria-hidden','style','class','data-open','data-visible'] });
+    // Poll every 250ms — catches GoKwik removing an ancestor wrapper from DOM.
+    pollTimer = setInterval(function() { if (isVisuallyHidden()) close(); }, 250);
+    // Safety net: force-close after 2 minutes in case all detection paths miss.
+    safetyTimer = setTimeout(function() { close(); }, 120000);
   }
 
   function onDrawerOpen(drawer) {
     var sel = drawer.id ? '#' + drawer.id : ('.' + (drawer.className || 'pb').split(' ')[0]);
     injectScrollCSS(sel);
-    document.body.style.setProperty('background','white','important');
-    document.body.style.setProperty('visibility','hidden','important');
-    document.documentElement.style.setProperty('visibility','visible','important');
-    drawer.style.setProperty('visibility','visible','important');
     watchDrawerClose(drawer);
-    setTimeout(function() {
-      try { window.flutter_inappwebview.callHandler('DrawerReady'); } catch(_) {}
-    }, 350);
+    try { window.flutter_inappwebview.callHandler('DrawerReady'); } catch(_) {}
   }
 
-  // Page is already loaded — try button immediately first.
-  var btn = findButton();
-  if (btn) {
-    btn.click();
+  // Guard prevents double-firing onDrawerOpen from the two detection methods below.
+  var d_found = false;
+
+  // Method A: DOM mutation — watch <body>'s direct children for a new fixed/absolute
+  // high-z-index element (the GoKwik drawer is always appended to <body>).
+  // This works without knowing GoKwik's specific element ID or class name.
+  var bodyObs = new MutationObserver(function(muts) {
+    if (d_found) return;
+    for (var mi = 0; mi < muts.length; mi++) {
+      for (var ni = 0; ni < muts[mi].addedNodes.length; ni++) {
+        var node = muts[mi].addedNodes[ni];
+        if (node.nodeType !== 1) continue;
+        try {
+          var cs = window.getComputedStyle(node);
+          var z = parseInt(cs.zIndex || 0);
+          // Skip elements added while display:none — they're pre-rendered, not yet open.
+          // findOpenDrawer() polling will catch them when GoKwik makes them visible.
+          if ((cs.position === 'fixed' || cs.position === 'absolute') && z > 99 &&
+              cs.display !== 'none' && cs.visibility !== 'hidden') {
+            d_found = true;
+            bodyObs.disconnect();
+            clearInterval(poll);
+            onDrawerOpen(node);
+            return;
+          }
+        } catch(_) {}
+      }
+    }
+  });
+  bodyObs.observe(document.body, { childList: true });
+
+  // Wait for readyState===complete before clicking — at 'interactive' state GoKwik
+  // is not fully initialized and theme.js throws "Failed to construct URL" which
+  // may block GoKwik's click handler from running via stopImmediatePropagation.
+  var btn = null;
+  var btnClicked = false;
+
+  function attemptClick() {
+    if (btnClicked) return;
+    btn = findButton();
+    if (!btn) return;
+    btnClicked = true;
+    console.log('[PB] click state=' + document.readyState);
+    try { btn.click(); } catch(e) { console.log('[PB] click err: ' + e); }
+  }
+
+  if (document.readyState === 'complete') {
+    attemptClick();
   } else {
-    console.log('[PB] btn not found on load, will retry');
+    document.addEventListener('readystatechange', function pbReady() {
+      if (document.readyState === 'complete') {
+        document.removeEventListener('readystatechange', pbReady);
+        attemptClick();
+      }
+    });
   }
 
-  // Poll for open drawer (also handles async button click animation delay).
+  // Method B: selector polling — handles pre-rendered drawers that become visible
+  // by toggling a CSS class rather than being added fresh to the DOM.
   var tries = 0;
-  var btnRetries = 0;
   var poll = setInterval(function() {
     tries++;
-    var d = findOpenDrawer();
-    if (d) { clearInterval(poll); onDrawerOpen(d); return; }
+    if (!d_found) {
+      var d = findOpenDrawer();
+      if (d) { d_found = true; clearInterval(poll); bodyObs.disconnect(); onDrawerOpen(d); return; }
+    }
 
-    // Retry button click every 500ms for up to 5s (handles lazy-rendered buttons)
-    if (!btn && tries % 5 === 0 && btnRetries < 10) {
-      btnRetries++;
-      btn = findButton();
-      if (btn) btn.click();
+    // Retry every 500ms in case the button was lazy-rendered or readyState delayed
+    if (!btnClicked && tries % 5 === 0) {
+      attemptClick();
     }
 
     if (tries === 30) {
-      // 3s diagnostic
-      var els = document.querySelectorAll('[id*="price"],[class*="price"],[id*="drawer"],[class*="drawer"]');
+      // 3s diagnostic — query price/drawer/gokwik elements to identify actual selectors
+      var els = document.querySelectorAll('[id*="price"],[class*="price"],[id*="drawer"],[class*="drawer"],[id*="kwik"],[class*="gokwik"],[id*="gk-"],[class*="gk-"]');
       var inf = [];
-      for (var k = 0; k < Math.min(els.length, 15); k++) {
+      for (var k = 0; k < Math.min(els.length, 20); k++) {
         inf.push(els[k].tagName + '#' + (els[k].id||'') + '.' + (els[k].className||'').split(' ')[0].substring(0,25));
       }
-      console.log('[PB] 3s diag: ' + (inf.length ? inf.join('; ') : 'EMPTY'));
-      if (!inf.length) {
-        // Log ALL buttons with text to help identify the right selector
-        var btns = document.querySelectorAll('button,a,summary,[role="button"]');
-        var binfo = [];
-        for (var bi = 0; bi < Math.min(btns.length, 20); bi++) {
-          var txt2 = (btns[bi].textContent||'').trim().substring(0,25);
-          if (txt2) binfo.push(btns[bi].tagName + ':"' + txt2 + '"');
-        }
-        console.log('[PB] all-btns: ' + (binfo.length ? binfo.join('; ') : 'NONE'));
-      }
+      console.log('[PB] 3s diag: btn=' + (btn ? btn.tagName : 'null') + ' els=' + (inf.length ? inf.join('; ') : 'EMPTY'));
     }
 
-    if (tries >= 100) {
+    if (tries >= 300 && !d_found) {
       clearInterval(poll);
-      console.log('[PB] timeout 10s title="' + document.title + '"');
+      bodyObs.disconnect();
+      console.log('[PB] timeout 30s title="' + document.title + '"');
       try { window.flutter_inappwebview.callHandler('DrawerError'); } catch(_) {}
     }
   }, 100);
@@ -955,11 +1026,18 @@ class _PriceBreakupSheet extends StatefulWidget {
 class _PriceBreakupSheetState extends State<_PriceBreakupSheet> {
   bool _ready = false;
   bool _error = false;
+  bool _popped = false;
   InAppWebViewController? _wvc;
+
+  void _safeClose() {
+    if (_popped || !mounted) return;
+    _popped = true;
+    Navigator.of(context).pop();
+  }
 
   void _reload() {
     if (!mounted) return;
-    setState(() { _ready = false; _error = false; });
+    setState(() { _error = false; });
     _wvc?.reload();
   }
 
@@ -1010,23 +1088,96 @@ class _PriceBreakupSheetState extends State<_PriceBreakupSheet> {
                       c.addJavaScriptHandler(
                         handlerName: 'DrawerClosed',
                         callback: (_) {
-                          if (mounted) Navigator.of(context).pop();
+                          _safeClose();
                           return null;
                         },
                       );
                       c.addJavaScriptHandler(
                         handlerName: 'DrawerError',
                         callback: (_) {
-                          if (mounted) setState(() => _error = true);
+                          // Could not find/open the price breakup drawer within
+                          // the poll window — close the sheet so the user is not
+                          // stuck looking at a blank spinner.
+                          _safeClose();
                           return null;
                         },
                       );
                     },
                     onLoadStart: (_, url) {
-                      // Reset error on each new navigation (Cloudflare redirects,
-                      // manual retries) so we don't get stuck on a stale error state.
                       if (mounted && !_ready) setState(() => _error = false);
                       if (kDebugMode) debugPrint('[PriceBreakup] loadStart: $url');
+
+                      // Inject early — don't wait for loadStop, which can fire
+                      // after 3+ minutes due to GoKwik SDK long-poll connections.
+                      // Only inject for the actual product page (not Cloudflare
+                      // challenge pages, which lack /products/ in the path).
+                      final host = url?.host ?? '';
+                      final path = url?.path ?? '';
+                      if (!host.contains('earthlyjewels') ||
+                          !path.contains('/products/')) {
+                        return;
+                      }
+                      // ignore: discarded_futures
+                      Future.delayed(const Duration(seconds: 3), () async {
+                        if (!mounted || _popped) return;
+                        if (kDebugMode) {
+                          debugPrint('[PriceBreakup] early-inject at 3s: $url');
+                          // Pre-inject: snapshot page state via return value
+                          // (guaranteed to reach Dart — bypasses lossy logcat).
+                          try {
+                            final pre = await _wvc?.evaluateJavascript(source: r'''
+                              (function(){
+                                var btns=document.querySelectorAll('button,a,[role="button"],summary');
+                                var pbBtn=null;
+                                for(var i=0;i<btns.length;i++){
+                                  var t=(btns[i].textContent||'').toLowerCase().trim();
+                                  if(t.indexOf('price break')>-1){pbBtn=btns[i].tagName+'|'+btns[i].id+'|'+btns[i].className.substring(0,40);break;}
+                                }
+                                return JSON.stringify({pb:!!window.__earthly_pb,pbR:!!window.__pbRunning,state:document.readyState,btn:pbBtn});
+                              })()
+                            ''');
+                            debugPrint('[PriceBreakup] pre=$pre');
+                          } catch (e) {
+                            debugPrint('[PriceBreakup] pre-err=$e');
+                          }
+                        }
+                        try {
+                          await _wvc?.evaluateJavascript(
+                              source: _kPriceBreakupScript);
+                        } catch (e) {
+                          if (kDebugMode) {
+                            debugPrint('[PriceBreakup] inject-err=$e');
+                          }
+                        }
+                        // Post-inject: 1.5s later, find what new elements appeared
+                        // (the drawer GoKwik opened after the button click).
+                        // ignore: discarded_futures
+                        Future.delayed(const Duration(milliseconds: 1500),
+                            () async {
+                          if (!mounted || _popped) return;
+                          try {
+                            final post = await _wvc?.evaluateJavascript(
+                                source: r'''
+                              (function(){
+                                var els=Array.from(document.querySelectorAll('*')).filter(function(el){
+                                  try{
+                                    var cs=window.getComputedStyle(el);
+                                    var z=parseInt(cs.zIndex||0);
+                                    return (cs.position==='fixed'||cs.position==='absolute')&&z>50;
+                                  }catch(_){return false;}
+                                }).slice(0,15).map(function(el){
+                                  var cs=window.getComputedStyle(el);
+                                  return el.tagName+'#'+el.id+'.'+(el.className||'').split(' ')[0].substring(0,25)+'|z='+cs.zIndex+'|v='+cs.visibility+'|d='+cs.display;
+                                });
+                                return JSON.stringify({pb:!!window.__earthly_pb,bodyViz:document.body.style.visibility,els:els});
+                              })()
+                            ''');
+                            if (kDebugMode) {
+                              debugPrint('[PriceBreakup] post=$post');
+                            }
+                          } catch (_) {}
+                        });
+                      });
                     },
                     onLoadStop: (c, url) async {
                       // Page is fully loaded. Cloudflare challenge (if any) is done.
@@ -1084,6 +1235,23 @@ class _PriceBreakupSheetState extends State<_PriceBreakupSheet> {
                     ),
                   ),
                 ),
+                // Drag handle — visual cue that the sheet can be dismissed
+              // by tapping the barrier outside or swiping back (Android).
+              Positioned(
+                top: 8,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.black26,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
